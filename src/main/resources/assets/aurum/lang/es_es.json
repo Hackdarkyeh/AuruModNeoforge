@@ -1,0 +1,9 @@
+{
+  "item.aurum.example_item": "Example Item Name",
+  "block.aurum.withered_grass_block": "Hierba marchita",
+  "block.aurum.withered_dirt_block": "Tierra marchita",
+  "item_group.aurum.interfaz_creativo": "Interfaz Creativa de Aurum",
+  "effect.aurum.aurum_blight": "Añublo de Aurum",
+  "death.attack.aurum_blight_damage": "%1$s fue consumido por la plaga Aurum"
+
+}
