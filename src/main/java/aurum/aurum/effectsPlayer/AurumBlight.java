@@ -19,9 +19,11 @@ import static aurum.aurum.init.ModEffects.AurumBlightEffect;
 public class AurumBlight extends MobEffect {
 
     private static int ARMOR_DAMAGE = 10;
+    private boolean inmuneMilk = false;
 
     public AurumBlight() {
         super(MobEffectCategory.HARMFUL, -26113);
+
     }
 
     @Override
@@ -31,7 +33,9 @@ public class AurumBlight extends MobEffect {
 
     @Override
     public boolean applyEffectTick( LivingEntity entity, int amplifier) {
+        inmuneMilk = amplifier != 0;
         // 1. Eliminar todos los efectos
+
         MobEffectInstance effectInstanceToKeep = null;
         if ( !entity.level().isClientSide()) {
                 Holder<MobEffect> effectToKeep = AurumBlightEffect.getDelegate(); // El efecto que deseas mantener
@@ -50,7 +54,7 @@ public class AurumBlight extends MobEffect {
             Level level = entity.level();
             DamageSource aurumBlightSource = AurumBlightDamageSource.createAurumBlightDamageSource(level.registryAccess());
             entity.hurt(aurumBlightSource, 2.0F * (amplifier + 1)); // Daño escala con el amplificador
-
+            entity.hurt(entity.damageSources().wither(), 2);
             // 3. Dañar la armadura
             for (EquipmentSlot slot : EquipmentSlot.values()) {
                 if (slot.getType() == EquipmentSlot.Type.HUMANOID_ARMOR) {
@@ -96,17 +100,37 @@ public class AurumBlight extends MobEffect {
         return false;
     }
 
+
+
+
+
+    @Override
+    public boolean isBeneficial() {
+        return inmuneMilk;
+    }
+
     public static void getEffectTier1(Player player) {
         int duracionMaxima = 30 * 20 * 60; // 30 minutos en ticks
-
         if (player.hasEffect(AurumBlightEffect.getDelegate())) {
             MobEffectInstance efectoActual = player.getEffect(AurumBlightEffect.getDelegate());
+
             if (efectoActual != null) {
+                if(efectoActual.getAmplifier() > 0){
+                    efectoActual.getCures().clear();
+                }
                 // Verificar si la duración actual es menor que la máxima
-                if (efectoActual.getDuration() < duracionMaxima) {
+                if (efectoActual.getDuration() < duracionMaxima && efectoActual.getAmplifier() == 0) {
                     // Modificar la duración del efecto existente
                     int nuevaDuracion = Math.min(efectoActual.getDuration() + 200, duracionMaxima);
-                    efectoActual.update(ModEffects.createEffectInstance(AurumBlightEffect.getDelegate(), nuevaDuracion, 0));
+                    if (nuevaDuracion == duracionMaxima) {
+                        // Si la duración llega al máximo, aumentar el amplificador
+                        efectoActual.update(ModEffects.createEffectInstance(AurumBlightEffect.getDelegate(), 2400, 1));
+                        System.out.println("Amplificador actualizado");
+                    } else {
+                        efectoActual.update(ModEffects.createEffectInstance(AurumBlightEffect.getDelegate(), nuevaDuracion, 0));
+                    }
+                    //efectoActual.update(ModEffects.createEffectInstance(AurumBlightEffect.getDelegate(), nuevaDuracion, 0));
+                    //System.out.println("Duración actualizada");
                 }
             }
         } else {

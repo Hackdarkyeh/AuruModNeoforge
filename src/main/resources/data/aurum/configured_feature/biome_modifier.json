@@ -1,0 +1,11 @@
+{
+  "type": "forge:add_features",
+  "biomes": [
+    "minecraft:plains",
+    "minecraft:desert"
+  ],
+  "features": [
+    "aurum:volcan_placed"
+  ],
+  "step": "surface_structures"
+}

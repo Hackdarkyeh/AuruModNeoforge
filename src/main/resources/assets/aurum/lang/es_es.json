@@ -1,9 +1,21 @@
 {
   "item.aurum.example_item": "Example Item Name",
+  "item.aurum.aurum_healing_item": "Cura de Aurum",
   "block.aurum.withered_grass_block": "Hierba marchita",
   "block.aurum.withered_dirt_block": "Tierra marchita",
-  "item_group.aurum.interfaz_creativo": "Interfaz Creativa de Aurum",
+  "item_group.aurum.interfaz_creativo": "Interfaz creativa de Aurum",
   "effect.aurum.aurum_blight": "Añublo de Aurum",
-  "death.attack.aurum_blight_damage": "%1$s fue consumido por la plaga Aurum"
+  "death.attack.aurum_blight_damage": "%1$s fue consumido por la plaga Aurum",
 
+
+
+  "aurum.aurum.energy": "Energía: %s",
+  "aurum.aurum.channeling": "Canalizando: %s",
+  "config.jade.plugin_aurum.cooper_golem": "Golem de cobre",
+  "entity.aurum.cooper_golem": "Golem de cobre",
+
+  "container.energy_generator_block": "Generador de energía",
+
+  "config.jade.plugin_aurum.energy_storage_block": "Almacén energía",
+  "aurum.aurum.energy_storage_check": "Energía: %s/%s"
 }

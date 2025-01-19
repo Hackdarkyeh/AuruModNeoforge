@@ -1,0 +1,70 @@
+{
+	"credit": "Made with Blockbench",
+	"texture_size": [32, 32],
+	"textures": {
+		"0": "aurum:block/pipe",
+		"particle": "aurum:block/pipe"
+	},
+	"elements": [
+		{
+			"from": [10, 0, 5],
+			"to": [11, 16, 11],
+			"rotation": {"angle": 0, "axis": "y", "origin": [11, 1, 6]},
+			"faces": {
+				"north": {"uv": [10, 8, 10.5, 16], "texture": "#0"},
+				"east": {"uv": [0, 0, 3, 8], "texture": "#0"},
+				"south": {"uv": [10.5, 8, 11, 16], "texture": "#0"},
+				"west": {"uv": [3, 0, 6, 8], "texture": "#0"},
+				"up": {"uv": [12.5, 3, 12, 0], "texture": "#0"},
+				"down": {"uv": [12.5, 3, 12, 6], "texture": "#0"}
+			}
+		},
+		{
+			"from": [5, 0, 5],
+			"to": [6, 16, 11],
+			"rotation": {"angle": 0, "axis": "y", "origin": [6, 1, 6]},
+			"faces": {
+				"north": {"uv": [11, 0, 11.5, 8], "texture": "#0"},
+				"east": {"uv": [6, 0, 9, 8], "texture": "#0"},
+				"south": {"uv": [11, 8, 11.5, 16], "texture": "#0"},
+				"west": {"uv": [0, 8, 3, 16], "texture": "#0"},
+				"up": {"uv": [12.5, 9, 12, 6], "texture": "#0"},
+				"down": {"uv": [12.5, 9, 12, 12], "texture": "#0"}
+			}
+		},
+		{
+			"from": [6, 0, 10],
+			"to": [10, 16, 11],
+			"rotation": {"angle": 0, "axis": "y", "origin": [6, 0, 10]},
+			"faces": {
+				"north": {"uv": [7, 8, 9, 16], "texture": "#0"},
+				"east": {"uv": [11.5, 0, 12, 8], "texture": "#0"},
+				"south": {"uv": [9, 0, 11, 8], "texture": "#0"},
+				"west": {"uv": [11.5, 8, 12, 16], "texture": "#0"},
+				"up": {"uv": [14.5, 1, 12.5, 0.5], "texture": "#0"},
+				"down": {"uv": [14.5, 1, 12.5, 1.5], "texture": "#0"}
+			}
+		},
+		{
+			"from": [6, 0, 5],
+			"to": [10, 16, 6],
+			"rotation": {"angle": 0, "axis": "y", "origin": [6, 0, 5]},
+			"faces": {
+				"north": {"uv": [3, 8, 5, 16], "texture": "#0"},
+				"east": {"uv": [9, 8, 9.5, 16], "texture": "#0"},
+				"south": {"uv": [5, 8, 7, 16], "texture": "#0"},
+				"west": {"uv": [9.5, 8, 10, 16], "texture": "#0"},
+				"up": {"uv": [14, 12.5, 12, 12], "texture": "#0"},
+				"down": {"uv": [14.5, 0, 12.5, 0.5], "texture": "#0"}
+			}
+		}
+	],
+	"groups": [
+		{
+			"name": "pipe",
+			"origin": [8, 8, 8],
+			"color": 0,
+			"children": [0, 1, 2, 3]
+		}
+	]
+}

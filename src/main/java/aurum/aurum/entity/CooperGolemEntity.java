@@ -3,6 +3,7 @@ package aurum.aurum.entity;
 
 import aurum.aurum.energy.EnergyStorage;
 import aurum.aurum.entity.ai.CooperGolemAttackGoal;
+import aurum.aurum.entity.ai.ExtinguishFireGoal;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -61,7 +62,7 @@ public class CooperGolemEntity extends AbstractGolem implements NeutralMob {
 
 	public CooperGolemEntity(EntityType<? extends AbstractGolem> type, Level world) {
 		super(type, world);
-        this.energyStorage = new EnergyStorage(1000);
+        this.energyStorage = new EnergyStorage(1000, 0,0,0);
         xpReward = 0;
 		setNoAi(false);
 
@@ -85,25 +86,21 @@ public class CooperGolemEntity extends AbstractGolem implements NeutralMob {
 		}else{
 			--this.idleAnimationTimeOut;
 		}
+        shouldChannelLightning = isEntityExposedToThundering(this);
 		// detectar canSeeSky hace que no fufe
-		if (isEntityExposedToThundering(this) && this.channelraysAnimationTimeOut <= 0) {
+		if (shouldChannelLightning && this.channelraysAnimationTimeOut <= 0) {
 			this.channelraysAnimationTimeOut = 24;
 			this.channelraysAnimationState.start(this.tickCount);
 			setChannelRays(true);
-			shouldChannelLightning = true;
 		}else{
 			--this.channelraysAnimationTimeOut;
 		}
 
-		// Invocar un rayo con cierta probabilidad si la animación está activa
-		if (shouldChannelLightning) {
-			trySummonLightning();
-		}
+
 
 		if (!this.level().isThundering() || !this.level().canSeeSky(this.blockPosition())) {
 			this.channelraysAnimationState.stop();
 			setChannelRays(false);
-			shouldChannelLightning = false;
 		}
 
 
@@ -140,7 +137,6 @@ public class CooperGolemEntity extends AbstractGolem implements NeutralMob {
 			while (world.isEmptyBlock(abovePos) && abovePos.getY() < world.getMaxBuildHeight()) {
 				abovePos = abovePos.above();
 			}
-
 			// Si no hay bloques sólidos sobre la entidad, entonces está expuesta a la lluvia
 			return world.canSeeSky(pos) && world.isRainingAt(pos);
 		}
@@ -149,26 +145,32 @@ public class CooperGolemEntity extends AbstractGolem implements NeutralMob {
 	}
 
 	private void trySummonLightning() {
-		// Definir la probabilidad de que caiga un rayo (por ejemplo, 20%)
-		double lightningProbability = 0.5;
+		// Definir la probabilidad de que caiga un rayo (en este caso, 100%)
+		double lightningProbability = 0.01;
 
-		// Comprobar si la animación está activa y si la probabilidad se cumple
-		// Asegurarse de que esto se ejecute en el servidor
-		if (!this.level().isClientSide) {
-			if (this.random.nextDouble() < lightningProbability) {
+		// Comprobar si la probabilidad se cumple y si se ejecuta en el servidor
+		if (!this.level().isClientSide && this.random.nextDouble() < lightningProbability) {
 
+			BlockPos pos = this.blockPosition();
+			LightningBolt lightningBolt = EntityType.LIGHTNING_BOLT.create(this.level());
 
-				BlockPos pos = this.blockPosition();
-				LightningBolt lightningBolt = EntityType.LIGHTNING_BOLT.create(this.level());
+			if (lightningBolt != null) {
+				// Mover el rayo a la posición deseada
+				lightningBolt.moveTo(pos.getX(), pos.getY(), pos.getZ());
 
-				if (lightningBolt != null) {
-					lightningBolt.moveTo(pos.getX(), pos.getY(), pos.getZ());
-					this.level().addFreshEntity(lightningBolt);
-					System.out.println("Lightning summoned at: " + pos.getX() + ", " + pos.getY() + ", " + pos.getZ());
-				}
+				// Añadir la entidad rayo al nivel (mundo)
+				this.level().addFreshEntity(lightningBolt);
+
+				System.out.println("Rayo invocado en: " + pos.getX() + ", " + pos.getY() + ", " + pos.getZ());
+			} else {
+				System.out.println("El rayo no pudo ser creado.");
 			}
+		} else {
+			System.out.println("El rayo no fue invocado debido a que la probabilidad no se cumplió o no estaba en el lado del servidor.");
 		}
 	}
+
+
 
 
 	@Override
@@ -221,6 +223,7 @@ public class CooperGolemEntity extends AbstractGolem implements NeutralMob {
 		*/
 		this.goalSelector.addGoal(6, new TemptGoal(this, 1.5D, Ingredient.of(Blocks.COPPER_BLOCK), false));
 		this.goalSelector.addGoal(1, new CooperGolemAttackGoal(this, 1.0, true));
+		this.goalSelector.addGoal(2, new ExtinguishFireGoal(this));
 		this.goalSelector.addGoal(2, new MoveTowardsTargetGoal(this, 0.9, 32.0F));
 		this.goalSelector.addGoal(2, new MoveBackToVillageGoal(this, 0.6, false));
 		this.goalSelector.addGoal(4, new GolemRandomStrollInVillageGoal(this, 0.6));
@@ -247,6 +250,10 @@ public class CooperGolemEntity extends AbstractGolem implements NeutralMob {
 		/*if (this.offerFlowerTick > 0) {
 			this.offerFlowerTick--;
 		}*/
+		// Invocar un rayo con cierta probabilidad si la animación está activa
+		if (isEntityExposedToThundering(this)) {
+			trySummonLightning();
+		}
 
 		if (!this.level().isClientSide) {
 			this.updatePersistentAnger((ServerLevel)this.level(), true);
@@ -329,27 +336,26 @@ public class CooperGolemEntity extends AbstractGolem implements NeutralMob {
 		// Por ejemplo, incrementar energía o iniciar otra animación:
 
 		// Ejemplo: Aumentar la energía del golem cuando es impactado por un rayo
-		this.energyStorage.addEnergy(100);
+		this.energyStorage.addEnergy(100, false);
 
 
 		// También podrías causar daño, cambiar atributos, etc.
 	}
 
-/*
-
-	@Override
-	public void addAdditionalSaveData(CompoundTag p_28867_) {
-		super.addAdditionalSaveData(p_28867_);
-		p_28867_.putBoolean("PlayerCreated", this.isPlayerCreated());
-		this.addPersistentAngerSaveData(p_28867_);
+	// Método para obtener el nivel de energía actual como porcentaje
+	public int getEnergyPercentage() {
+		return (int) ((this.energyStorage.getEnergyStored() / (double) this.energyStorage.getMaxEnergyStored()) * 100);
 	}
 
-	@Override
-	public void readAdditionalSaveData(CompoundTag p_28857_) {
-		super.readAdditionalSaveData(p_28857_);
-		this.setPlayerCreated(p_28857_.getBoolean("PlayerCreated"));
-		this.readPersistentAngerSaveData(this.level(), p_28857_);
-	}*/
+	// Método para obtener la energía actual (en caso de que quieras el valor absoluto)
+	public int getEnergyLevel() {
+		return this.energyStorage.getEnergyStored();
+	}
+
+	// Método para comprobar si está canalizando rayos
+	public boolean isChanneling() {
+		return isEntityExposedToThundering(this);
+	}
 
 
 

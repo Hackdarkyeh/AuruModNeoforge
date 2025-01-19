@@ -1,0 +1,13 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "down": "aurum:block/ancient_aurum_grass_bot",
+    "up": "aurum:block/ancient_aurum_grass_top",
+    "north": "aurum:block/ancient_aurum_grass",
+    "east": "aurum:block/ancient_aurum_grass",
+    "south": "aurum:block/ancient_aurum_grass",
+    "west": "aurum:block/ancient_aurum_grass",
+    "particle": "aurum:block/ancient_aurum_grass_bot"
+  },
+  "render_type": "solid"
+}

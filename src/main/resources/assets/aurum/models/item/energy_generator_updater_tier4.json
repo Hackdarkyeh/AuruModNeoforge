@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "aurum:item/energy_generator_updater_tier4"
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "aurum:block/ancient_aurum_grass_bot"
+  },
+  "render_type": "solid"
+}

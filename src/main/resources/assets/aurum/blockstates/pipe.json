@@ -1,0 +1,30 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "aurum:block/pipe",
+      "x": 270
+    },
+    "facing=south": {
+      "model": "aurum:block/pipe",
+      "x": 270
+    },
+    "facing=east": {
+      "model": "aurum:block/pipe",
+      "x": 270,
+      "y": 90
+    },
+    "facing=west": {
+      "model": "aurum:block/pipe",
+      "x": 270,
+      "y": 270
+    },
+    "facing=up": {
+      "model": "aurum:block/pipe",
+      "x": 0
+    },
+    "facing=down": {
+      "model": "aurum:block/pipe",
+      "x": 0
+    }
+  }
+}

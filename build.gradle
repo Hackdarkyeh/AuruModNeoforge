@@ -15,11 +15,35 @@ tasks.named('wrapper', Wrapper).configure {
     distributionType = Wrapper.DistributionType.BIN
 }
 
+
+
 version = mod_version
 group = mod_group_id
 
 repositories {
     mavenLocal()
+    mavenCentral()
+
+    // JEI
+    maven {
+        name 'JEI Maven'
+        url 'https://maven.blamejared.com'
+    }
+
+    // JEI (fallback)
+    maven {
+        name 'ModMaven'
+        url 'https://modmaven.dev'
+    }
+
+    // CF Maven
+    maven {
+        name 'Curse Maven'
+        url 'https://www.cursemaven.com'
+        content {
+            includeGroup 'curse.maven'
+        }
+    }
 }
 
 base {
@@ -97,11 +121,8 @@ dependencies {
     // And its provides the option to then use net.minecraft as the group, and one of; client, server or joined as the module name, plus the game version as version.
     // For all intends and purposes: You can treat this dependency as if it is a normal library you would use.
     implementation "net.neoforged:neoforge:${neo_version}"
-
     // Example optional mod dependency with JEI
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
-    // compileOnly "mezz.jei:jei-${mc_version}-common-api:${jei_version}"
-    // compileOnly "mezz.jei:jei-${mc_version}-neoforge-api:${jei_version}"
     // We add the full version to localRuntime, not runtimeOnly, so that we do not publish a dependency on it
     // localRuntime "mezz.jei:jei-${mc_version}-neoforge:${jei_version}"
 
@@ -110,6 +131,21 @@ dependencies {
     // The group id is ignored when searching -- in this case, it is "blank"
     // implementation "blank:coolmod-${mc_version}:${coolmod_version}"
 
+    System.out.println(String.format("[QoL] jei_enabled == %s", jei_enabled));
+    System.out.println(String.format("[QoL] jade_enabled == %s", jade_enabled));
+
+    // JEI
+    //if (jei_enabled == "true") {
+      //  runtimeOnly("mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}")
+        // To compile against the JEI api (e.g. for a JEI plugin), uncomment:
+        //compileOnly("mezz.jei:jei-${minecraft_version}-common-api:${jei_version}")
+        //compileOnly("mezz.jei:jei-${minecraft_version}-neoforge-api:${jei_version}")
+    //}
+
+    // Jade
+    if (jade_enabled == "true") {
+        implementation "curse.maven:jade-324717:${jade_file_id}"
+    }
     // Example mod dependency using a file as dependency
     // implementation files("libs/coolmod-${mc_version}-${coolmod_version}.jar")
 
@@ -158,6 +194,7 @@ publishing {
             url "file://${project.projectDir}/repo"
         }
     }
+
 }
 
 tasks.withType(JavaCompile).configureEach {

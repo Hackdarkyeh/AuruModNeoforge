@@ -3,11 +3,13 @@ package aurum.aurum;
 import aurum.aurum.Commands.AurumBlightCommands;
 import aurum.aurum.client.renderer.CooperGolemRenderer;
 import aurum.aurum.eventHandler.AurumBlightRain;
-import aurum.aurum.eventHandler.BlockChecker;
-import aurum.aurum.init.ModEntities;
-import aurum.aurum.init.ModParticles;
+import aurum.aurum.init.*;
+import aurum.aurum.init.GUI.ModMenuType;
+import aurum.aurum.init.GUI.ModScreens;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.ItemBlockRenderTypes;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRenderers;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
@@ -31,7 +33,8 @@ import org.slf4j.Logger;
 
 import java.util.function.Supplier;
 
-import static aurum.aurum.init.ModBloques.*;
+import static aurum.aurum.init.ModBlockEntities.BLOCK_ENTITIES_REGISTRY;
+import static aurum.aurum.init.ModBlocks.*;
 import static aurum.aurum.init.ModEffects.EFFECTS_REGISTRY;
 import static aurum.aurum.init.ModItems.*;
 
@@ -44,12 +47,6 @@ public class Aurum {
     // Referencia directa a un logger slf4j
     private static final Logger LOGGER = LogUtils.getLogger();
 
-
-
-
-
-
-
     public Aurum() {
         IEventBus modEventBus = ModLoadingContext.get().getActiveContainer().getEventBus();
 
@@ -57,8 +54,9 @@ public class Aurum {
         assert modEventBus != null;
         modEventBus.addListener(this::commonSetup);
 
-        // Registra el Registro Diferido al bus de eventos del mod para que los ModBloques se registren
+        // Registra el Registro Diferido al bus de eventos del mod para que los ModBlocks se registren
         BLOCK_REGISTRY.register(modEventBus);
+        BLOCK_ENTITIES_REGISTRY.register(modEventBus);
         //BLOCKS_REGISTRY_DEFERRED_REGISTER.register(modEventBus);
         // Registra el Registro Diferido al bus de eventos del mod para que los ModItems se registren
         ITEMS_REGISTRY.register(modEventBus);
@@ -77,24 +75,37 @@ public class Aurum {
 
         ModParticles.REGISTRY.register(modEventBus);
 
-        //NeoForge.EVENT_BUS.register(BlockChecker.class);
         NeoForge.EVENT_BUS.register(AurumBlightCommands.class);
         NeoForge.EVENT_BUS.register(AurumBlightRain.class);
+
         ModEntities.ENTITY_REGISTER.register(modEventBus);
 
+        ModBiomes.BIOMES.register(modEventBus);
+
+        ModFluids.REGISTRY_FLUIDS.register(modEventBus);
+        ModFluidTypes.REGISTRY_FLUID_TYPE.register(modEventBus);
+        ModStructures.register(modEventBus);
+        ModMenuType.MENU_TYPE_REGISTRY.register(modEventBus);
+
+
+
+        // Registrar características configuradas
+
+        // Registrar características colocadas
 
         // Registra la ForgeConfigSpec de nuestro mod para que Forge pueda crear y cargar el archivo de configuración por nosotros
         //ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Config.SPEC);
     }
 
+
+
     private void commonSetup(final FMLCommonSetupEvent event) {
         // Algun código de configuración común
         LOGGER.info("HOLA DESDE LA CONFIGURACIÓN COMÚN");
         LOGGER.info("BLOQUE DE TIERRA >> {}", BuiltInRegistries.BLOCK.getKey(Blocks.DIRT));
-
     }
 
-    // Añade el item de bloque de ejemplo a la pestaña de ModBloques de construcción
+    // Añade el item de bloque de ejemplo a la pestaña de ModBlocks de construcción
     private void addCreative(BuildCreativeModeTabContentsEvent event)
     {
         //if (event.getTabKey() == CreativeModeTabs.BUILDING_BLOCKS)
@@ -119,7 +130,7 @@ public class Aurum {
             LOGGER.info("NOMBRE DE MINECRAFT >> {}", Minecraft.getInstance().getUser().getName());
             LOGGER.info("Pack de recursos activos DE MINECRAFT >> {}", Minecraft.getInstance().getDownloadedPackSource());
             EntityRenderers.register(ModEntities.COOPER_GOLEM.get(), CooperGolemRenderer::new);
-
+            ItemBlockRenderTypes.setRenderLayer(ENERGY_STORAGE_BLOCK.get(), RenderType.translucent());
         }
     }
 
@@ -127,11 +138,28 @@ public class Aurum {
     public static final Supplier<CreativeModeTab> INTERFAZ_CREATIVO = CREATIVE_MODE_TABS.register("interfaz_creativo", () -> CreativeModeTab.builder()
             .title(Component.translatable("item_group." + MODID + ".interfaz_creativo"))
             .withTabsBefore(CreativeModeTabs.COMBAT)
-            .icon(() -> EXAMPLE_ITEM.get().getDefaultInstance())
+            .icon(() -> AURUM_HEALING_ITEM.get().getDefaultInstance())
             .displayItems((parameters, output) -> {
                 output.accept(EXAMPLE_ITEM.get()); // Añade el item de ejemplo a la pestaña. Para tus propias pestañas, este método es preferido sobre el evento
                 output.accept(WITHERED_GRASS_BLOCK.get()); // Añade el item de bloque de ejemplo a la pestaña
                 output.accept(WITHERED_DIRT_BLOCK.get()); // Añade el item de bloque de tierra marchita a la pestaña
+                output.accept(ANCIENT_AURUM_GRASS_BLOCK.get()); // Añade el item de hierba de Aurum a la pestaña
+                output.accept(ANCIENT_AURUM_DIRT_BLOCK.get()); // Añade el item de tierra de Aurum a la pestaña
+                output.accept(AURUM_HEALING_ITEM.get()); // Añade el item de curación de Aurum a la pestaña
+                output.accept(AURUM_OPEN_PORTAL_ITEM.get()); // Añade el item de portal abierto de Aurum a la pestaña
+                output.accept(AURUMROSA_BUCKET.get()); // Añade el cubo de Aurum a la pestaña
+                output.accept(AURELITE_ORE.get()); // Añade el bloque de Aurum a la pestaña
+                output.accept(PIPE_BLOCK.get()); // Añade el bloque de tubería a la pestaña
+                output.accept(PANEL_BLOCK.get()); // Añade el bloque de panel a la pestaña
+                output.accept(EXTRACTOR_BLOCK.get()); // Añade el bloque de extractor a la pestaña
+                output.accept(ENERGY_STORAGE_BLOCK.get()); // Añade el bloque de almacenamiento de energía a la pestaña
+                output.accept(RESOURCE_STORAGE_BLOCK.get()); // Añade el bloque de almacenamiento de recursos a la pestaña
+                output.accept(ENERGY_GENERATOR_BLOCK.get()); // Añade el bloque de generador de energía a la pestaña
+                output.accept(BATTERY_ITEM.get()); // Añade el item de batería a la pestaña
+                output.accept(ENERGY_GENERATOR_UPDATER_TIER1.get()); // Añade el item de actualización de generador de energía de nivel 1 a la pestaña
+                output.accept(ENERGY_GENERATOR_UPDATER_TIER2.get()); // Añade el item de actualización de generador de energía de nivel 2 a la pestaña
+                output.accept(ENERGY_GENERATOR_UPDATER_TIER3.get()); // Añade el item de actualización de generador de energía de nivel 3 a la pestaña
+                output.accept(ENERGY_GENERATOR_UPDATER_TIER4.get()); // Añade el item de actualización de generador de energía de nivel 4 a la pestaña
             }).build());
 
 
