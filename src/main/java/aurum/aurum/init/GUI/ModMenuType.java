@@ -1,7 +1,8 @@
 package aurum.aurum.init.GUI;
 
 import aurum.aurum.Aurum;
-import aurum.aurum.client.gui.EnergyGeneratorMenu;
+import aurum.aurum.client.gui.EnergyGeneratorBlock.EnergyGeneratorMenu;
+import aurum.aurum.client.gui.ExtractorBlock.ExtractorMenu;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -23,7 +24,10 @@ public class ModMenuType <T extends AbstractContainerMenu> implements FeatureEle
     public static DeferredHolder<MenuType<?>,MenuType<EnergyGeneratorMenu>> ENERGY_GENERATOR_MENU = MENU_TYPE_REGISTRY.register(
             "energy_generator_menu", () -> new MenuType<>(EnergyGeneratorMenu::new, FeatureFlags.VANILLA_SET));
 
-    //public static final MenuType<EnergyGeneratorMenu> ENERGY_GENERATOR_MENU = register("energy_generator_menu", EnergyGeneratorMenu::new);
+    public static DeferredHolder<MenuType<?>,MenuType<ExtractorMenu>> EXTRACTOR_MENU = MENU_TYPE_REGISTRY.register(
+            "extractor_menu", () -> new MenuType<>(ExtractorMenu::new, FeatureFlags.VANILLA_SET));
+
+    //public static final MenuType<ExtractorMenu> ENERGY_GENERATOR_MENU = register("energy_generator_menu", ExtractorMenu::new);
 
     private final FeatureFlagSet requiredFeatures;
     private final MenuType.MenuSupplier<T> constructor;

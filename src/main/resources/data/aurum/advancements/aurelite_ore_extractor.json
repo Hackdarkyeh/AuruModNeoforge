@@ -1,0 +1,29 @@
+{
+  "display": {
+    "icon": {
+      "item": "minecraft:aurita"
+    },
+    "title": {
+      "translate": "logro.aurum.aurelite_ore_extractor.titulo"
+    },
+    "description": {
+      "translate": "logro.aurum.aurelite_ore_extractor.descripcion"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "extraer_aurita": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "item": "aurum:aurelite_ore"
+          }
+        ]
+      }
+    }
+  }
+}

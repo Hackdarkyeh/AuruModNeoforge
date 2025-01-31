@@ -1,0 +1,4 @@
+// 1.21	2024-09-03T20:07:58.1235522	Tags for minecraft:damage_type mod id aurum
+335b4f97f016b7a41c0003080262c2c38cc63ddb data/minecraft/tags/damage_type/bypasses_armor.json
+335b4f97f016b7a41c0003080262c2c38cc63ddb data/minecraft/tags/damage_type/no_knockback.json
+335b4f97f016b7a41c0003080262c2c38cc63ddb data/minecraft/tags/damage_type/witch_resistant_to.json

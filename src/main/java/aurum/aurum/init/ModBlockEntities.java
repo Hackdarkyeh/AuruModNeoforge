@@ -2,6 +2,7 @@ package aurum.aurum.init;
 
 import aurum.aurum.block.engineering.EnergyGeneratorBlock.EnergyGeneratorBlockEntity;
 import aurum.aurum.block.engineering.EnergyStorageBlock.EnergyStorageBlockEntity;
+import aurum.aurum.block.engineering.ExtractorBlock.ExtractorBlockEntity;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -20,6 +21,14 @@ public class ModBlockEntities {
             () -> BlockEntityType.Builder.of(
                     EnergyGeneratorBlockEntity::new, // Constructor de la entidad
                     ModBlocks.ENERGY_GENERATOR_BLOCK.get() // Bloque asociado
+            ).build(null)
+    );
+
+    public static final Supplier<BlockEntityType<ExtractorBlockEntity>> EXTRACTOR_BLOCK_ENTITY = BLOCK_ENTITIES_REGISTRY.register(
+            "extractor_block",
+            () -> BlockEntityType.Builder.of(
+                    ExtractorBlockEntity::new, // Constructor de la entidad
+                    ModBlocks.EXTRACTOR_BLOCK.get() // Bloque asociado
             ).build(null)
     );
 

@@ -160,6 +160,16 @@ public class Aurum {
                 output.accept(ENERGY_GENERATOR_UPDATER_TIER2.get()); // Añade el item de actualización de generador de energía de nivel 2 a la pestaña
                 output.accept(ENERGY_GENERATOR_UPDATER_TIER3.get()); // Añade el item de actualización de generador de energía de nivel 3 a la pestaña
                 output.accept(ENERGY_GENERATOR_UPDATER_TIER4.get()); // Añade el item de actualización de generador de energía de nivel 4 a la pestaña
+                output.accept(EXTRACTOR_PEAK_TIER1.get()); // Añade el item de pico de extractor de nivel 1 a la pestaña
+                output.accept(EXTRACTOR_PEAK_TIER2.get()); // Añade el item de pico de extractor de nivel 2 a la pestaña
+                output.accept(EXTRACTOR_PEAK_TIER3.get()); // Añade el item de pico de extractor de nivel 3 a la pestaña
+                output.accept(EXTRACTOR_PROTECTOR.get()); // Añade el item de protector de extractor a la pestaña
+                output.accept(RANGE_EXTRACTOR_UPDATER_TIER_1.get()); // Añade el item de actualización de extractor de rango de nivel 1 a la pestaña
+                output.accept(RANGE_EXTRACTOR_UPDATER_TIER_2.get()); // Añade el item de actualización de extractor de rango de nivel 2 a la pestaña
+                output.accept(RANGE_EXTRACTOR_UPDATER_TIER_3.get()); // Añade el item de actualización de extractor de rango de nivel 3 a la pestaña
+                output.accept(RANGE_EXTRACTOR_UPDATER_TIER_4.get()); // Añade el item de actualización de extractor de rango de nivel 4 a la pestaña
+                output.accept(RANGE_EXTRACTOR_UPDATER_TIER_5.get()); // Añade el item de actualización de extractor de rango de nivel 5 a la pestaña
+
             }).build());
 
 

@@ -1,15 +1,14 @@
-package aurum.aurum.block.engineering.EnergyGeneratorBlock;
+package aurum.aurum.block.engineering.EnergyGeneratorBlock.Slots;
 
-import aurum.aurum.client.gui.AbstractEnergyGeneratorMenu;
+import aurum.aurum.client.gui.EnergyGeneratorBlock.AbstractEnergyGeneratorMenu;
 import net.minecraft.world.Container;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 
-public class EnergyGeneratorFuelSlot extends Slot {
+public class EnergyGeneratorUpdaterSlot extends Slot {
     private final AbstractEnergyGeneratorMenu menu;
 
-    public EnergyGeneratorFuelSlot(AbstractEnergyGeneratorMenu pFurnaceMenu, Container pFurnaceContainer, int pSlot, int pXPosition, int pYPosition) {
+    public EnergyGeneratorUpdaterSlot(AbstractEnergyGeneratorMenu pFurnaceMenu, Container pFurnaceContainer, int pSlot, int pXPosition, int pYPosition) {
         super(pFurnaceContainer, pSlot, pXPosition, pYPosition);
         this.menu = pFurnaceMenu;
     }
@@ -20,17 +19,13 @@ public class EnergyGeneratorFuelSlot extends Slot {
      */
     @Override
     public boolean mayPlace(ItemStack pStack) {
-        return this.menu.isFuel(pStack) || isBucket(pStack);
+        return this.menu.isEnergyGeneratorUpdater(pStack);
     }
 
 
 
     @Override
     public int getMaxStackSize(ItemStack pStack) {
-        return isBucket(pStack) ? 1 : super.getMaxStackSize(pStack);
-    }
-
-    public static boolean isBucket(ItemStack pStack) {
-        return pStack.is(Items.BUCKET);
+        return super.getMaxStackSize(pStack);
     }
 }

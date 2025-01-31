@@ -1,4 +1,4 @@
-package aurum.aurum.client.gui;
+package aurum.aurum.client.gui.EnergyGeneratorBlock;
 import aurum.aurum.init.GUI.ModMenuType;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Inventory;

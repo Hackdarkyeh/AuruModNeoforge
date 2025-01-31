@@ -1,11 +1,7 @@
-package aurum.aurum.client.gui;
+package aurum.aurum.client.gui.EnergyGeneratorBlock;
 
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.ImageButton;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.gui.screens.recipebook.AbstractFurnaceRecipeBookComponent;
-import net.minecraft.client.gui.screens.recipebook.RecipeBookComponent;
-import net.minecraft.client.gui.screens.recipebook.RecipeUpdateListener;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
@@ -67,12 +63,12 @@ public abstract class AbstractenergyGeneratorScreen <T extends AbstractEnergyGen
         if (this.menu.isLit()) {
             int k = 14;
             int l = Mth.ceil(this.menu.getLitProgress() * 13.0F) + 1;
-            pGuiGraphics.blitSprite(this.litProgressSprite, 14, 14, 0, 14 - l, i + 56, j + 36 + 14 - l, 14, l);
+            pGuiGraphics.blitSprite(this.litProgressSprite, 14, 14, 0, 14 - l, i + 87, j + 34 + 14 - l, 14, l);
         }
 
         int i1 = 24;
         int j1 = Mth.ceil(this.menu.getBurnProgress() * 24.0F);
-        pGuiGraphics.blitSprite(this.burnProgressSprite, 24, 16, 0, 0, i + 79, j + 34, j1, 16);
+        pGuiGraphics.blitSprite(this.burnProgressSprite, 24, 16, 0, 0, i + 111, j + 49, j1, 16);
 
         // Dibujar barra de energía en el lado izquierdo (crece de abajo hacia arriba)
         int energyBarHeight = 48; // Altura máxima de la barra en píxeles
@@ -83,7 +79,7 @@ public abstract class AbstractenergyGeneratorScreen <T extends AbstractEnergyGen
                 this.energyProgressSprite,          // Sprite de la barra de energía
                 energyBarWidth, energyBarHeight,    // Dimensiones completas del sprite
                 0, energyBarHeight - energyProgress, // Coordenadas para dibujar desde abajo hacia arriba
-                i + 3, j + 21 + (energyBarHeight - energyProgress), // Posición en la GUI
+                i + 4, j + 21 + (energyBarHeight - energyProgress), // Posición en la GUI
                 energyBarWidth, energyProgress       // Dimensiones visibles (ancho fijo, altura variable)
         );
 

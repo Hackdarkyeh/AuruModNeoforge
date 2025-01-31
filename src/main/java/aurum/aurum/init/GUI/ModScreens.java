@@ -1,6 +1,6 @@
 package aurum.aurum.init.GUI;
 
-import aurum.aurum.client.gui.EnergyGeneratorScreen;
+import aurum.aurum.client.gui.EnergyGeneratorBlock.EnergyGeneratorScreen;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;

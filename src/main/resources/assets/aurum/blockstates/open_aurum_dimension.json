@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "axis=z": {
+      "model": "aurum:block/aurum_portal_block_ew"
+    },
+    "axis=x": {
+      "model": "aurum:block/aurum_portal_block_ns"
+    }
+  }
+}

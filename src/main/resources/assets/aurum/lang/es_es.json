@@ -17,5 +17,15 @@
   "container.energy_generator_block": "Generador de energía",
 
   "config.jade.plugin_aurum.energy_storage_block": "Almacén energía",
-  "aurum.aurum.energy_storage_check": "Energía: %s/%s"
+  "aurum.aurum.energy_storage_check": "Energía: %s/%s",
+
+
+
+  "logro.aurum.aurelite_ore_extractor.titulo": "Una nueva era",
+  "logro.aurum.aurelite_ore_extractor.descripcion": "Extrae un mineral de aurita"
+
+
+
+
+
 }

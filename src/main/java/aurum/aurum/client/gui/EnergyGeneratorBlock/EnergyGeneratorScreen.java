@@ -1,4 +1,4 @@
-package aurum.aurum.client.gui;
+package aurum.aurum.client.gui.EnergyGeneratorBlock;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;

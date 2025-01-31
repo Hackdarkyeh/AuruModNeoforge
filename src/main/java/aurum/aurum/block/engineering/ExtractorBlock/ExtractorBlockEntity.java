@@ -1,6 +1,6 @@
-package aurum.aurum.block.engineering.EnergyGeneratorBlock;
+package aurum.aurum.block.engineering.ExtractorBlock;
 
-import aurum.aurum.client.gui.EnergyGeneratorBlock.EnergyGeneratorMenu;
+import aurum.aurum.client.gui.ExtractorBlock.ExtractorMenu;
 import aurum.aurum.init.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -9,18 +9,18 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.block.state.BlockState;
 
-public class EnergyGeneratorBlockEntity extends AbstractEnergyGeneratorBlockEntity {
-    public EnergyGeneratorBlockEntity(BlockPos pPos, BlockState pBlockState) {
+public class ExtractorBlockEntity extends AbstractExtractorBlockEntity {
+    public ExtractorBlockEntity(BlockPos pPos, BlockState pBlockState) {
         super(ModBlockEntities.ENERGY_GENERATOR_BLOCK_ENTITY.get(), pPos, pBlockState, RecipeType.SMELTING);
     }
 
     @Override
     protected Component getDefaultName() {
-        return Component.translatable("container.energy_generator_block");
+        return Component.translatable("container.extractor_block");
     }
 
     @Override
     protected AbstractContainerMenu createMenu(int pId, Inventory pPlayer) {
-        return new EnergyGeneratorMenu(pId, pPlayer, this, this.dataAccess);
+        return new ExtractorMenu(pId, pPlayer, this, this.dataAccess);
     }
 }

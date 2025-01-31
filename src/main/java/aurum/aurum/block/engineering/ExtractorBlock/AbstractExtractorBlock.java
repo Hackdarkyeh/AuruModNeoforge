@@ -1,8 +1,7 @@
-package aurum.aurum.block.engineering.EnergyGeneratorBlock;
+package aurum.aurum.block.engineering.ExtractorBlock;
 
 
 import com.mojang.serialization.MapCodec;
-import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -17,7 +16,6 @@ import net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
@@ -28,19 +26,20 @@ import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 
+import javax.annotation.Nullable;
 import java.util.function.ToIntFunction;
 
-public abstract class AbstractEnergyGeneratorBlock extends BaseEntityBlock {
+public abstract class AbstractExtractorBlock extends BaseEntityBlock {
     public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
     public static final BooleanProperty LIT = BlockStateProperties.LIT;
 
-    protected AbstractEnergyGeneratorBlock(BlockBehaviour.Properties pProperties) {
+    protected AbstractExtractorBlock(Properties pProperties) {
         super(pProperties);
         this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(LIT, Boolean.valueOf(false)));
     }
 
-    public AbstractEnergyGeneratorBlock(BlockEntityType<EnergyGeneratorBlockEntity> energyGeneratorBlockEntityBlockEntityType, BlockPos blockPos, BlockState blockState) {
-        super(BlockBehaviour.Properties.of()
+    public AbstractExtractorBlock(BlockEntityType<ExtractorBlockEntity> energyGeneratorBlockEntityBlockEntityType, BlockPos blockPos, BlockState blockState) {
+        super(Properties.of()
                 .mapColor(MapColor.STONE)
                 .instrument(NoteBlockInstrument.BASEDRUM)
                 .requiresCorrectToolForDrops()
@@ -53,7 +52,7 @@ public abstract class AbstractEnergyGeneratorBlock extends BaseEntityBlock {
     }
 
     @Override
-    protected abstract MapCodec<? extends AbstractEnergyGeneratorBlock> codec();
+    protected abstract MapCodec<? extends AbstractExtractorBlock> codec();
 
     @Override
     protected InteractionResult useWithoutItem(BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, BlockHitResult pHitResult) {
@@ -81,10 +80,10 @@ public abstract class AbstractEnergyGeneratorBlock extends BaseEntityBlock {
     protected void onRemove(BlockState pState, Level pLevel, BlockPos pPos, BlockState pNewState, boolean pIsMoving) {
         if (!pState.is(pNewState.getBlock())) {
             BlockEntity blockentity = pLevel.getBlockEntity(pPos);
-            if (blockentity instanceof AbstractEnergyGeneratorBlockEntity) {
+            if (blockentity instanceof AbstractExtractorBlockEntity) {
                 if (pLevel instanceof ServerLevel) {
-                    Containers.dropContents(pLevel, pPos, (AbstractEnergyGeneratorBlockEntity)blockentity);
-                    ((AbstractEnergyGeneratorBlockEntity)blockentity).getRecipesToAwardAndPopExperience((ServerLevel)pLevel, Vec3.atCenterOf(pPos));
+                    Containers.dropContents(pLevel, pPos, (AbstractExtractorBlockEntity)blockentity);
+                    ((AbstractExtractorBlockEntity)blockentity).getRecipesToAwardAndPopExperience((ServerLevel)pLevel, Vec3.atCenterOf(pPos));
                 }
 
                 super.onRemove(pState, pLevel, pPos, pNewState, pIsMoving);
@@ -137,9 +136,9 @@ public abstract class AbstractEnergyGeneratorBlock extends BaseEntityBlock {
 
     @Nullable
     protected static <T extends BlockEntity> BlockEntityTicker<T> createFurnaceTicker(
-            Level pLevel, BlockEntityType<T> pServerType, BlockEntityType<? extends AbstractEnergyGeneratorBlockEntity> pClientType
+            Level pLevel, BlockEntityType<T> pServerType, BlockEntityType<? extends AbstractExtractorBlockEntity> pClientType
     ) {
-        return pLevel.isClientSide ? null : createTickerHelper(pServerType, pClientType, AbstractEnergyGeneratorBlockEntity::serverTick);
+        return pLevel.isClientSide ? null : createTickerHelper(pServerType, pClientType, AbstractExtractorBlockEntity::serverTick);
     }
 }
 

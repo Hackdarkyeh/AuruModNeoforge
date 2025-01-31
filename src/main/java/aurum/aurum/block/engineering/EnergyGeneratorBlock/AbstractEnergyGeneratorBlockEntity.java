@@ -3,10 +3,9 @@ package aurum.aurum.block.engineering.EnergyGeneratorBlock;
 import aurum.aurum.block.engineering.EnergyStorageBlock.EnergyStorageBlock;
 import aurum.aurum.block.engineering.EnergyStorageBlock.EnergyStorageBlockEntity;
 import aurum.aurum.block.engineering.PipeBlock;
-import aurum.aurum.energy.IEnergyStorage;
+import aurum.aurum.init.ModItems;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.mojang.datafixers.kinds.IdF;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 
@@ -62,6 +61,7 @@ public abstract class AbstractEnergyGeneratorBlockEntity extends BaseContainerBl
     private static final int[] SLOTS_FOR_UP = new int[]{0};
     private static final int[] SLOTS_FOR_DOWN = new int[]{2, 1};
     private static final int[] SLOTS_FOR_SIDES = new int[]{1};
+    private static final int SLOTS_COUNT = 4;
     public static final int DATA_LIT_DURATION = 1;
     public static final int DATA_COOKING_PROGRESS = 2;
     public static final int DATA_COOKING_TOTAL_TIME = 3;
@@ -69,14 +69,15 @@ public abstract class AbstractEnergyGeneratorBlockEntity extends BaseContainerBl
     public static final int BURN_TIME_STANDARD = 200;
     public static final int BURN_COOL_SPEED = 2;
     private final RecipeType<? extends AbstractCookingRecipe> recipeType;
-    protected NonNullList<ItemStack> items = NonNullList.withSize(3, ItemStack.EMPTY);
+    protected NonNullList<ItemStack> items = NonNullList.withSize(SLOTS_COUNT, ItemStack.EMPTY);
     int litTime;
     int litDuration;
     int cookingProgress;
     int cookingTotalTime;
 
-    int totalCapacityGestion = 100;
-    public int energyCapacity = 100; // Capacidad base mínima
+    int totalCapacityGestion;
+    public int energyCapacity; // Capacidad base mínima
+    private int MINENERGYCAPACITY = 100; // Capacidad base mínima
     public int energyStoredVisible = 0; // Energía almacenada actualmente
     private int energyGeneratedPerTick = 1; // Energía generada por tick
     private final Map<BlockPos, int[]> detectedStorages = new HashMap<>();
@@ -320,8 +321,32 @@ public abstract class AbstractEnergyGeneratorBlockEntity extends BaseContainerBl
 
         ItemStack fuelStack = pBlockEntity.items.get(1); // Slot de combustible
         ItemStack inputStack = pBlockEntity.items.get(0); // Slot de entrada
+        ItemStack energy_generator_updater = pBlockEntity.items.get(3); // Slot de actualizador de generador de energía
+
         boolean hasFuel = !fuelStack.isEmpty();
         boolean hasInput = !inputStack.isEmpty();
+        boolean hasEnergyGeneratorUpdater = !energy_generator_updater.isEmpty();
+        if (hasEnergyGeneratorUpdater){
+            if (energy_generator_updater.getItem() == ModItems.ENERGY_GENERATOR_UPDATER_TIER1.get()){
+                pBlockEntity.energyGeneratedPerTick = 2;
+                pBlockEntity.MINENERGYCAPACITY = 200;
+            }
+            else if (energy_generator_updater.getItem() == ModItems.ENERGY_GENERATOR_UPDATER_TIER2.get()){
+                pBlockEntity.energyGeneratedPerTick = 3;
+                pBlockEntity.MINENERGYCAPACITY = 300;
+            }
+            else if (energy_generator_updater.getItem() == ModItems.ENERGY_GENERATOR_UPDATER_TIER3.get()){
+                pBlockEntity.energyGeneratedPerTick = 4;
+                pBlockEntity.MINENERGYCAPACITY = 400;
+            }
+            else if (energy_generator_updater.getItem() == ModItems.ENERGY_GENERATOR_UPDATER_TIER4.get()){
+                pBlockEntity.energyGeneratedPerTick = 5;
+                pBlockEntity.MINENERGYCAPACITY = 500;
+            }
+        }else{
+            pBlockEntity.energyGeneratedPerTick = 1;
+            pBlockEntity.MINENERGYCAPACITY = 100;
+        }
 
         RecipeHolder<?> recipeHolder = hasInput
                 ? pBlockEntity.quickCheck.getRecipeFor(new SingleRecipeInput(inputStack), pLevel).orElse(null)
@@ -612,6 +637,9 @@ public abstract class AbstractEnergyGeneratorBlockEntity extends BaseContainerBl
                 }
             }
         }
+        if (detectedStorages.isEmpty()) {
+            adjustGeneratorCapacity(MINENERGYCAPACITY);
+        }
     }
 
     private void deleteStorage(BlockPos storagePos) {
@@ -669,7 +697,6 @@ public abstract class AbstractEnergyGeneratorBlockEntity extends BaseContainerBl
                 storage.addEnergy(energyToTransfer, false);
                 detectedStorages.get(storagePos)[1] += energyToTransfer;
                 // Si el generador ya no tiene energía, salimos del bucle
-                System.out.println("Almacenamiento de : " + energyStoredVisible);
                 if (this.internalEnergy <= 0 || !this.isLit()) {
                     break;
                 }
@@ -703,7 +730,6 @@ public abstract class AbstractEnergyGeneratorBlockEntity extends BaseContainerBl
                 int capacity = storage.getMaxEnergyStored();
                 totalCapacityGestion += capacity;
                 energyStoredVisible += storage.getEnergyStored();
-                System.out.println("1234Alacenamiento de : " + energyStoredVisible);
                 int[] storageData = new int[] {capacity, storage.getEnergyStored()}; // Capacidad máxima y energía actual
                 detectedStorages.put(storagePos, storageData);
                 adjustGeneratorCapacity(totalCapacityGestion);
@@ -714,7 +740,7 @@ public abstract class AbstractEnergyGeneratorBlockEntity extends BaseContainerBl
 
 
     private void adjustGeneratorCapacity(int newCapacity) {
-        this.energyCapacity = Math.max(newCapacity, 100);  // Valor mínimo de seguridad
+        this.energyCapacity = Math.max(newCapacity, MINENERGYCAPACITY);  // Valor mínimo de seguridad
         if (internalEnergy > energyCapacity) {
             internalEnergy = energyCapacity;
         }
@@ -732,5 +758,14 @@ public abstract class AbstractEnergyGeneratorBlockEntity extends BaseContainerBl
         }
     }
 
+    public boolean hasEnergy() {
+        return energyStoredVisible > 0 || internalEnergy > 0;
+    }
+
+    public int getExtractingDuration(int cost) {
+        int availableEnergy = energyStoredVisible > 0 ? energyStoredVisible : internalEnergy;
+        int extractableEnergy = Math.min(availableEnergy, cost);
+        return Math.max(extractableEnergy, 0);
+    }
 }
 
