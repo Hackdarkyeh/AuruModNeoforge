@@ -37,7 +37,7 @@ public class AurumBlightRainParticle extends TextureSheetParticle {
     protected AurumBlightRainParticle(ClientLevel level, double x, double y, double z, double xd, double yd, double zd, SpriteSet spriteSet) {
         super(level, x, y, z, xd, yd, zd);
         this.gravity = 30.0F; // Gravedad aplicada a la partícula
-        this.friction = 0.0F; // Fricción que afecta el movimiento
+        this.friction = 0.2F; // Fricción que afecta el movimiento
         this.xd = xd;
         this.yd = yd;
         this.zd = zd;
@@ -50,8 +50,8 @@ public class AurumBlightRainParticle extends TextureSheetParticle {
 
     @Override
     public void tick() {
+        this.setSpriteFromAge(spriteSet);
         super.tick();
-
         int groundHeight = level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, new BlockPos((int) x, 0, (int) z)).getY();
 
 
@@ -62,7 +62,7 @@ public class AurumBlightRainParticle extends TextureSheetParticle {
 
     @Override
     public @NotNull ParticleRenderType getRenderType() {
-        return ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT; // Tipo de renderizado
+        return ParticleRenderType.PARTICLE_SHEET_OPAQUE; // Tipo de renderizado
     }
 
 }

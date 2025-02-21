@@ -1,5 +1,5 @@
 {
-  "ultrawarm": true,
+  "ultrawarm": false,
   "natural": false,
   "piglin_safe": true,
   "respawn_anchor_works": true,
@@ -9,15 +9,15 @@
   "has_ceiling": false,
   "coordinate_scale": 1,
   "ambient_light": 0.5,
+  "logical_height": 256,
+  "effects": "aurum:dimension_1",
   "infiniburn": "#minecraft:infiniburn_overworld",
   "min_y": -64,
-  "height": 384,
-  "logical_height": 384,
+  "height": 256,
   "monster_spawn_light_level": {
     "type": "minecraft:uniform",
     "min_inclusive": 0,
     "max_inclusive": 7
   },
-  "monster_spawn_block_light_limit": 0,
-  "effects": "aurum:aurum_dimension"
+  "monster_spawn_block_light_limit": 0
 }

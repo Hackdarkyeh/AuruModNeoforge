@@ -29,6 +29,9 @@ public abstract class AbstractEnergyGeneratorMenu extends AbstractContainerMenu 
     protected final Level level;
     private final RecipeType<? extends AbstractCookingRecipe> recipeType;
 
+    private static final int FLOAT_SCALING_FACTOR = 1000; // Factor de escala
+
+
     protected AbstractEnergyGeneratorMenu(
             MenuType<?> pMenuType, RecipeType<? extends AbstractCookingRecipe> pRecipeType, int pContainerId, Inventory pPlayerInventory
     ) {
@@ -168,12 +171,12 @@ public abstract class AbstractEnergyGeneratorMenu extends AbstractContainerMenu 
         return Mth.clamp((float) currentEnergy / (float) maxEnergy, 0.0F, 1.0F);
     }
 
-    public int getCurrenEnergy() {
-        return this.data.get(4);
+    public float getCurrenEnergy() {
+        return (float) this.data.get(4) /FLOAT_SCALING_FACTOR;
     }
 
-    public int getMaxEnergy() {
-        return this.data.get(5);
+    public float getMaxEnergy() {
+        return (float) this.data.get(5) /FLOAT_SCALING_FACTOR;
     }
 
 

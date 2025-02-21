@@ -3,8 +3,8 @@ package aurum.aurum.energy;
 import net.minecraft.nbt.CompoundTag;
 
 public class EnergyStorage implements IEnergyStorage {
-    private int energyStored;
-    private final int maxEnergy;
+    private float energyStored;
+    private final float maxEnergy;
     private final int transfer;
     private final int maxTransfer;
     private final int maxReceive;
@@ -18,9 +18,9 @@ public class EnergyStorage implements IEnergyStorage {
     }
 
     @Override
-    public int addEnergy(int amount, boolean simulate) {
+    public float addEnergy(float amount, boolean simulate) {
         // Calcula la cantidad máxima de energía que se puede añadir
-        int energyToAdd = Math.min(amount, this.maxEnergy - this.energyStored);
+        float energyToAdd = Math.min(amount, this.maxEnergy - this.energyStored);
 
         // Si no es una simulación, actualiza el almacenamiento de energía
         if (!simulate) {
@@ -31,12 +31,10 @@ public class EnergyStorage implements IEnergyStorage {
         return energyToAdd;
     }
 
-
-    // Método para consumir energía
     @Override
-    public int consumeEnergy(int energy, boolean simulate) {
+    public float consumeEnergy(float energy, boolean simulate) {
         // Calcula la cantidad máxima de energía que se puede extraer
-        int energyExtracted = Math.min(energyStored, Math.min(maxEnergy, energy));
+        float energyExtracted = Math.min(energyStored, Math.min(maxEnergy, energy));
 
         if (!simulate) {
             // Actualiza el almacenamiento de energía si no es una simulación
@@ -48,12 +46,12 @@ public class EnergyStorage implements IEnergyStorage {
     }
 
     @Override
-    public int getEnergyStored() {
+    public float getEnergyStored() {
         return energyStored;
     }
 
     @Override
-    public int getMaxEnergyStored() {
+    public float getMaxEnergyStored() {
         return maxEnergy;
     }
 
@@ -78,9 +76,9 @@ public class EnergyStorage implements IEnergyStorage {
     }
 
     @Override
-    public int receiveEnergy(int maxReceive, boolean simulate) {
+    public float receiveEnergy(float maxReceive, boolean simulate) {
         // Calcular la cantidad de energía que puede ser recibida
-        int energyAvailableToReceive = Math.min(this.getMaxEnergyStored() - this.getEnergyStored(), maxReceive);
+        float energyAvailableToReceive = Math.min(this.getMaxEnergyStored() - this.getEnergyStored(), maxReceive);
 
         // Si es una simulación, solo devolvemos la cantidad que se podría recibir
         if (simulate) {
@@ -94,12 +92,12 @@ public class EnergyStorage implements IEnergyStorage {
     }
 
     @Override
-    public void setStoredEnergy(int energyStored) {
+    public void setStoredEnergy(float energyStored) {
         this.energyStored = energyStored;
     }
 
     @Override
-    public int getRemainingCapacity() {
+    public float getRemainingCapacity() {
         return maxEnergy - energyStored;
     }
 }

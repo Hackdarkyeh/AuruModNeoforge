@@ -68,6 +68,9 @@ public class Aurum {
         // Registra el Registro Diferido al bus de eventos del mod para que las pestañas se registren
         CREATIVE_MODE_TABS.register(modEventBus);
 
+
+
+
         // Nos registramos para los eventos del servidor y otros eventos del juego que nos interesan
         NeoForge.EVENT_BUS.register(this);
         // Registra el item a una pestaña creativa
@@ -146,7 +149,6 @@ public class Aurum {
                 output.accept(ANCIENT_AURUM_GRASS_BLOCK.get()); // Añade el item de hierba de Aurum a la pestaña
                 output.accept(ANCIENT_AURUM_DIRT_BLOCK.get()); // Añade el item de tierra de Aurum a la pestaña
                 output.accept(AURUM_HEALING_ITEM.get()); // Añade el item de curación de Aurum a la pestaña
-                output.accept(AURUM_OPEN_PORTAL_ITEM.get()); // Añade el item de portal abierto de Aurum a la pestaña
                 output.accept(AURUMROSA_BUCKET.get()); // Añade el cubo de Aurum a la pestaña
                 output.accept(AURELITE_ORE.get()); // Añade el bloque de Aurum a la pestaña
                 output.accept(PIPE_BLOCK.get()); // Añade el bloque de tubería a la pestaña

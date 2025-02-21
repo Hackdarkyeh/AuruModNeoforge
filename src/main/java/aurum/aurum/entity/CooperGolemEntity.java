@@ -347,11 +347,6 @@ public class CooperGolemEntity extends AbstractGolem implements NeutralMob {
 		return (int) ((this.energyStorage.getEnergyStored() / (double) this.energyStorage.getMaxEnergyStored()) * 100);
 	}
 
-	// Método para obtener la energía actual (en caso de que quieras el valor absoluto)
-	public int getEnergyLevel() {
-		return this.energyStorage.getEnergyStored();
-	}
-
 	// Método para comprobar si está canalizando rayos
 	public boolean isChanneling() {
 		return isEntityExposedToThundering(this);

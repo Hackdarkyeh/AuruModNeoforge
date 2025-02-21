@@ -13,8 +13,7 @@ public abstract class AbstractExtractorScreen<T extends AbstractExtractorMenu> e
     //public final AbstractFurnaceRecipeBookComponent recipeBookComponent;
     private boolean widthTooNarrow;
     private final ResourceLocation texture;
-    private final ResourceLocation litProgressSprite;
-    private final ResourceLocation burnProgressSprite;
+    private final ResourceLocation extractorProgressSprite;
     private final ResourceLocation energyProgressSprite;
 
     public AbstractExtractorScreen(
@@ -24,13 +23,12 @@ public abstract class AbstractExtractorScreen<T extends AbstractExtractorMenu> e
             Component pTitle,
             ResourceLocation pTexture,
             ResourceLocation pListProgressSprite,
-            ResourceLocation pBurnProgressSprite, ResourceLocation energyProgressSprite
+            ResourceLocation energyProgressSprite
     ) {
         super(pMenu, pPlayerInventory, pTitle);
         //this.recipeBookComponent = pRecipeBookComponent;
         this.texture = pTexture;
-        this.litProgressSprite = pListProgressSprite;
-        this.burnProgressSprite = pBurnProgressSprite;
+        this.extractorProgressSprite = pListProgressSprite;
         this.energyProgressSprite = energyProgressSprite;
     }
 
@@ -60,15 +58,25 @@ public abstract class AbstractExtractorScreen<T extends AbstractExtractorMenu> e
         int i = this.leftPos;
         int j = this.topPos;
         pGuiGraphics.blit(this.texture, i, j, 0, 0, this.imageWidth, this.imageHeight);
+
         if (this.menu.isLit()) {
-            int k = 14;
-            int l = Mth.ceil(this.menu.getLitProgress() * 13.0F) + 1;
-            pGuiGraphics.blitSprite(this.litProgressSprite, 14, 14, 0, 14 - l, i + 87, j + 34 + 14 - l, 14, l);
+            int progressBarWidth = 16;  // Ancho de la barra de progreso del extractor
+            int progressBarHeight = 16; // Altura de la barra de progreso del extractor
+
+            // Calcular el progreso en píxeles (de 0 a 13, más 1 extra para alineación)
+            int extractorProgress = Mth.ceil(this.menu.getExtractorProgress() * progressBarHeight);
+
+            // Dibujar la barra de progreso desde arriba hacia abajo
+            pGuiGraphics.blitSprite(
+                    this.extractorProgressSprite,  // Sprite de la barra de progreso del extractor
+                    progressBarWidth, progressBarHeight, // Dimensiones visibles (ancho fijo, altura variable)
+                    0, 0 , // Coordenadas de inicio del sprite (desde arriba)
+                    i + 80, j + 30, // Posición en la GUI
+                    progressBarWidth, extractorProgress // Dimensiones visibles (ancho fijo, altura creciente hacia abajo)
+            );
         }
-        // Modificar a barra de progreso de extracción
-        int i1 = 24;
-        int j1 = Mth.ceil(this.menu.getBurnProgress() * 24.0F);
-        pGuiGraphics.blitSprite(this.burnProgressSprite, 24, 16, 0, 0, i + 111, j + 49, j1, 16);
+
+
 
         // Dibujar barra de energía en el lado izquierdo (crece de abajo hacia arriba)
         int energyBarHeight = 48; // Altura máxima de la barra en píxeles
@@ -79,7 +87,7 @@ public abstract class AbstractExtractorScreen<T extends AbstractExtractorMenu> e
                 this.energyProgressSprite,          // Sprite de la barra de energía
                 energyBarWidth, energyBarHeight,    // Dimensiones completas del sprite
                 0, energyBarHeight - energyProgress, // Coordenadas para dibujar desde abajo hacia arriba
-                i + 4, j + 21 + (energyBarHeight - energyProgress), // Posición en la GUI
+                i + 3, j + 21 + (energyBarHeight - energyProgress), // Posición en la GUI
                 energyBarWidth, energyProgress       // Dimensiones visibles (ancho fijo, altura variable)
         );
 
@@ -91,12 +99,44 @@ public abstract class AbstractExtractorScreen<T extends AbstractExtractorMenu> e
         //guiGraphics.drawString(this.font, Component.translatable("gui.asherah.generador.label_energy"), 8, 19, -12829636, false);
 
         // Obtener energía actual y máxima desde el menú
-        int currentEnergy = this.menu.getCurrenEnergy(); // Índice de energía actual
-        int maxEnergy = this.menu.getMaxEnergy();     // Índice de capacidad máxima
+        float currentEnergy = this.menu.getCurrenEnergy(); // Índice de energía actual
+        float maxEnergy = this.menu.getMaxEnergy();     // Índice de capacidad máxima
 
         // Mostrar [energía actual] / [capacidad máxima]
-        String energyText = currentEnergy + "/" + maxEnergy;
-        guiGraphics.drawString(this.font, energyText, 8, 15, -12829636, false); // Posición y color ajustables
+        String energyText = formatEnergyValue(maxEnergy);
+        guiGraphics.drawString(this.font, energyText, 15, 18, -12829636, false); // Posición y color ajustables
+
+        String energyText2 = formatEnergyValue(currentEnergy);
+        guiGraphics.drawString(this.font, energyText2, 17, 65, -12829636, false); // Posición y color ajustables
+
+        if (this.menu.hasInsufficientExp()) {
+            Component message = Component.translatable("aurum.aurum.insufficient_exp");
+
+            // Guardar la transformación original
+            guiGraphics.pose().pushPose();
+
+            // Aplicar escala (0.75f reduce el tamaño un 25%)
+            guiGraphics.pose().scale(0.75f, 0.75f, 1.0f);
+
+            // Dibujar el texto en una posición ajustada por la escala
+            guiGraphics.drawString(this.font, message, (int) (2 / 0.75f), (int) (5 / 0.75f), 0xFF5555, false);
+
+            // Restaurar la transformación original
+            guiGraphics.pose().popPose();
+        }
+
+
+
+    }
+
+    private String formatEnergyValue(float value) {
+        if (value >= 1_000_000) {
+            return String.format("%.1fM", value / 1_000_000.0f); // Formato con 1 decimal
+        } else if (value >= 1_000) {
+            return String.format("%.1fk", value / 1_000.0f); // Formato con 1 decimal
+        } else {
+            return String.format("%.0f", value); // Número sin decimales
+        }
     }
 
 

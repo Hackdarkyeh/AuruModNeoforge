@@ -24,7 +24,7 @@ public class AurumDimension {
                     return true;
                 }
             };
-            event.register(ResourceLocation.parse("aurum:aurum_dimension"), customEffect);
+            event.register(ResourceLocation.parse("aurum:dimension_1"), customEffect);
         }
     }
 }

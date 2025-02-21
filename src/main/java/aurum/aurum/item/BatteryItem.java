@@ -40,32 +40,32 @@ public class BatteryItem extends Item {
         }
 
 
-        public static int getEnergy(EnergyStorage energyStorage) {
+        public static float getEnergy(EnergyStorage energyStorage) {
             return energyStorage.getEnergyStored();
         }
 
         @Override
-        public int getRemainingCapacity() {
+        public float getRemainingCapacity() {
             return energyStorage.getRemainingCapacity();
         }
 
         @Override
-        public int getEnergyStored() {
+        public float getEnergyStored() {
             return getEnergy(energyStorage);
         }
 
         @Override
-        public int getMaxEnergyStored() {
+        public float getMaxEnergyStored() {
             return MAX_ENERGY;
         }
 
         @Override
-        public int addEnergy(int energy, boolean simulate) {
+        public float addEnergy(float energy, boolean simulate) {
             return 0;
         }
 
         @Override
-        public int consumeEnergy(int energy, boolean simulate) {
+        public float consumeEnergy(float energy, boolean simulate) {
             return 0;
         }
 
@@ -85,12 +85,12 @@ public class BatteryItem extends Item {
         }
 
         @Override
-        public int receiveEnergy(int maxReceive, boolean simulate) {
+        public float receiveEnergy(float maxReceive, boolean simulate) {
             return 0;
         }
 
         @Override
-        public void setStoredEnergy(int energyStored) {
+        public void setStoredEnergy(float energyStored) {
 
         }
 

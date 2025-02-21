@@ -17,27 +17,26 @@ public class EnergyStorageBlockEntity extends BlockEntity implements IEnergyStor
     }
 
     @Override
-    public int getEnergyStored() {
+    public float getEnergyStored() {
         return energyStorage.getEnergyStored();
     }
 
     @Override
-    public int getMaxEnergyStored() {
+    public float getMaxEnergyStored() {
         return energyStorage.getMaxEnergyStored();
     }
 
     @Override
-    public int addEnergy(int amount, boolean simulate) {
+    public float addEnergy(float amount, boolean simulate) {
         return energyStorage.addEnergy(amount, simulate);
     }
 
-    public int getRemainingCapacity() {
+    public float getRemainingCapacity() {
         return energyStorage.getMaxEnergyStored() - energyStorage.getEnergyStored();
     }
 
-
     @Override
-    public int consumeEnergy(int energy, boolean simulate) {
+    public float consumeEnergy(float energy, boolean simulate) {
         return energyStorage.consumeEnergy(energy, simulate);
     }
 
@@ -63,12 +62,12 @@ public class EnergyStorageBlockEntity extends BlockEntity implements IEnergyStor
     }
 
     @Override
-    public int receiveEnergy(int maxReceive, boolean simulate) {
+    public float receiveEnergy(float maxReceive, boolean simulate) {
         return energyStorage.receiveEnergy(maxReceive, simulate);
     }
 
     @Override
-    public void setStoredEnergy(int storedEnergy) {
+    public void setStoredEnergy(float storedEnergy) {
         energyStorage.setStoredEnergy(storedEnergy);
     }
 

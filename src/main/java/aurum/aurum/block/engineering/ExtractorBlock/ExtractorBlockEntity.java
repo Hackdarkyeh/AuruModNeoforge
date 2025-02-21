@@ -11,7 +11,7 @@ import net.minecraft.world.level.block.state.BlockState;
 
 public class ExtractorBlockEntity extends AbstractExtractorBlockEntity {
     public ExtractorBlockEntity(BlockPos pPos, BlockState pBlockState) {
-        super(ModBlockEntities.ENERGY_GENERATOR_BLOCK_ENTITY.get(), pPos, pBlockState, RecipeType.SMELTING);
+        super(ModBlockEntities.EXTRACTOR_BLOCK_ENTITY.get(), pPos, pBlockState, RecipeType.SMELTING);
     }
 
     @Override

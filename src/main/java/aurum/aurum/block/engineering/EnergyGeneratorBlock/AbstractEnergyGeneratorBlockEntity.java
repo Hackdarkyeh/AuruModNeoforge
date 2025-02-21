@@ -2,6 +2,8 @@ package aurum.aurum.block.engineering.EnergyGeneratorBlock;
 
 import aurum.aurum.block.engineering.EnergyStorageBlock.EnergyStorageBlock;
 import aurum.aurum.block.engineering.EnergyStorageBlock.EnergyStorageBlockEntity;
+import aurum.aurum.block.engineering.ExtractorBlock.AbstractExtractorBlockEntity;
+import aurum.aurum.block.engineering.ExtractorBlock.ExtractorBlockEntity;
 import aurum.aurum.block.engineering.PipeBlock;
 import aurum.aurum.init.ModItems;
 import com.google.common.collect.Lists;
@@ -75,15 +77,16 @@ public abstract class AbstractEnergyGeneratorBlockEntity extends BaseContainerBl
     int cookingProgress;
     int cookingTotalTime;
 
-    int totalCapacityGestion;
-    public int energyCapacity; // Capacidad base mínima
-    private int MINENERGYCAPACITY = 100; // Capacidad base mínima
-    public int energyStoredVisible = 0; // Energía almacenada actualmente
+    float totalCapacityGestion;
+    public float energyCapacity; // Capacidad base mínima
+    private float MINENERGYCAPACITY = 100; // Capacidad base mínima
+    public float energyStoredVisible = 0; // Energía almacenada actualmente
     private int energyGeneratedPerTick = 1; // Energía generada por tick
-    private final Map<BlockPos, int[]> detectedStorages = new HashMap<>();
-    Queue<Map.Entry<BlockPos, Integer>> storageQueue = new LinkedList<>();
+    private final Map<BlockPos, float[]> detectedStorages = new HashMap<>();
+    Queue<Map.Entry<BlockPos, Float>> storageQueue = new LinkedList<>();
     private final Set<BlockPos> connectedGenerators = new HashSet<>();
-    private int internalEnergy = 0;
+    private float internalEnergy = 0;
+    private static final int FLOAT_SCALING_FACTOR = 1000; // Factor de escala
 
     @Nullable
     private static volatile Map<Item, Integer> fuelCache;
@@ -105,9 +108,9 @@ public abstract class AbstractEnergyGeneratorBlockEntity extends BaseContainerBl
                 case 3:
                     return aurum.aurum.block.engineering.EnergyGeneratorBlock.AbstractEnergyGeneratorBlockEntity.this.cookingTotalTime;
                 case 4:
-                    return AbstractEnergyGeneratorBlockEntity.this.energyStoredVisible;
+                    return (int)AbstractEnergyGeneratorBlockEntity.this.energyStoredVisible * FLOAT_SCALING_FACTOR;
                 case 5:
-                    return aurum.aurum.block.engineering.EnergyGeneratorBlock.AbstractEnergyGeneratorBlockEntity.this.energyCapacity;
+                    return (int)aurum.aurum.block.engineering.EnergyGeneratorBlock.AbstractEnergyGeneratorBlockEntity.this.energyCapacity * FLOAT_SCALING_FACTOR;
 
                 default:
                     return 0;
@@ -130,10 +133,10 @@ public abstract class AbstractEnergyGeneratorBlockEntity extends BaseContainerBl
                     aurum.aurum.block.engineering.EnergyGeneratorBlock.AbstractEnergyGeneratorBlockEntity.this.cookingTotalTime = p_58434_;
                     break;
                 case 4:
-                    aurum.aurum.block.engineering.EnergyGeneratorBlock.AbstractEnergyGeneratorBlockEntity.this.energyStoredVisible = p_58434_;
+                    AbstractEnergyGeneratorBlockEntity.this.energyStoredVisible = p_58434_ / (float) FLOAT_SCALING_FACTOR; // Convertir de nuevo a float
                     break;
                 case 5:
-                    aurum.aurum.block.engineering.EnergyGeneratorBlock.AbstractEnergyGeneratorBlockEntity.this.energyCapacity = p_58434_;
+                    AbstractEnergyGeneratorBlockEntity.this.energyCapacity = p_58434_ / (float) FLOAT_SCALING_FACTOR; // Convertir de nuevo a float
                     break;
             }
         }
@@ -462,10 +465,6 @@ public abstract class AbstractEnergyGeneratorBlockEntity extends BaseContainerBl
         return pBlockEntity.quickCheck.getRecipeFor(singlerecipeinput, pLevel).map(p_300840_ -> p_300840_.value().getCookingTime()).orElse(200);
     }
 
-    public static boolean isFuel(ItemStack pStack) {
-        return pStack.getBurnTime(null) > 0;
-    }
-
     @Override
     public int[] getSlotsForFace(Direction pSide) {
         if (pSide == Direction.DOWN) {
@@ -644,9 +643,9 @@ public abstract class AbstractEnergyGeneratorBlockEntity extends BaseContainerBl
 
     private void deleteStorage(BlockPos storagePos) {
         if (detectedStorages.containsKey(storagePos)) {
-            int[] data = detectedStorages.remove(storagePos);
-            int storageCapacity = (data != null) ? data[0] : 0; // Índice 0 para la capacidad máxima
-            int energyStorage = (data != null) ? data[1] : 0; // Índice 0 para la capacidad máxima
+            float[] data = detectedStorages.remove(storagePos);
+            float storageCapacity = (data != null) ? data[0] : 0; // Índice 0 para la capacidad máxima
+            float energyStorage = (data != null) ? data[1] : 0; // Índice 0 para la capacidad máxima
             System.out.println("Almacenamiento eliminado en: " + storagePos + " con energía: " + energyStorage);
             energyCapacity -= storageCapacity;
             if (internalEnergy > energyCapacity) {
@@ -692,7 +691,7 @@ public abstract class AbstractEnergyGeneratorBlockEntity extends BaseContainerBl
         for (BlockPos storagePos : detectedStorages.keySet()) {
             BlockEntity storageEntity = level.getBlockEntity(storagePos);
             if (storageEntity instanceof EnergyStorageBlockEntity storage) {
-                int energyToTransfer = Math.min(this.internalEnergy, storage.getRemainingCapacity());
+                float energyToTransfer = Math.min(this.internalEnergy, storage.getRemainingCapacity());
                 this.internalEnergy -= energyToTransfer;
                 storage.addEnergy(energyToTransfer, false);
                 detectedStorages.get(storagePos)[1] += energyToTransfer;
@@ -721,16 +720,34 @@ public abstract class AbstractEnergyGeneratorBlockEntity extends BaseContainerBl
 
     }
 
+    public void extractEnergyFromNetwork(AbstractExtractorBlockEntity extractor, int energyByTick) {
+        for (BlockPos storagePos : detectedStorages.keySet()) {
+            BlockEntity storageEntity = level.getBlockEntity(storagePos);
+            if (storageEntity instanceof EnergyStorageBlockEntity storage) {
+                if (storage.getEnergyStored() >= 0) {
+                    if (extractor.energyStored < extractor.energyCapacity) {
+                        extractor.energyStored += energyByTick;
+                        storage.consumeEnergy(energyByTick, false);
+                        if (storage.getEnergyStored() <= 0) {
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
 
-    private void updateGeneratorCapacity(Queue<Map.Entry<BlockPos, Integer>> storageQueue) {
-        for (Map.Entry<BlockPos, Integer> entry : storageQueue) {
+
+
+    private void updateGeneratorCapacity(Queue<Map.Entry<BlockPos, Float>> storageQueue) {
+        for (Map.Entry<BlockPos, Float> entry : storageQueue) {
             BlockPos storagePos = entry.getKey();
             BlockEntity storageEntity = level.getBlockEntity(storagePos);
             if (storageEntity instanceof EnergyStorageBlockEntity storage && !detectedStorages.containsKey(storagePos)) {
-                int capacity = storage.getMaxEnergyStored();
+                float capacity = storage.getMaxEnergyStored();
                 totalCapacityGestion += capacity;
                 energyStoredVisible += storage.getEnergyStored();
-                int[] storageData = new int[] {capacity, storage.getEnergyStored()}; // Capacidad máxima y energía actual
+                float[] storageData = new float[] {capacity, storage.getEnergyStored()}; // Capacidad máxima y energía actual
                 detectedStorages.put(storagePos, storageData);
                 adjustGeneratorCapacity(totalCapacityGestion);
             }
@@ -739,7 +756,7 @@ public abstract class AbstractEnergyGeneratorBlockEntity extends BaseContainerBl
 
 
 
-    private void adjustGeneratorCapacity(int newCapacity) {
+    private void adjustGeneratorCapacity(float newCapacity) {
         this.energyCapacity = Math.max(newCapacity, MINENERGYCAPACITY);  // Valor mínimo de seguridad
         if (internalEnergy > energyCapacity) {
             internalEnergy = energyCapacity;
@@ -760,12 +777,6 @@ public abstract class AbstractEnergyGeneratorBlockEntity extends BaseContainerBl
 
     public boolean hasEnergy() {
         return energyStoredVisible > 0 || internalEnergy > 0;
-    }
-
-    public int getExtractingDuration(int cost) {
-        int availableEnergy = energyStoredVisible > 0 ? energyStoredVisible : internalEnergy;
-        int extractableEnergy = Math.min(availableEnergy, cost);
-        return Math.max(extractableEnergy, 0);
     }
 }
 

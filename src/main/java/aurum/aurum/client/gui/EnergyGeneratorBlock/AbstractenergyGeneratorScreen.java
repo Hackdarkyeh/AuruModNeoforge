@@ -91,13 +91,24 @@ public abstract class AbstractenergyGeneratorScreen <T extends AbstractEnergyGen
         //guiGraphics.drawString(this.font, Component.translatable("gui.asherah.generador.label_energy"), 8, 19, -12829636, false);
 
         // Obtener energía actual y máxima desde el menú
-        int currentEnergy = this.menu.getCurrenEnergy(); // Índice de energía actual
-        int maxEnergy = this.menu.getMaxEnergy();     // Índice de capacidad máxima
+        float currentEnergy = this.menu.getCurrenEnergy(); // Índice de energía actual
+        float maxEnergy = this.menu.getMaxEnergy();     // Índice de capacidad máxima
 
         // Mostrar [energía actual] / [capacidad máxima]
-        String energyText = currentEnergy + "/" + maxEnergy;
+        String energyText = formatEnergyValue(currentEnergy) + "/" + formatEnergyValue(maxEnergy);
         guiGraphics.drawString(this.font, energyText, 8, 15, -12829636, false); // Posición y color ajustables
     }
+
+    private String formatEnergyValue(float value) {
+        if (value >= 1_000_000) {
+            return String.format("%.1fM", value / 1_000_000.0f); // Formato con 1 decimal
+        } else if (value >= 1_000) {
+            return String.format("%.1fk", value / 1_000.0f); // Formato con 1 decimal
+        } else {
+            return String.format("%.0f", value); // Número sin decimales
+        }
+    }
+
 
 
 

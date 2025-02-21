@@ -7,19 +7,19 @@ import net.minecraft.nbt.CompoundTag;
 public interface IEnergyStorage {
 
     // Devuelve la cantidad de energía almacenada
-    int getEnergyStored();
+    float getEnergyStored();
 
     // Devuelve la capacidad máxima de almacenamiento de energía
-    int getMaxEnergyStored();
+    float getMaxEnergyStored();
 
     // Añade energía al almacenamiento, con una opción para simular la operación
-    int addEnergy(int energy, boolean simulate);
+    float addEnergy(float energy, boolean simulate);
 
     // Consume energía del almacenamiento, con una opción para simular la operación
-    int consumeEnergy(int energy, boolean simulate);
+    float consumeEnergy(float energy, boolean simulate);
 
     // Devuelve la capacidad restante de almacenamiento
-    int getRemainingCapacity();
+    float getRemainingCapacity();
 
 
     // Devuelve si el almacenamiento puede recibir energía
@@ -34,9 +34,9 @@ public interface IEnergyStorage {
     // Carga la información de energía desde una etiqueta NBT
     void loadEnergyFromTag(CompoundTag tag);
 
-    int receiveEnergy(int maxReceive, boolean simulate);
+    float receiveEnergy(float maxReceive, boolean simulate);
 
-    void setStoredEnergy(int energyStored);
+    void setStoredEnergy(float energyStored);
 }
 
 

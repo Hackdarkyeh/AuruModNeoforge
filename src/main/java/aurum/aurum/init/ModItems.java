@@ -27,7 +27,6 @@ public class ModItems {
 
     public static final Supplier<Item> AURUM_HEALING_ITEM = ITEMS_REGISTRY.register("aurum_healing_item", AurumHealing::new);
 
-    public static final Supplier<Item> AURUM_OPEN_PORTAL_ITEM = ITEMS_REGISTRY.register("aurum_open_portal_item", AurumOpenPortal::new);
 
     public static final Supplier<Item> AURUMROSA_BUCKET = ITEMS_REGISTRY.register("plague_aurum_bucket", AurumBucketItem::new);
 

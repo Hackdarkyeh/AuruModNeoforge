@@ -1,0 +1,16 @@
+{
+  "type": "neoforge:remove_features",
+  "biomes": [
+    "aurum:dim1_biome6_void_river"
+  ],
+  "features": [
+    "minecraft:lake_lava_surface",
+    "minecraft:spring_lava",
+    "minecraft:lake_lava_underground",
+    "minecraft:spring_lava_frozen"
+  ],
+  "steps": [
+    "raw_generation",
+    "fluid_springs"
+  ]
+}

@@ -20,9 +20,10 @@ public class ModBiomes {
 
     // Registro del bioma
     public static final DeferredHolder<Biome,Biome> MY_CUSTOM_BIOME = BIOMES.register("aurum_biome1",
-            () -> createCustomBiome());
+            ModBiomes::createCustomBiome);
     public static final DeferredHolder<Biome,Biome> MY_CUSTOM_BIOME1 = BIOMES.register("aurum_biome2",
-            () -> createCustomBiome());
+            ModBiomes::createCustomBiome);
+
 
     // Método para crear el bioma
     private static Biome createCustomBiome() {

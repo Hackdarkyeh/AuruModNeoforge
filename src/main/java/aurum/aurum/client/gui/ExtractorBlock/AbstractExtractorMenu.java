@@ -12,7 +12,6 @@ import net.minecraft.world.inventory.*;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.AbstractCookingRecipe;
 import net.minecraft.world.item.crafting.RecipeType;
-import net.minecraft.world.item.crafting.SingleRecipeInput;
 import net.minecraft.world.level.Level;
 
 public abstract class AbstractExtractorMenu extends AbstractContainerMenu {
@@ -30,10 +29,12 @@ public abstract class AbstractExtractorMenu extends AbstractContainerMenu {
     protected final Level level;
     private final RecipeType<? extends AbstractCookingRecipe> recipeType;
 
+    private final int FLOAT_SCALING_FACTOR = 1000;
+
     protected AbstractExtractorMenu(
             MenuType<?> pMenuType, RecipeType<? extends AbstractCookingRecipe> pRecipeType, int pContainerId, Inventory pPlayerInventory
     ) {
-        this(pMenuType, pRecipeType, pContainerId, pPlayerInventory, new SimpleContainer(4), new SimpleContainerData(7));
+        this(pMenuType, pRecipeType, pContainerId, pPlayerInventory, new SimpleContainer(SLOT_COUNT), new SimpleContainerData(7));
     }
 
     protected AbstractExtractorMenu(
@@ -46,16 +47,16 @@ public abstract class AbstractExtractorMenu extends AbstractContainerMenu {
     ) {
         super(pMenuType, pContainerId);
         this.recipeType = pRecipeType;
-        checkContainerSize(pContainer, 4);
-        checkContainerDataCount(pData, 6);
+        checkContainerSize(pContainer, SLOT_COUNT);
+        checkContainerDataCount(pData, 7);
         this.container = pContainer;
         this.data = pData;
         this.level = pPlayerInventory.player.level();
-        this.addSlot(new ExtractorPipeSlot(this, pContainer, PIPE_STACK, 86, 14));
-        this.addSlot(new ExtractorPeakSlot(this, pContainer, EXTRACTOR_PEAK, 86, 32));
-        this.addSlot(new ExtractorMineralOutPutSlot(pPlayerInventory.player, pContainer, MINERAL_OUTPUT, 86, 50));
-        this.addSlot(new ExtractorProtectorSlot(this, pContainer, PROTECTOR, 86, 68));
-        this.addSlot(new ExtractorRangeSlot(this, pContainer, RANGE_EXTRACTOR, 86, 86));
+        this.addSlot(new ExtractorPipeSlot(this, pContainer, PIPE_STACK, 47, 17));
+        this.addSlot(new ExtractorPeakSlot(this, pContainer, EXTRACTOR_PEAK, 47, 53));
+        this.addSlot(new ExtractorMineralOutPutSlot(pPlayerInventory.player, pContainer, MINERAL_OUTPUT, 80, 58));
+        this.addSlot(new ExtractorProtectorSlot(this, pContainer, PROTECTOR, 113, 17));
+        this.addSlot(new ExtractorRangeSlot(this, pContainer, RANGE_EXTRACTOR, 113, 53));
         //this.addSlot(new EnergyGeneratorFuelSlot(this, pContainer, FUEL_SLOT, 86, 50));
         //this.addSlot(new FurnaceResultSlot(pPlayerInventory.player, pContainer, RESULT_SLOT, 148, 50));
         //this.addSlot(new EnergyGeneratorUpdaterSlot(this, pContainer,
@@ -116,10 +117,9 @@ public abstract class AbstractExtractorMenu extends AbstractContainerMenu {
                     if (!this.moveItemStackTo(itemstack1, 3, 4, false)) {
                         return ItemStack.EMPTY;
                     }
-                    else if(this.isRangeExtractor(itemstack1)) { // Si es un actualizador de generador de energía
-                        if (!this.moveItemStackTo(itemstack1, 4, 5, false)) {
-                            return ItemStack.EMPTY;
-                        }
+                }else if(this.isRangeExtractor(itemstack1)) { // Si es un actualizador de generador de energía
+                    if (!this.moveItemStackTo(itemstack1, 4, 5, false)) {
+                        return ItemStack.EMPTY;
                     }
                 }else if (pIndex >= inventoryStart && pIndex < 31) { // Slots del inventario
                     if (!this.moveItemStackTo(itemstack1, 31, inventoryEnd, false)) {
@@ -148,17 +148,7 @@ public abstract class AbstractExtractorMenu extends AbstractContainerMenu {
         return itemstack;
     }
 
-    public float getBurnProgress() {
-        int i = this.data.get(2);
-        int j = this.data.get(3);
-        return j != 0 && i != 0 ? Mth.clamp((float)i / (float)j, 0.0F, 1.0F) : 0.0F;
-    }
 
-    public float getEnergyProgress() {
-        int currentEnergy = this.data.get(4);
-        int maxEnergy = this.data.get(5);
-        return Mth.clamp((float) currentEnergy / (float) maxEnergy, 0.0F, 1.0F);
-    }
 
     public int getCurrenEnergy() {
         return this.data.get(4);
@@ -166,6 +156,10 @@ public abstract class AbstractExtractorMenu extends AbstractContainerMenu {
 
     public int getMaxEnergy() {
         return this.data.get(5);
+    }
+
+    public boolean hasInsufficientExp(){
+        return this.data.get(6) == 1;
     }
 
     public boolean isPipe(ItemStack pStack) {
@@ -189,16 +183,20 @@ public abstract class AbstractExtractorMenu extends AbstractContainerMenu {
                 || pStack.is(ModItems.RANGE_EXTRACTOR_UPDATER_TIER_5.get().asItem());
     }
 
-    public float getLitProgress() {
-        int i = this.data.get(1);
-        if (i == 0) {
-            i = 200;
-        }
+    public float getEnergyProgress() {
+        int currentEnergy = this.data.get(4);
+        int maxEnergy = this.data.get(5);
+        return Mth.clamp((float) currentEnergy / (float) maxEnergy, 0.0F, 1.0F);
+    }
 
-        return Mth.clamp((float)this.data.get(0) / (float)i, 0.0F, 1.0F);
+    public float getExtractorProgress() {
+        float currentTimeExtractorMineral = this.data.get(2);
+        float totalTimeExtractorMineral = this.data.get(3);
+
+        return Mth.clamp(currentTimeExtractorMineral/totalTimeExtractorMineral, 0.0F, 1.0F);
     }
 
     public boolean isLit() {
-        return this.data.get(0) > 0;
+        return this.data.get(0) / (float) FLOAT_SCALING_FACTOR > 0;
     }
 }

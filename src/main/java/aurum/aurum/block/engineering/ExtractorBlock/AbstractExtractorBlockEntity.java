@@ -3,6 +3,7 @@ package aurum.aurum.block.engineering.ExtractorBlock;
 import aurum.aurum.block.engineering.EnergyGeneratorBlock.EnergyGeneratorBlockEntity;
 import aurum.aurum.block.engineering.PipeBlock;
 import aurum.aurum.init.ModBlocks;
+import aurum.aurum.init.ModItems;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
@@ -37,6 +38,7 @@ import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.Vec3;
 
 import javax.annotation.Nullable;
@@ -45,32 +47,35 @@ import java.util.*;
 public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEntity implements WorldlyContainer, RecipeCraftingHolder, StackedContentsCompatible {
     protected static final int SLOT_INPUT = 0;
     protected static final int SLOT_FUEL = 1;
-    protected static final int SLOT_RESULT = 2;
+    protected static final int MINERAL_OUTPUT = 2;
     public static final int DATA_LIT_TIME = 0;
     private static final int[] SLOTS_FOR_UP = new int[]{0};
     private static final int[] SLOTS_FOR_DOWN = new int[]{2, 1};
     private static final int[] SLOTS_FOR_SIDES = new int[]{1};
-    private static final int SLOTS_COUNT = 4;
+    private static final int SLOTS_COUNT = 5;
     public static final int DATA_LIT_DURATION = 1;
     public static final int DATA_COOKING_PROGRESS = 2;
     public static final int DATA_COOKING_TOTAL_TIME = 3;
     public static final int NUM_DATA_VALUES = 4;
     public static final int BURN_TIME_STANDARD = 200;
     public static final int BURN_COOL_SPEED = 2;
-    public static final int EXTRACTING_COST_AURELITE_ORE = 1000;
+    public int EXTRACTING_COST_AURELITE_ORE = 2500;
     private final RecipeType<? extends AbstractCookingRecipe> recipeType;
     protected NonNullList<ItemStack> items = NonNullList.withSize(SLOTS_COUNT, ItemStack.EMPTY);
-    int litTime;
-    int litDuration;
+    private float litTime;
+    float litDuration;
     int extractingProgress;
     int extractingTotalTime;
 
-
-    public int energyCapacity; // Capacidad base mínima
-    public int energyStoredVisible = 0; // Energía almacenada actualmente
-    private boolean blockToExtractConnected = false;
+    private static int MAX_TRANSFER_RATE = 1; // Tasa de transferencia máxima
+    private boolean hasEnoughExperience = false; // Indica si el jugador tiene suficiente experiencia para extraer
+    private int maxDistance = 10; // Distancia máxima de búsqueda de bloques de diamante
+    public int energyCapacity = 20000; // Capacidad base mínima
+    public int energyStored = 0; // Energía almacenada actualmente
     private EnergyGeneratorBlockEntity singleGeneratorInNetwork = null;
-    private BlockState extractBlockState = null;
+    private BlockState extractBlockState = this.getBlockState();
+
+    private static final int FLOAT_SCALING_FACTOR = 1000; // Factor de escala
 
     @Nullable
     private static volatile Map<Item, Integer> fuelCache;
@@ -84,17 +89,19 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
                         return Mth.floor(((double) litTime / litDuration) * Short.MAX_VALUE);
                     }
 
-                    return AbstractExtractorBlockEntity.this.litTime;
+                    return (int )AbstractExtractorBlockEntity.this.litTime * FLOAT_SCALING_FACTOR;
                 case 1:
-                    return Math.min(AbstractExtractorBlockEntity.this.litDuration, Short.MAX_VALUE);
+                    return (int) Math.min(AbstractExtractorBlockEntity.this.litDuration, Short.MAX_VALUE) * FLOAT_SCALING_FACTOR;
                 case 2:
                     return AbstractExtractorBlockEntity.this.extractingProgress;
                 case 3:
                     return AbstractExtractorBlockEntity.this.extractingTotalTime;
                 case 4:
-                    return AbstractExtractorBlockEntity.this.energyStoredVisible;
+                    return AbstractExtractorBlockEntity.this.energyStored;
                 case 5:
                     return AbstractExtractorBlockEntity.this.energyCapacity;
+                case 6:
+                    return AbstractExtractorBlockEntity.this.hasEnoughExperience ? 1 : 0;
 
                 default:
                     return 0;
@@ -105,10 +112,10 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
         public void set(int p_58433_, int p_58434_) {
             switch (p_58433_) {
                 case 0:
-                    AbstractExtractorBlockEntity.this.litTime = p_58434_;
+                    AbstractExtractorBlockEntity.this.litTime = p_58434_ / (float) FLOAT_SCALING_FACTOR;
                     break;
                 case 1:
-                    AbstractExtractorBlockEntity.this.litDuration = p_58434_;
+                    AbstractExtractorBlockEntity.this.litDuration = p_58434_ / (float) FLOAT_SCALING_FACTOR;
                     break;
                 case 2:
                     AbstractExtractorBlockEntity.this.extractingProgress = p_58434_;
@@ -117,17 +124,20 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
                     AbstractExtractorBlockEntity.this.extractingTotalTime = p_58434_;
                     break;
                 case 4:
-                    AbstractExtractorBlockEntity.this.energyStoredVisible = p_58434_;
+                    AbstractExtractorBlockEntity.this.energyStored = p_58434_;
                     break;
                 case 5:
                     AbstractExtractorBlockEntity.this.energyCapacity = p_58434_;
+                    break;
+                case 6:
+                    AbstractExtractorBlockEntity.this.hasEnoughExperience = p_58434_ == 1;
                     break;
             }
         }
 
         @Override
         public int getCount() {
-            return 6;
+            return 7;
         }
     };
     private final Object2IntOpenHashMap<ResourceLocation> recipesUsed = new Object2IntOpenHashMap<>();
@@ -273,20 +283,22 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
         this.litTime = pTag.getInt("BurnTime");
         this.extractingProgress = pTag.getInt("ExtractorTime");
         this.extractingTotalTime = pTag.getInt("CookTimeTotal");
+        this.energyStored = pTag.getInt("EnergyStorage");
         this.litDuration = this.getExtractingDuration();
-        CompoundTag compoundtag = pTag.getCompound("RecipesUsed");
-
+        //CompoundTag compoundtag = pTag.getCompound("RecipesUsed");
+        /*
         for (String s : compoundtag.getAllKeys()) {
             this.recipesUsed.put(ResourceLocation.parse(s), compoundtag.getInt(s));
-        }
+        }*/
     }
 
     @Override
     protected void saveAdditional(CompoundTag pTag, HolderLookup.Provider pRegistries) {
         super.saveAdditional(pTag, pRegistries);
-        pTag.putInt("BurnTime", this.litTime);
+        pTag.putFloat("BurnTime", this.litTime);
         pTag.putInt("ExtractorTime", this.extractingProgress);
         pTag.putInt("CookTimeTotal", this.extractingTotalTime);
+        pTag.putInt("EnergyStorage", this.energyStored);
         ContainerHelper.saveAllItems(pTag, this.items, pRegistries);
         //CompoundTag compoundtag = new CompoundTag();
         //this.recipesUsed.forEach((p_187449_, p_187450_) -> compoundtag.putInt(p_187449_.toString(), p_187450_));
@@ -295,14 +307,14 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
 
     public static void serverTick(Level pLevel, BlockPos pPos, BlockState pState, AbstractExtractorBlockEntity pBlockEntity) {
         BlockPos coordsEnergyGenerator = pBlockEntity.findSingleGeneratorInNetwork();
-        if (coordsEnergyGenerator != null) {
-            pBlockEntity.singleGeneratorInNetwork = new EnergyGeneratorBlockEntity(coordsEnergyGenerator, pLevel.getBlockState(coordsEnergyGenerator));
-        }else{
-            pBlockEntity.singleGeneratorInNetwork = null;
-        }
         boolean wasLit = pBlockEntity.isLit();
         boolean stateChanged = false;
-
+        if (pLevel.hasNearbyAlivePlayer(pPos.getX(), pPos.getY(), pPos.getZ(), 5.0D)) {
+            pBlockEntity.hasEnoughExperience = true;
+            if (Objects.requireNonNull(pLevel.getNearestPlayer(pPos.getX(), pPos.getY(), pPos.getZ(), 2, false)).experienceLevel == 30) {
+                pBlockEntity.hasEnoughExperience = true;
+            };
+        }
         // Reducir tiempo de combustión si está encendido
         if (pBlockEntity.isLit()) {
             pBlockEntity.litTime--;
@@ -310,45 +322,68 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
 
         ItemStack pipeStack = pBlockEntity.items.get(0); // Slot de tuberías
         ItemStack extractorPeak = pBlockEntity.items.get(1); // Slot de pico extractor (velocidad de extracción y capacidad)
+        updatePeak(pBlockEntity, extractorPeak);
         ItemStack mineralOutput = pBlockEntity.items.get(2); // Slot de salida de minerales
         ItemStack protector = pBlockEntity.items.get(3); // Slot de protector de explosiones
         ItemStack rangeExtractor = pBlockEntity.items.get(4); // Slot de extractor de rango
+        updateRangeExtractor(pBlockEntity, rangeExtractor);
 
-        int maxDistance = 10; // Distancia máxima de búsqueda de bloques de diamante
+        if (coordsEnergyGenerator != null) {
+            BlockEntity energyGeneratorBlockEntity = pBlockEntity.level.getBlockEntity(coordsEnergyGenerator);
+            if (energyGeneratorBlockEntity instanceof EnergyGeneratorBlockEntity) {
+                pBlockEntity.singleGeneratorInNetwork = (EnergyGeneratorBlockEntity) energyGeneratorBlockEntity;
+                boolean singleGeneratorInNetworkhasEnergy = pBlockEntity.singleGeneratorInNetwork.hasEnergy();
+                if (singleGeneratorInNetworkhasEnergy){
+                    pBlockEntity.singleGeneratorInNetwork.extractEnergyFromNetwork(pBlockEntity, MAX_TRANSFER_RATE);
+                }
+                // Iniciar combustión si no está encendido pero tiene combustible y puede procesar
+                boolean hasEnergy = pBlockEntity.energyStored >= pBlockEntity.getExtractingDuration();
+                if (hasEnergy) {
+                    pBlockEntity.litTime = pBlockEntity.getExtractingDuration();
+                    pBlockEntity.litDuration = pBlockEntity.litTime;
+                    if (pBlockEntity.isLit()) {
+                        stateChanged = true;
+                        pBlockEntity.detectAdjacentBlocksGradual(pipeStack, pBlockEntity.maxDistance);
 
-        boolean hasEnergy = pBlockEntity.singleGeneratorInNetwork.hasEnergy();
-        boolean hasPipe = !pipeStack.isEmpty();
+                    }
+                }
+                // Procesar receta si está encendido
+                if (pBlockEntity.isLit() && pBlockEntity.hasConnectedPipesToAurelite(pBlockEntity.maxDistance)) {
+                    pBlockEntity.extractingProgress++;
+                    if (pBlockEntity.extractingProgress == pBlockEntity.extractingTotalTime) {
+                        pBlockEntity.extractingProgress = 0;
 
-        int maxStackSize = pBlockEntity.getMaxStackSize();
+                        // Obtener el ItemStack actual en el slot de salida
+                        ItemStack currentStack = pBlockEntity.getItem(MINERAL_OUTPUT);
+                        ItemStack newItem = ModBlocks.AURELITE_ORE.get().asItem().getDefaultInstance();
 
-        // Iniciar combustión si no está encendido pero tiene combustible y puede procesar
-        if (!pBlockEntity.isLit() && hasEnergy) {
-            pBlockEntity.litTime = pBlockEntity.getExtractingDuration();
-            pBlockEntity.litDuration = pBlockEntity.litTime;
-            if (pBlockEntity.isLit()) {
-                stateChanged = true;
-                pBlockEntity.detectAdjacentBlocksGradual(pipeStack, maxDistance);
+                        if (currentStack.isEmpty()) {
+                            // Si el slot está vacío, colocar el nuevo ítem
+                            pBlockEntity.setItem(MINERAL_OUTPUT, newItem);
+                        } else if (currentStack.is(newItem.getItem())) {
+                            // Si el mismo ítem ya está en el slot, aumentar la cantidad
+                            currentStack.grow(newItem.getCount());
+                        }
 
+                        stateChanged = true;
+                    }
+                } else {
+                    pBlockEntity.extractingProgress = 0;
+                }
+
+                // Reducir progreso si no hay combustión
+                if (!pBlockEntity.isLit() && pBlockEntity.extractingProgress > 0) {
+                    pBlockEntity.extractingProgress = Mth.clamp(pBlockEntity.extractingProgress - 2, 0, pBlockEntity.extractingTotalTime);
+                }
             }
+
+        }else{
+            pBlockEntity.singleGeneratorInNetwork = null;
         }
 
-        // Procesar receta si está encendido
-        if (pBlockEntity.isLit()) {
-            pBlockEntity.extractingProgress++;
-            if (pBlockEntity.extractingProgress == pBlockEntity.extractingTotalTime) {
-                pBlockEntity.extractingProgress = 0;
-                pBlockEntity.extractingTotalTime = getTotalCookTime(pLevel, pBlockEntity);
 
-                stateChanged = true;
-            }
-        } else {
-            pBlockEntity.extractingProgress = 0;
-        }
 
-        // Reducir progreso si no hay combustión
-        if (!pBlockEntity.isLit() && pBlockEntity.extractingProgress > 0) {
-            pBlockEntity.extractingProgress = Mth.clamp(pBlockEntity.extractingProgress - 2, 0, pBlockEntity.extractingTotalTime);
-        }
+
 
         // Actualizar el estado visual si cambió
         if (wasLit != pBlockEntity.isLit()) {
@@ -363,16 +398,8 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
         }
     }
 
-    protected int getExtractingDuration() {
-        if (extractBlockState.getBlock() == ModBlocks.AURELITE_ORE.get()) {
-            return singleGeneratorInNetwork.getExtractingDuration(EXTRACTING_COST_AURELITE_ORE);
-        }
-        return 0;
-    }
-
-    private static int getTotalCookTime(Level pLevel, AbstractExtractorBlockEntity pBlockEntity) {
-        SingleRecipeInput singlerecipeinput = new SingleRecipeInput(pBlockEntity.getItem(0));
-        return pBlockEntity.quickCheck.getRecipeFor(singlerecipeinput, pLevel).map(p_300840_ -> p_300840_.value().getCookingTime()).orElse(200);
+    protected float getExtractingDuration() {
+        return this.energyStored;
     }
 
     @Override
@@ -383,6 +410,39 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
             return pSide == Direction.UP ? SLOTS_FOR_UP : SLOTS_FOR_SIDES;
         }
     }
+
+    private static void updatePeak(AbstractExtractorBlockEntity pBlockEntity, ItemStack extractorPeak) {
+        if (extractorPeak.isEmpty()) {
+            return;
+        }
+        if (extractorPeak.is(ModItems.EXTRACTOR_PEAK_TIER1.get().asItem())) {
+            pBlockEntity.EXTRACTING_COST_AURELITE_ORE = 2000;
+        } else if (extractorPeak.is(ModItems.EXTRACTOR_PEAK_TIER2.get().asItem())) {
+            pBlockEntity.EXTRACTING_COST_AURELITE_ORE = 1500;
+        } else if (extractorPeak.is(ModItems.EXTRACTOR_PEAK_TIER3.get().asItem())) {
+            pBlockEntity.EXTRACTING_COST_AURELITE_ORE = 1000;
+        }else{
+            pBlockEntity.EXTRACTING_COST_AURELITE_ORE = 2500;
+        }
+    }
+
+    private static void updateRangeExtractor(AbstractExtractorBlockEntity pBlockEntity, ItemStack rangeExtractor) {
+        if (rangeExtractor.isEmpty()) {
+            return;
+        }
+        if (rangeExtractor.is(ModItems.RANGE_EXTRACTOR_UPDATER_TIER_1.get().asItem())) {
+            pBlockEntity.maxDistance = 15;
+        } else if (rangeExtractor.is(ModItems.RANGE_EXTRACTOR_UPDATER_TIER_2.get().asItem())) {
+            pBlockEntity.maxDistance = 20;
+        } else if (rangeExtractor.is(ModItems.RANGE_EXTRACTOR_UPDATER_TIER_3.get().asItem())) {
+            pBlockEntity.maxDistance = 25;
+        } else if (rangeExtractor.is(ModItems.RANGE_EXTRACTOR_UPDATER_TIER_4.get().asItem())) {
+            pBlockEntity.maxDistance = 30;
+        }  else if (rangeExtractor.is(ModItems.RANGE_EXTRACTOR_UPDATER_TIER_5.get().asItem())) {
+            pBlockEntity.maxDistance = 35;
+        }
+    }
+
 
     /**
      * Returns {@code true} if automation can insert the given item in the given slot from the given side.
@@ -415,6 +475,11 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
         this.items = pItems;
     }
 
+    private boolean canExtract(Player player) {
+        return player.experienceLevel >= 30;
+    }
+
+
 
 
     /**
@@ -427,7 +492,6 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
         this.items.set(pIndex, pStack);
         pStack.limitSize(this.getMaxStackSize(pStack));
         if (pIndex == 0 && !flag) {
-            this.extractingTotalTime = getTotalCookTime(this.level, this);
             this.extractingProgress = 0;
             this.setChanged();
         }
@@ -487,7 +551,7 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
         BlockPos currentPos = worldPosition;
         visited.add(currentPos);
 
-        boolean diamondBlockFound = false;
+        boolean aureliteOreBlockFound = false;
         BlockPos diamondBlockPos = null;
 
         // Buscar bloque de diamante debajo hasta la distancia máxima
@@ -497,14 +561,15 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
             BlockState belowState = level.getBlockState(belowPos);
 
             if (belowState.getBlock() == ModBlocks.AURELITE_ORE.get()) {
-                diamondBlockFound = true;
+                aureliteOreBlockFound = true;
                 this.extractBlockState = belowState;
+                this.extractingTotalTime = EXTRACTING_COST_AURELITE_ORE;
                 diamondBlockPos = belowPos;
                 break;
             }
         }
 
-        if (!diamondBlockFound) {
+        if (!aureliteOreBlockFound) {
             // No se encontró bloque de diamante dentro del rango
             return;
         }
@@ -527,9 +592,13 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
             // Colocar tuberías si están disponibles en la interfaz
             checkPos = currentPos;
             for (int i = 1; i <= maxDistance && !checkPos.equals(diamondBlockPos); i++) {
+
                 checkPos = checkPos.below();
                 BlockState checkState = level.getBlockState(checkPos);
-
+                if (diamondBlockPos.equals(checkPos)) {
+                    // Llegamos al bloque de diamante
+                    break;
+                }
                 if (!(checkState.getBlock() instanceof PipeBlock)) {
                     if (pipeStack.isEmpty()) {
                         // No hay tuberías disponibles
@@ -540,13 +609,50 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
             }
         }
 
-        blockToExtractConnected = true;
     }
+
+    private boolean hasConnectedPipesToAurelite(int maxDistance) {
+        BlockPos currentPos = worldPosition;
+
+        // Buscar el bloque de Aurelita en el rango especificado
+        BlockPos aureliteBlockPos = null;
+        for (int i = 1; i <= maxDistance; i++) {
+            BlockPos belowPos = currentPos.below(i);
+            assert level != null;
+            BlockState belowState = level.getBlockState(belowPos);
+
+            if (belowState.getBlock() == ModBlocks.AURELITE_ORE.get()) {
+                aureliteBlockPos = belowPos;
+                break;
+            }
+        }
+
+        // Si no se encontró Aurelita, retornar false
+        if (aureliteBlockPos == null) {
+            return false;
+        }
+
+        // Verificar si hay tuberías conectando el bloque actual con el bloque de Aurelita
+        BlockPos checkPos = currentPos;
+        for (int i = 1; i <= maxDistance && !checkPos.equals(aureliteBlockPos); i++) {
+            checkPos = checkPos.below();
+            BlockState checkState = level.getBlockState(checkPos);
+
+            if (!(checkState.getBlock() instanceof PipeBlock) && !checkPos.equals(aureliteBlockPos)) {
+                return false; // Se encontró un bloque que no es tubería en el camino
+            }
+        }
+
+        return true; // Hay conexión completa de tuberías hasta la Aurelita
+    }
+
 
     private void placePipeAt(BlockPos pos , ItemStack pipeStack) {
         // Lógica para colocar una tubería en la posición especificada
         assert level != null;
-        level.setBlockAndUpdate(pos, ModBlocks.PIPE_BLOCK.get().defaultBlockState());
+        BlockState pipeState = ModBlocks.PIPE_BLOCK.get().defaultBlockState()
+                .setValue(BlockStateProperties.FACING, Direction.DOWN); // Asegurar que la tubería esté orientada hacia abajo
+        level.setBlockAndUpdate(pos, pipeState);
         pipeStack.shrink(1);
     }
 

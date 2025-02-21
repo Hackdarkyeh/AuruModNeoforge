@@ -5,6 +5,7 @@ import aurum.aurum.block.*;
 import aurum.aurum.block.engineering.*;
 import aurum.aurum.block.engineering.EnergyGeneratorBlock.EnergyGeneratorBlock;
 import aurum.aurum.block.engineering.EnergyStorageBlock.EnergyStorageBlock;
+import aurum.aurum.block.engineering.ExtractorBlock.ExtractorBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.player.Player;
@@ -56,7 +57,6 @@ public class ModBlocks {
                     .strength(4f).requiresCorrectToolForDrops().sound(SoundType.GRASS)));
     public static final DeferredBlock<Block> PORTAl_BLOCK_AURUM = BLOCK_REGISTRY.register("aurum_portal_block", PortalBlock::new);
 
-    public static final DeferredBlock<Block> PORTAL = BLOCK_REGISTRY.register("portal", PortalBlockOpen::new);
 
     /*
     public static final DeferredBlock<Block> WITHERED_GRASS_BLOCK = registerBlock("withered_grass_block",
@@ -73,7 +73,7 @@ public class ModBlocks {
 
     public static final DeferredBlock<Block> PIPE_BLOCK = registerBlock("pipe", PipeBlock::new);
     public static final DeferredBlock<Block> PANEL_BLOCK = registerBlock("panel", PipeBlock::new);
-    public static final DeferredBlock<Block> EXTRACTOR_BLOCK = registerBlock("extractor", OreExtractorBlock::new);
+    public static final DeferredBlock<Block> EXTRACTOR_BLOCK = registerBlock("extractor", ExtractorBlock::new);
     public static final DeferredBlock<Block> ENERGY_STORAGE_BLOCK = registerBlock("energy_storage_block", EnergyStorageBlock::new);
     public static final DeferredBlock<Block> RESOURCE_STORAGE_BLOCK = registerBlock("resource_storage", ResourceStorageBlock::new);
     public static final DeferredBlock<Block> ENERGY_GENERATOR_BLOCK = registerBlock("energy_generator_block",  EnergyGeneratorBlock::new);
