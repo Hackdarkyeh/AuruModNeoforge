@@ -1,8 +1,11 @@
 package aurum.aurum.init.GUI;
 
 import aurum.aurum.Aurum;
+import aurum.aurum.client.gui.Armor.SoulModificationTableMenu;
+import aurum.aurum.client.gui.ArmorTable.ArmorTableMenu;
 import aurum.aurum.client.gui.EnergyGeneratorBlock.EnergyGeneratorMenu;
 import aurum.aurum.client.gui.ExtractorBlock.ExtractorMenu;
+import aurum.aurum.client.gui.Pedestal.PedestalMenu;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -13,6 +16,8 @@ import net.minecraft.world.flag.FeatureFlagSet;
 import net.minecraft.world.flag.FeatureFlags;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
+import net.neoforged.neoforge.common.extensions.IMenuTypeExtension;
+import net.neoforged.neoforge.network.IContainerFactory;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
@@ -27,7 +32,21 @@ public class ModMenuType <T extends AbstractContainerMenu> implements FeatureEle
     public static DeferredHolder<MenuType<?>,MenuType<ExtractorMenu>> EXTRACTOR_MENU = MENU_TYPE_REGISTRY.register(
             "extractor_menu", () -> new MenuType<>(ExtractorMenu::new, FeatureFlags.VANILLA_SET));
 
-    //public static final MenuType<ExtractorMenu> ENERGY_GENERATOR_MENU = register("energy_generator_menu", ExtractorMenu::new);
+    public static DeferredHolder<MenuType<?>,MenuType<ArmorTableMenu>> ARMOR_TABLE_MENU = MENU_TYPE_REGISTRY.register(
+            "armor_table_menu", () -> new MenuType<>(ArmorTableMenu::new, FeatureFlags.VANILLA_SET));
+
+    public static final DeferredHolder<MenuType<?>, MenuType<PedestalMenu>> PEDESTAL_MENU =
+            registerMenuType("pedestal_menu", PedestalMenu::new);
+
+    public static final DeferredHolder<MenuType<?>, MenuType<SoulModificationTableMenu>> SOUL_MODIFICATION_TABLE =
+            registerMenuType("soul_modification_table_menu", SoulModificationTableMenu::new);
+
+    private static <T extends AbstractContainerMenu>DeferredHolder<MenuType<?>, MenuType<T>> registerMenuType(String name,
+                                                                                                              IContainerFactory<T> factory) {
+        return MENU_TYPE_REGISTRY.register(name, () -> IMenuTypeExtension.create(factory));
+    }
+
+    //public static final MenuType<ArmorTableMenu> ENERGY_GENERATOR_MENU = register("energy_generator_menu", ArmorTableMenu::new);
 
     private final FeatureFlagSet requiredFeatures;
     private final MenuType.MenuSupplier<T> constructor;

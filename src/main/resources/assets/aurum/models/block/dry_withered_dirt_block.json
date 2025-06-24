@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "aurum:block/dry_withered_grass_block_bot"
+  },
+  "render_type": "solid"
+}

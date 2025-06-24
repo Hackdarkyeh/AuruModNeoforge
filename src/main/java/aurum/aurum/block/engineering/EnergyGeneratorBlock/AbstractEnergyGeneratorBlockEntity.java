@@ -1,5 +1,6 @@
 package aurum.aurum.block.engineering.EnergyGeneratorBlock;
 
+import aurum.aurum.block.engineering.ArmorTable.AbstractArmorTableBlockEntity;
 import aurum.aurum.block.engineering.EnergyStorageBlock.EnergyStorageBlock;
 import aurum.aurum.block.engineering.EnergyStorageBlock.EnergyStorageBlockEntity;
 import aurum.aurum.block.engineering.ExtractorBlock.AbstractExtractorBlockEntity;
@@ -82,6 +83,7 @@ public abstract class AbstractEnergyGeneratorBlockEntity extends BaseContainerBl
     private float MINENERGYCAPACITY = 100; // Capacidad base mínima
     public float energyStoredVisible = 0; // Energía almacenada actualmente
     private int energyGeneratedPerTick = 1; // Energía generada por tick
+    private int energyTransferPerTick = 1; // Energía transferida por tick
     private final Map<BlockPos, float[]> detectedStorages = new HashMap<>();
     Queue<Map.Entry<BlockPos, Float>> storageQueue = new LinkedList<>();
     private final Set<BlockPos> connectedGenerators = new HashSet<>();
@@ -320,8 +322,10 @@ public abstract class AbstractEnergyGeneratorBlockEntity extends BaseContainerBl
         }
         pBlockEntity.detectAdjacentBlocksGradual(); // Detectar dispositivos de almacenamiento y tuberías
 
-        pBlockEntity.syncronizeEnergy(); // Sincronizar energía con los dispositivos de almacenamiento
+        pBlockEntity.removeDisconnectedStorages(); // Elimina los almacenamientos desconectados
 
+
+        pBlockEntity.syncronizeEnergy(); // Sincronizar energía con los dispositivos de almacenamiento
         ItemStack fuelStack = pBlockEntity.items.get(1); // Slot de combustible
         ItemStack inputStack = pBlockEntity.items.get(0); // Slot de entrada
         ItemStack energy_generator_updater = pBlockEntity.items.get(3); // Slot de actualizador de generador de energía
@@ -332,22 +336,27 @@ public abstract class AbstractEnergyGeneratorBlockEntity extends BaseContainerBl
         if (hasEnergyGeneratorUpdater){
             if (energy_generator_updater.getItem() == ModItems.ENERGY_GENERATOR_UPDATER_TIER1.get()){
                 pBlockEntity.energyGeneratedPerTick = 2;
+                pBlockEntity.energyTransferPerTick = 2;
                 pBlockEntity.MINENERGYCAPACITY = 200;
             }
             else if (energy_generator_updater.getItem() == ModItems.ENERGY_GENERATOR_UPDATER_TIER2.get()){
                 pBlockEntity.energyGeneratedPerTick = 3;
+                pBlockEntity.energyTransferPerTick = 3;
                 pBlockEntity.MINENERGYCAPACITY = 300;
             }
             else if (energy_generator_updater.getItem() == ModItems.ENERGY_GENERATOR_UPDATER_TIER3.get()){
                 pBlockEntity.energyGeneratedPerTick = 4;
+                pBlockEntity.energyTransferPerTick = 4;
                 pBlockEntity.MINENERGYCAPACITY = 400;
             }
             else if (energy_generator_updater.getItem() == ModItems.ENERGY_GENERATOR_UPDATER_TIER4.get()){
                 pBlockEntity.energyGeneratedPerTick = 5;
+                pBlockEntity.energyTransferPerTick = 5;
                 pBlockEntity.MINENERGYCAPACITY = 500;
             }
         }else{
             pBlockEntity.energyGeneratedPerTick = 1;
+            pBlockEntity.energyTransferPerTick = 1;
             pBlockEntity.MINENERGYCAPACITY = 100;
         }
 
@@ -632,7 +641,9 @@ public abstract class AbstractEnergyGeneratorBlockEntity extends BaseContainerBl
                         updateGeneratorCapacity(storageQueue);
                     }
                 } else {
-                    deleteStorage(adjacentPos);
+                    if (detectedStorages.containsKey(adjacentPos)) {
+                        deleteStorage(adjacentPos);  // Solo eliminar si ya estaba detectado antes
+                    }
                 }
             }
         }
@@ -642,7 +653,6 @@ public abstract class AbstractEnergyGeneratorBlockEntity extends BaseContainerBl
     }
 
     private void deleteStorage(BlockPos storagePos) {
-        if (detectedStorages.containsKey(storagePos)) {
             float[] data = detectedStorages.remove(storagePos);
             float storageCapacity = (data != null) ? data[0] : 0; // Índice 0 para la capacidad máxima
             float energyStorage = (data != null) ? data[1] : 0; // Índice 0 para la capacidad máxima
@@ -654,7 +664,8 @@ public abstract class AbstractEnergyGeneratorBlockEntity extends BaseContainerBl
             energyStoredVisible -= energyStorage;
             totalCapacityGestion -= storageCapacity;
             storageQueue.removeIf(entry -> entry.getKey().equals(storagePos));
-        }
+            detectedStorages.remove(storagePos);
+
     }
 
     private void detectConnectedGenerators() {
@@ -691,13 +702,11 @@ public abstract class AbstractEnergyGeneratorBlockEntity extends BaseContainerBl
         for (BlockPos storagePos : detectedStorages.keySet()) {
             BlockEntity storageEntity = level.getBlockEntity(storagePos);
             if (storageEntity instanceof EnergyStorageBlockEntity storage) {
-                float energyToTransfer = Math.min(this.internalEnergy, storage.getRemainingCapacity());
-                this.internalEnergy -= energyToTransfer;
-                storage.addEnergy(energyToTransfer, false);
-                detectedStorages.get(storagePos)[1] += energyToTransfer;
-                // Si el generador ya no tiene energía, salimos del bucle
-                if (this.internalEnergy <= 0 || !this.isLit()) {
-                    break;
+                //float energyToTransfer = Math.min(this.internalEnergy, storage.getRemainingCapacity());
+                if (this.internalEnergy > energyTransferPerTick) {
+                    this.internalEnergy -= energyTransferPerTick;
+                    storage.addEnergy(energyTransferPerTick, false);
+                    detectedStorages.get(storagePos)[0] += energyTransferPerTick;
                 }
 
 
@@ -720,14 +729,31 @@ public abstract class AbstractEnergyGeneratorBlockEntity extends BaseContainerBl
 
     }
 
-    public void extractEnergyFromNetwork(AbstractExtractorBlockEntity extractor, int energyByTick) {
+    public void extractEnergyFromNetwork(AbstractExtractorBlockEntity extractor) {
         for (BlockPos storagePos : detectedStorages.keySet()) {
             BlockEntity storageEntity = level.getBlockEntity(storagePos);
             if (storageEntity instanceof EnergyStorageBlockEntity storage) {
                 if (storage.getEnergyStored() >= 0) {
                     if (extractor.energyStored < extractor.energyCapacity) {
-                        extractor.energyStored += energyByTick;
-                        storage.consumeEnergy(energyByTick, false);
+                        extractor.energyStored += 1;
+                        storage.consumeEnergy(1, false);
+                        if (storage.getEnergyStored() <= 0) {
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public void extractEnergyFromNetwork(AbstractArmorTableBlockEntity armorTable) {
+        for (BlockPos storagePos : detectedStorages.keySet()) {
+            BlockEntity storageEntity = level.getBlockEntity(storagePos);
+            if (storageEntity instanceof EnergyStorageBlockEntity storage) {
+                if (storage.getEnergyStored() >= 0) {
+                    if (armorTable.energyStored < armorTable.energyCapacity) {
+                        armorTable.energyStored += 1;
+                        storage.consumeEnergy(1, false);
                         if (storage.getEnergyStored() <= 0) {
                             break;
                         }
@@ -778,5 +804,55 @@ public abstract class AbstractEnergyGeneratorBlockEntity extends BaseContainerBl
     public boolean hasEnergy() {
         return energyStoredVisible > 0 || internalEnergy > 0;
     }
+
+    private void removeDisconnectedStorages() {
+        Set<BlockPos> storagesToRemove = new HashSet<>();
+
+        for (BlockPos storagePos : detectedStorages.keySet()) {
+            if (!isConnectedToGenerator(storagePos)) {
+                storagesToRemove.add(storagePos);
+            }
+        }
+
+        // Eliminar los almacenamientos desconectados
+        for (BlockPos storagePos : storagesToRemove) {
+            deleteStorage(storagePos);
+            System.out.println("❌ Eliminado almacenamiento desconectado en: " + storagePos);
+        }
+    }
+
+
+    private boolean isConnectedToGenerator(BlockPos storagePos) {
+        Queue<BlockPos> queue = new LinkedList<>();
+        Set<BlockPos> visited = new HashSet<>();
+
+        queue.add(worldPosition);
+        visited.add(worldPosition);
+
+        while (!queue.isEmpty()) {
+            BlockPos currentPos = queue.poll();
+            for (Direction direction : Direction.values()) {
+                BlockPos adjacentPos = currentPos.relative(direction);
+
+                if (visited.contains(adjacentPos)) continue;
+                visited.add(adjacentPos);
+
+                BlockState adjacentState = level.getBlockState(adjacentPos);
+
+                // Si encontramos el almacenamiento, significa que sigue conectado
+                if (adjacentPos.equals(storagePos)) {
+                    return true;
+                }
+
+                // Si es una tubería, seguimos buscando
+                if (adjacentState.getBlock() instanceof PipeBlock) {
+                    queue.add(adjacentPos);
+                }
+            }
+        }
+
+        return false; // Si nunca encontramos el almacenamiento, significa que está desconectado
+    }
+
 }
 

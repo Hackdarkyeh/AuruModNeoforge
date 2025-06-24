@@ -27,6 +27,7 @@ public abstract class AbstractExtractorMenu extends AbstractContainerMenu {
     private final Container container;
     private final ContainerData data;
     protected final Level level;
+    private Player player;
     private final RecipeType<? extends AbstractCookingRecipe> recipeType;
 
     private final int FLOAT_SCALING_FACTOR = 1000;
@@ -52,6 +53,7 @@ public abstract class AbstractExtractorMenu extends AbstractContainerMenu {
         this.container = pContainer;
         this.data = pData;
         this.level = pPlayerInventory.player.level();
+        this.player = pPlayerInventory.player;
         this.addSlot(new ExtractorPipeSlot(this, pContainer, PIPE_STACK, 47, 17));
         this.addSlot(new ExtractorPeakSlot(this, pContainer, EXTRACTOR_PEAK, 47, 53));
         this.addSlot(new ExtractorMineralOutPutSlot(pPlayerInventory.player, pContainer, MINERAL_OUTPUT, 80, 58));
@@ -151,7 +153,7 @@ public abstract class AbstractExtractorMenu extends AbstractContainerMenu {
 
 
     public int getCurrenEnergy() {
-        return this.data.get(4);
+        return this.data.get(4) / FLOAT_SCALING_FACTOR;
     }
 
     public int getMaxEnergy() {
@@ -159,7 +161,7 @@ public abstract class AbstractExtractorMenu extends AbstractContainerMenu {
     }
 
     public boolean hasInsufficientExp(){
-        return this.data.get(6) == 1;
+        return this.data.get(6) == 0;
     }
 
     public boolean isPipe(ItemStack pStack) {

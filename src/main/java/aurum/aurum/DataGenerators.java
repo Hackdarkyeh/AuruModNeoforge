@@ -1,28 +1,20 @@
 package aurum.aurum;
+import aurum.aurum.init.ModItemModelProvider;
+import aurum.aurum.tagsProvider.ModBlockTagProvider;
+import aurum.aurum.tagsProvider.ModItemTagProvider;
 import aurum.aurum.tagsProvider.MyDamageTagsProvider;
-import aurum.aurum.worldgen.features.VolcanFeature;
 import net.minecraft.core.*;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.data.DataGenerator;
 import net.minecraft.data.PackOutput;
-import net.minecraft.resources.RegistryDataLoader;
-import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
-import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
-import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.common.data.DatapackBuiltinEntriesProvider;
+import net.neoforged.neoforge.common.data.BlockTagsProvider;
 import net.neoforged.neoforge.common.data.ExistingFileHelper;
 import net.neoforged.neoforge.data.event.GatherDataEvent;
 
-import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import static aurum.aurum.Aurum.MODID;
-import static aurum.aurum.init.ModFeatures.VOLCANO_CONFIGURED_FEATURE;
-import static aurum.aurum.init.ModFeatures.VOLCANO_KEY_PLACED_FEATURE;
 
 @EventBusSubscriber(modid = MODID, bus = EventBusSubscriber.Bus.MOD)
 public class DataGenerators {
@@ -36,6 +28,7 @@ public class DataGenerators {
 
         generator.addProvider(event.includeServer(),
                 new MyDamageTagsProvider(generator.getPackOutput(), lookupProvider, existingFileHelper));
+        /*
         RegistrySetBuilder builder = new RegistrySetBuilder()
                 .add(Registries.CONFIGURED_FEATURE, bootstrap -> {
                     bootstrap.register(VOLCANO_CONFIGURED_FEATURE, new ConfiguredFeature<>(
@@ -54,5 +47,13 @@ public class DataGenerators {
         event.getGenerator().addProvider(  event.includeServer()// Only run datapack generation when server data is being generated
                 ,                // Create the provider
                 new DatapackBuiltinEntriesProvider(packOutput, lookupProvider, builder, Set.of(MODID)));
+           */
+
+        generator.addProvider(event.includeClient(), new ModItemModelProvider(packOutput, existingFileHelper));
+
+        BlockTagsProvider blockTagsProvider = new ModBlockTagProvider(packOutput, lookupProvider, existingFileHelper);
+        generator.addProvider(event.includeServer(), blockTagsProvider);
+        generator.addProvider(event.includeServer(), new ModItemTagProvider(packOutput, lookupProvider, blockTagsProvider.contentsGetter(), existingFileHelper));
+
     }
 }

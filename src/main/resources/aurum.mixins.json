@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "package": "aurum.aurum.mixin",
+  "minVersion": "0.8.0",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "HideHealthBarMixin",
+    "GuiAccessor"
+  ],
+  "client": [
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "down": "aurum:block/dry_withered_grass_block_bot",
+    "up": "aurum:block/dry_withered_grass_block_top",
+    "north": "aurum:block/dry_withered_grass_block",
+    "east": "aurum:block/dry_withered_grass_block",
+    "south": "aurum:block/dry_withered_grass_block",
+    "west": "aurum:block/dry_withered_grass_block",
+    "particle": "aurum:block/dry_withered_grass_block_bot"
+  },
+  "render_type": "solid"
+}

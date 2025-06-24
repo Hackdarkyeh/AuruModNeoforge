@@ -59,7 +59,8 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
     public static final int NUM_DATA_VALUES = 4;
     public static final int BURN_TIME_STANDARD = 200;
     public static final int BURN_COOL_SPEED = 2;
-    public int EXTRACTING_COST_AURELITE_ORE = 2500;
+    public int EXTRACTING_COST_AURELITE_ORE_TIME = 4000;
+    public static int EXTRACTING_COST_AURELITE_ORE =  1000000;
     private final RecipeType<? extends AbstractCookingRecipe> recipeType;
     protected NonNullList<ItemStack> items = NonNullList.withSize(SLOTS_COUNT, ItemStack.EMPTY);
     private float litTime;
@@ -67,13 +68,12 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
     int extractingProgress;
     int extractingTotalTime;
 
-    private static int MAX_TRANSFER_RATE = 1; // Tasa de transferencia máxima
+    private static int MAX_TRANSFER_RATE = 10; // Tasa de transferencia máxima
     private boolean hasEnoughExperience = false; // Indica si el jugador tiene suficiente experiencia para extraer
     private int maxDistance = 10; // Distancia máxima de búsqueda de bloques de diamante
-    public int energyCapacity = 20000; // Capacidad base mínima
-    public int energyStored = 0; // Energía almacenada actualmente
+    public int energyCapacity = 2000000; // Capacidad base mínima
+    public float energyStored = 0; // Energía almacenada actualmente
     private EnergyGeneratorBlockEntity singleGeneratorInNetwork = null;
-    private BlockState extractBlockState = this.getBlockState();
 
     private static final int FLOAT_SCALING_FACTOR = 1000; // Factor de escala
 
@@ -97,7 +97,7 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
                 case 3:
                     return AbstractExtractorBlockEntity.this.extractingTotalTime;
                 case 4:
-                    return AbstractExtractorBlockEntity.this.energyStored;
+                    return (int)AbstractExtractorBlockEntity.this.energyStored * FLOAT_SCALING_FACTOR;
                 case 5:
                     return AbstractExtractorBlockEntity.this.energyCapacity;
                 case 6:
@@ -141,18 +141,12 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
         }
     };
     private final Object2IntOpenHashMap<ResourceLocation> recipesUsed = new Object2IntOpenHashMap<>();
-    private final RecipeManager.CachedCheck<SingleRecipeInput, ? extends AbstractCookingRecipe> quickCheck;
 
     protected AbstractExtractorBlockEntity(
             BlockEntityType<?> pType, BlockPos pPos, BlockState pBlockState, RecipeType<? extends AbstractCookingRecipe> pRecipeType
     ) {
         super(pType, pPos, pBlockState);
-        this.quickCheck = RecipeManager.createCheck((RecipeType<AbstractCookingRecipe>)pRecipeType);
         this.recipeType = pRecipeType;
-    }
-
-    public static void invalidateCache() {
-        fuelCache = null;
     }
 
     /**
@@ -298,7 +292,7 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
         pTag.putFloat("BurnTime", this.litTime);
         pTag.putInt("ExtractorTime", this.extractingProgress);
         pTag.putInt("CookTimeTotal", this.extractingTotalTime);
-        pTag.putInt("EnergyStorage", this.energyStored);
+        pTag.putFloat("EnergyStorage", this.energyStored);
         ContainerHelper.saveAllItems(pTag, this.items, pRegistries);
         //CompoundTag compoundtag = new CompoundTag();
         //this.recipesUsed.forEach((p_187449_, p_187450_) -> compoundtag.putInt(p_187449_.toString(), p_187450_));
@@ -311,10 +305,14 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
         boolean stateChanged = false;
         if (pLevel.hasNearbyAlivePlayer(pPos.getX(), pPos.getY(), pPos.getZ(), 5.0D)) {
             pBlockEntity.hasEnoughExperience = true;
-            if (Objects.requireNonNull(pLevel.getNearestPlayer(pPos.getX(), pPos.getY(), pPos.getZ(), 2, false)).experienceLevel == 30) {
+            if (pLevel.getNearestPlayer(pPos.getX(), pPos.getY(), pPos.getZ(), 5, false).experienceLevel == 30) {
                 pBlockEntity.hasEnoughExperience = true;
-            };
+            }else{
+                pBlockEntity.hasEnoughExperience = false;
+            }
         }
+
+
         // Reducir tiempo de combustión si está encendido
         if (pBlockEntity.isLit()) {
             pBlockEntity.litTime--;
@@ -334,7 +332,7 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
                 pBlockEntity.singleGeneratorInNetwork = (EnergyGeneratorBlockEntity) energyGeneratorBlockEntity;
                 boolean singleGeneratorInNetworkhasEnergy = pBlockEntity.singleGeneratorInNetwork.hasEnergy();
                 if (singleGeneratorInNetworkhasEnergy){
-                    pBlockEntity.singleGeneratorInNetwork.extractEnergyFromNetwork(pBlockEntity, MAX_TRANSFER_RATE);
+                    pBlockEntity.singleGeneratorInNetwork.extractEnergyFromNetwork(pBlockEntity);
                 }
                 // Iniciar combustión si no está encendido pero tiene combustible y puede procesar
                 boolean hasEnergy = pBlockEntity.energyStored >= pBlockEntity.getExtractingDuration();
@@ -347,41 +345,41 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
 
                     }
                 }
-                // Procesar receta si está encendido
-                if (pBlockEntity.isLit() && pBlockEntity.hasConnectedPipesToAurelite(pBlockEntity.maxDistance)) {
-                    pBlockEntity.extractingProgress++;
-                    if (pBlockEntity.extractingProgress == pBlockEntity.extractingTotalTime) {
-                        pBlockEntity.extractingProgress = 0;
-
-                        // Obtener el ItemStack actual en el slot de salida
-                        ItemStack currentStack = pBlockEntity.getItem(MINERAL_OUTPUT);
-                        ItemStack newItem = ModBlocks.AURELITE_ORE.get().asItem().getDefaultInstance();
-
-                        if (currentStack.isEmpty()) {
-                            // Si el slot está vacío, colocar el nuevo ítem
-                            pBlockEntity.setItem(MINERAL_OUTPUT, newItem);
-                        } else if (currentStack.is(newItem.getItem())) {
-                            // Si el mismo ítem ya está en el slot, aumentar la cantidad
-                            currentStack.grow(newItem.getCount());
-                        }
-
-                        stateChanged = true;
-                    }
-                } else {
-                    pBlockEntity.extractingProgress = 0;
-                }
-
-                // Reducir progreso si no hay combustión
-                if (!pBlockEntity.isLit() && pBlockEntity.extractingProgress > 0) {
-                    pBlockEntity.extractingProgress = Mth.clamp(pBlockEntity.extractingProgress - 2, 0, pBlockEntity.extractingTotalTime);
-                }
             }
-
         }else{
             pBlockEntity.singleGeneratorInNetwork = null;
         }
 
+        // Procesar receta si está encendido
+        if (pBlockEntity.isLit() && pBlockEntity.hasConnectedPipesToAurelite(pBlockEntity.maxDistance) && pBlockEntity.canExtractAurelite() ) {
+            pBlockEntity.extractingProgress++;
+            pBlockEntity.energyStored -= 500;
 
+            if (pBlockEntity.extractingProgress == pBlockEntity.extractingTotalTime) {
+                pBlockEntity.extractingProgress = 0;
+
+                // Obtener el ItemStack actual en el slot de salida
+                ItemStack currentStack = pBlockEntity.getItem(MINERAL_OUTPUT);
+                ItemStack newItem = ModBlocks.AURELITE_ORE.get().asItem().getDefaultInstance();
+
+                if (currentStack.isEmpty()) {
+                    // Si el slot está vacío, colocar el nuevo ítem
+                    pBlockEntity.setItem(MINERAL_OUTPUT, newItem);
+                } else if (currentStack.is(newItem.getItem())) {
+                    // Si el mismo ítem ya está en el slot, aumentar la cantidad
+                    currentStack.grow(newItem.getCount());
+                }
+
+                stateChanged = true;
+            }
+        } else {
+            pBlockEntity.extractingProgress = 0;
+        }
+
+        // Reducir progreso si no hay combustión
+        if (!pBlockEntity.isLit() && pBlockEntity.extractingProgress > 0) {
+            pBlockEntity.extractingProgress = Mth.clamp(pBlockEntity.extractingProgress - 2, 0, pBlockEntity.extractingTotalTime);
+        }
 
 
 
@@ -402,6 +400,10 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
         return this.energyStored;
     }
 
+    private boolean canExtractAurelite() {
+        return this.energyStored >= 500;
+    }
+
     @Override
     public int[] getSlotsForFace(Direction pSide) {
         if (pSide == Direction.DOWN) {
@@ -416,13 +418,13 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
             return;
         }
         if (extractorPeak.is(ModItems.EXTRACTOR_PEAK_TIER1.get().asItem())) {
-            pBlockEntity.EXTRACTING_COST_AURELITE_ORE = 2000;
+            pBlockEntity.EXTRACTING_COST_AURELITE_ORE_TIME = 3500;
         } else if (extractorPeak.is(ModItems.EXTRACTOR_PEAK_TIER2.get().asItem())) {
-            pBlockEntity.EXTRACTING_COST_AURELITE_ORE = 1500;
+            pBlockEntity.EXTRACTING_COST_AURELITE_ORE_TIME = 3000;
         } else if (extractorPeak.is(ModItems.EXTRACTOR_PEAK_TIER3.get().asItem())) {
-            pBlockEntity.EXTRACTING_COST_AURELITE_ORE = 1000;
+            pBlockEntity.EXTRACTING_COST_AURELITE_ORE_TIME = 2500;
         }else{
-            pBlockEntity.EXTRACTING_COST_AURELITE_ORE = 2500;
+            pBlockEntity.EXTRACTING_COST_AURELITE_ORE_TIME = 4000;
         }
     }
 
@@ -473,10 +475,6 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
     @Override
     protected void setItems(NonNullList<ItemStack> pItems) {
         this.items = pItems;
-    }
-
-    private boolean canExtract(Player player) {
-        return player.experienceLevel >= 30;
     }
 
 
@@ -562,8 +560,7 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
 
             if (belowState.getBlock() == ModBlocks.AURELITE_ORE.get()) {
                 aureliteOreBlockFound = true;
-                this.extractBlockState = belowState;
-                this.extractingTotalTime = EXTRACTING_COST_AURELITE_ORE;
+                this.extractingTotalTime = EXTRACTING_COST_AURELITE_ORE_TIME;
                 diamondBlockPos = belowPos;
                 break;
             }

@@ -1,7 +1,10 @@
 package aurum.aurum;
 
 import aurum.aurum.Commands.AurumBlightCommands;
+import aurum.aurum.block.SoulModificationTable.SoulModificationTableBlockEntityRenderer;
+import aurum.aurum.block.engineering.PedestalBlock.PedestalBlockEntityRenderer;
 import aurum.aurum.client.renderer.CooperGolemRenderer;
+import aurum.aurum.eventHandler.ArmorExpEventHandler;
 import aurum.aurum.eventHandler.AurumBlightRain;
 import aurum.aurum.init.*;
 import aurum.aurum.init.GUI.ModMenuType;
@@ -26,6 +29,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
@@ -73,6 +77,7 @@ public class Aurum {
 
         // Nos registramos para los eventos del servidor y otros eventos del juego que nos interesan
         NeoForge.EVENT_BUS.register(this);
+
         // Registra el item a una pestaña creativa
         modEventBus.addListener(this::addCreative);
 
@@ -89,6 +94,10 @@ public class Aurum {
         ModFluidTypes.REGISTRY_FLUID_TYPE.register(modEventBus);
         ModStructures.register(modEventBus);
         ModMenuType.MENU_TYPE_REGISTRY.register(modEventBus);
+
+        ModComponents.register(modEventBus); // <-- Añade esta línea
+
+        NeoForge.EVENT_BUS.register(ArmorExpEventHandler.class);
 
 
 
@@ -135,6 +144,13 @@ public class Aurum {
             EntityRenderers.register(ModEntities.COOPER_GOLEM.get(), CooperGolemRenderer::new);
             ItemBlockRenderTypes.setRenderLayer(ENERGY_STORAGE_BLOCK.get(), RenderType.translucent());
         }
+
+        @SubscribeEvent
+        public static void registerBER(EntityRenderersEvent.RegisterRenderers event) {
+            event.registerBlockEntityRenderer(ModBlockEntities.PEDESTAL_BE.get(), PedestalBlockEntityRenderer::new);
+            event.registerBlockEntityRenderer(ModBlockEntities.SOUL_MODIFICATION_TABLE_BLOCK_ENTITY.get(), SoulModificationTableBlockEntityRenderer::new);
+        }
+
     }
 
     // Crea una pestaña creativa con el id "examplemod:INTERFAZ_CREATIVO" para el item de ejemplo, que se coloca después de la pestaña de combate
@@ -148,6 +164,8 @@ public class Aurum {
                 output.accept(WITHERED_DIRT_BLOCK.get()); // Añade el item de bloque de tierra marchita a la pestaña
                 output.accept(ANCIENT_AURUM_GRASS_BLOCK.get()); // Añade el item de hierba de Aurum a la pestaña
                 output.accept(ANCIENT_AURUM_DIRT_BLOCK.get()); // Añade el item de tierra de Aurum a la pestaña
+                output.accept(DRY_WITHERED_GRASS_BLOCK.get()); // Añade el item de hierba marchita seca a la pestaña
+                output.accept(DRY_WITHERED_DIRT_BLOCK.get()); // Añade el item de tierra marchita seca a la pestaña
                 output.accept(AURUM_HEALING_ITEM.get()); // Añade el item de curación de Aurum a la pestaña
                 output.accept(AURUMROSA_BUCKET.get()); // Añade el cubo de Aurum a la pestaña
                 output.accept(AURELITE_ORE.get()); // Añade el bloque de Aurum a la pestaña
@@ -155,7 +173,6 @@ public class Aurum {
                 output.accept(PANEL_BLOCK.get()); // Añade el bloque de panel a la pestaña
                 output.accept(EXTRACTOR_BLOCK.get()); // Añade el bloque de extractor a la pestaña
                 output.accept(ENERGY_STORAGE_BLOCK.get()); // Añade el bloque de almacenamiento de energía a la pestaña
-                output.accept(RESOURCE_STORAGE_BLOCK.get()); // Añade el bloque de almacenamiento de recursos a la pestaña
                 output.accept(ENERGY_GENERATOR_BLOCK.get()); // Añade el bloque de generador de energía a la pestaña
                 output.accept(BATTERY_ITEM.get()); // Añade el item de batería a la pestaña
                 output.accept(ENERGY_GENERATOR_UPDATER_TIER1.get()); // Añade el item de actualización de generador de energía de nivel 1 a la pestaña
@@ -171,9 +188,27 @@ public class Aurum {
                 output.accept(RANGE_EXTRACTOR_UPDATER_TIER_3.get()); // Añade el item de actualización de extractor de rango de nivel 3 a la pestaña
                 output.accept(RANGE_EXTRACTOR_UPDATER_TIER_4.get()); // Añade el item de actualización de extractor de rango de nivel 4 a la pestaña
                 output.accept(RANGE_EXTRACTOR_UPDATER_TIER_5.get()); // Añade el item de actualización de extractor de rango de nivel 5 a la pestaña
-
+                output.accept(AURELITE_INGOT.get()); // Añade el item de lingote de Aurum a la pestaña
+                output.accept(AURELITE_HELMET.get()); // Añade el item de casco de Aurum a la pestaña
+                output.accept(AURELITE_CHESTPLATE.get()); // Añade el item de peto de Aurum a la pestaña
+                output.accept(AURELITE_LEGGINGS.get()); // Añade el item de pantalones de Aurum a la pestaña
+                output.accept(AURELITE_BOOTS.get()); // Añade el item de botas de Aurum a la pestaña
+                output.accept(VEILPIERCER.get()); // Añade el item Veilpiercer a la pestaña
+                output.accept(EXPANSION_DASH.get()); // Añade el item de expansión Dash a la pestaña
+                output.accept(EXPANSION_EXPLOSION.get()); // Añade el item de expansión Jump a la pestaña
+                output.accept(EXPANSION_DAMAGE_RESISTANCE.get()); // Añade el item de expansión Fall a la pestaña
+                output.accept(EXPANSION_FIRE_IMMUNE.get()); // Añade el item de expansión Speed a la pestaña
+                output.accept(EXPANSION_SUPER_SPEED.get()); // Añade el item de expansión Super Speed a la pestaña
+                output.accept(EXPANSION_HIGH_JUMP.get()); // Añade el item de expansión Super Jump a la pestaña
+                output.accept(EXPANSION_REGENERATION.get()); // Añade el item de expansión Super Fall a la pestaña
+                output.accept(EXPANSION_MAGIC_SHIELD.get()); // Añade el item de expansión Super Jump a la pestaña
+                output.accept(EXPANSION_LAVA_IMMUNE.get()); // Añade el item de expansión Dash a la pestaña
+                output.accept(EXPANSION_SOUL_TOTEM_1.get());
+                output.accept(EXPANSION_SOUL_TOTEM_2.get());
+                output.accept(EXPANSION_SOUL_TOTEM_3.get());
+                output.accept(SOUL_MODIFICATION_TABLE_BLOCK.get());
+                output.accept(PEDESTAL.get());
             }).build());
-
 
 
 }

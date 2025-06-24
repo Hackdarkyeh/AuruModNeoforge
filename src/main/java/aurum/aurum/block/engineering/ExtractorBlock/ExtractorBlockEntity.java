@@ -8,6 +8,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.NotNull;
 
 public class ExtractorBlockEntity extends AbstractExtractorBlockEntity {
     public ExtractorBlockEntity(BlockPos pPos, BlockState pBlockState) {
@@ -20,7 +21,7 @@ public class ExtractorBlockEntity extends AbstractExtractorBlockEntity {
     }
 
     @Override
-    protected AbstractContainerMenu createMenu(int pId, Inventory pPlayer) {
+    protected @NotNull AbstractContainerMenu createMenu(int pId, Inventory pPlayer) {
         return new ExtractorMenu(pId, pPlayer, this, this.dataAccess);
     }
 }

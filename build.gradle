@@ -3,7 +3,7 @@ plugins {
     id 'eclipse'
     id 'idea'
     id 'maven-publish'
-    id 'net.neoforged.gradle.userdev' version '7.0.145'
+    id 'net.neoforged.gradle.userdev' version '7.0.181'
 }
 
 tasks.named('wrapper', Wrapper).configure {
@@ -26,20 +26,20 @@ repositories {
 
     // JEI
     maven {
-        name 'JEI Maven'
-        url 'https://maven.blamejared.com'
+        name = 'JEI Maven'
+        url = 'https://maven.blamejared.com'
     }
 
     // JEI (fallback)
     maven {
-        name 'ModMaven'
-        url 'https://modmaven.dev'
+        name = 'ModMaven'
+        url = 'https://modmaven.dev'
     }
 
     // CF Maven
     maven {
-        name 'Curse Maven'
-        url 'https://www.cursemaven.com'
+        name = 'Curse Maven'
+        url = 'https://www.cursemaven.com'
         content {
             includeGroup 'curse.maven'
         }
@@ -191,7 +191,7 @@ publishing {
     }
     repositories {
         maven {
-            url "file://${project.projectDir}/repo"
+            url = "file://${project.projectDir}/repo"
         }
     }
 

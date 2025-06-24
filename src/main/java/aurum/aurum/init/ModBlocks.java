@@ -2,10 +2,13 @@ package aurum.aurum.init;
 
 
 import aurum.aurum.block.*;
+import aurum.aurum.block.SoulModificationTable.SoulModificationTableBlock;
 import aurum.aurum.block.engineering.*;
+import aurum.aurum.block.engineering.ArmorTable.ArmorTableBlock;
 import aurum.aurum.block.engineering.EnergyGeneratorBlock.EnergyGeneratorBlock;
 import aurum.aurum.block.engineering.EnergyStorageBlock.EnergyStorageBlock;
 import aurum.aurum.block.engineering.ExtractorBlock.ExtractorBlock;
+import aurum.aurum.block.engineering.PedestalBlock.PedestalBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.player.Player;
@@ -48,6 +51,9 @@ public class ModBlocks {
 
     public static final DeferredBlock<Block> WITHERED_GRASS_BLOCK = registerBlock("withered_grass_block", WitheredGrassBlock::new);
 
+    public static final DeferredBlock<Block> DRY_WITHERED_GRASS_BLOCK = registerBlock("dry_withered_grass_block", DryWitheredGrassBlock::new);
+    public static final DeferredBlock<Block> DRY_WITHERED_DIRT_BLOCK = registerBlock("dry_withered_dirt_block", DryWitheredDirtBlock::new);
+
     public static final DeferredBlock<Block> ANCIENT_AURUM_DIRT_BLOCK = registerBlock("ancient_aurum_dirt_block",
             () -> new Block(BlockBehaviour.Properties.of()
                     .strength(4f).requiresCorrectToolForDrops().sound(SoundType.GRASS)));
@@ -73,10 +79,10 @@ public class ModBlocks {
 
     public static final DeferredBlock<Block> PIPE_BLOCK = registerBlock("pipe", PipeBlock::new);
     public static final DeferredBlock<Block> PANEL_BLOCK = registerBlock("panel", PipeBlock::new);
-    public static final DeferredBlock<Block> EXTRACTOR_BLOCK = registerBlock("extractor", ExtractorBlock::new);
+    public static final DeferredBlock<Block> EXTRACTOR_BLOCK = registerBlock("extractor_block", ExtractorBlock::new);
     public static final DeferredBlock<Block> ENERGY_STORAGE_BLOCK = registerBlock("energy_storage_block", EnergyStorageBlock::new);
-    public static final DeferredBlock<Block> RESOURCE_STORAGE_BLOCK = registerBlock("resource_storage", ResourceStorageBlock::new);
     public static final DeferredBlock<Block> ENERGY_GENERATOR_BLOCK = registerBlock("energy_generator_block",  EnergyGeneratorBlock::new);
+    public static final DeferredBlock<Block> ARMOR_TABLE_BLOCK = registerBlock("armor_table_block", ArmorTableBlock::new);
 
 
 
@@ -109,10 +115,11 @@ public class ModBlocks {
     );
 
 
+    public static final DeferredBlock<Block> PEDESTAL = registerBlock("pedestal",
+            () -> new PedestalBlock(BlockBehaviour.Properties.of().noOcclusion()));
 
 
-
-
+    public static final DeferredBlock<Block> SOUL_MODIFICATION_TABLE_BLOCK = registerBlock("soul_modification_table_block", SoulModificationTableBlock::new);
 
 
 
