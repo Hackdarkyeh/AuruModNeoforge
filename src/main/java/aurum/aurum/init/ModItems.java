@@ -12,6 +12,7 @@ import aurum.aurum.item.ExtractorPeakTier.ExtractorPeakUpdaterTier1;
 import aurum.aurum.item.ExtractorPeakTier.ExtractorPeakUpdaterTier2;
 import aurum.aurum.item.ExtractorPeakTier.ExtractorPeakUpdaterTier3;
 import aurum.aurum.item.RangeExtractor.*;
+import aurum.aurum.item.Swords.AureliteSword;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.Item;
@@ -89,6 +90,6 @@ public class ModItems {
     public static final Supplier<Item> EXPANSION_SOUL_TOTEM_2 = ITEMS_REGISTRY.register("expansion_soul_totem_2", () -> new SoulExpansions(2, 1000, 200));
     public static final Supplier<Item> EXPANSION_SOUL_TOTEM_3 = ITEMS_REGISTRY.register("expansion_soul_totem_3", () -> new SoulExpansions(3, 1000000, 300));
 
-
+    public static final Supplier<Item> AURELITE_SWORD = ITEMS_REGISTRY.register("aurelite_sword", AureliteSword::new);
 
 }

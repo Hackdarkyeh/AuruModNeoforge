@@ -5,7 +5,7 @@ import net.minecraft.client.animation.AnimationDefinition;
 import net.minecraft.client.animation.Keyframe;
 import net.minecraft.client.animation.KeyframeAnimations;
 
-public class ModAnimationDefinitions {
+public class CooperGolemAnimationDefinitions {
 
 
 

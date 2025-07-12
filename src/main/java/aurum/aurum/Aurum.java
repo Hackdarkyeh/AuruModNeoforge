@@ -4,11 +4,11 @@ import aurum.aurum.Commands.AurumBlightCommands;
 import aurum.aurum.block.SoulModificationTable.SoulModificationTableBlockEntityRenderer;
 import aurum.aurum.block.engineering.PedestalBlock.PedestalBlockEntityRenderer;
 import aurum.aurum.client.renderer.CooperGolemRenderer;
+import aurum.aurum.client.renderer.SoreRenderer;
 import aurum.aurum.eventHandler.ArmorExpEventHandler;
 import aurum.aurum.eventHandler.AurumBlightRain;
 import aurum.aurum.init.*;
 import aurum.aurum.init.GUI.ModMenuType;
-import aurum.aurum.init.GUI.ModScreens;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
@@ -142,6 +142,7 @@ public class Aurum {
             LOGGER.info("NOMBRE DE MINECRAFT >> {}", Minecraft.getInstance().getUser().getName());
             LOGGER.info("Pack de recursos activos DE MINECRAFT >> {}", Minecraft.getInstance().getDownloadedPackSource());
             EntityRenderers.register(ModEntities.COOPER_GOLEM.get(), CooperGolemRenderer::new);
+            EntityRenderers.register(ModEntities.SORE_BOSS.get(), SoreRenderer::new);
             ItemBlockRenderTypes.setRenderLayer(ENERGY_STORAGE_BLOCK.get(), RenderType.translucent());
         }
 
@@ -208,6 +209,7 @@ public class Aurum {
                 output.accept(EXPANSION_SOUL_TOTEM_3.get());
                 output.accept(SOUL_MODIFICATION_TABLE_BLOCK.get());
                 output.accept(PEDESTAL.get());
+                output.accept(AURELITE_SWORD.get());
             }).build());
 
 

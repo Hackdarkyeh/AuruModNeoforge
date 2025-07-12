@@ -9,10 +9,10 @@ import aurum.aurum.Aurum;
 import aurum.aurum.entity.CooperGolemEntity;
 
 
+import aurum.aurum.entity.SoreBoss.SoreBossEntity;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.EntityType;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 import java.util.function.Supplier;
@@ -27,6 +27,9 @@ public class ModEntities {
                     .sized(0.6f, 1.45f)
                     .build("cooper_golem"));
 
-
+    public static final Supplier<EntityType<SoreBossEntity>> SORE_BOSS = ENTITY_REGISTER.register("sore_boss",
+            () -> EntityType.Builder.of(SoreBossEntity::new, MobCategory.MONSTER)
+                    .sized(1.0f, 2.0f)
+                    .build("sore_boss"));
 }
 

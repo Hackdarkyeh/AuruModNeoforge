@@ -5,17 +5,14 @@ package aurum.aurum.client.model;
 // Paste this class into your mod and generate all required imports
 
 
-import aurum.aurum.Aurum;
-import aurum.aurum.client.animations.ModAnimationDefinitions;
+import aurum.aurum.client.animations.CooperGolemAnimationDefinitions;
 import aurum.aurum.entity.CooperGolemEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.model.HierarchicalModel;
-import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.*;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 
@@ -76,8 +73,8 @@ public class ModelCooperGolem<T extends Entity> extends HierarchicalModel<T> {
 	}
 
 	@Override
-	public void renderToBuffer(PoseStack poseStack, VertexConsumer vertexConsumer, int packedLight, int packedOverlay, int nose) {
-		golemcooper.render(poseStack, vertexConsumer, packedLight, packedOverlay);
+	public void renderToBuffer(PoseStack poseStack, VertexConsumer vertexConsumer, int packedLight, int packedOverlay, int color) {
+		golemcooper.render(poseStack, vertexConsumer, packedLight, packedOverlay, color);
 	}
 
 	@Override
@@ -90,10 +87,10 @@ public class ModelCooperGolem<T extends Entity> extends HierarchicalModel<T> {
 		this.root().getAllParts().forEach(ModelPart::resetPose);
 		this.applyHeadRotation(netHeadYaw, headPitch, ageInTicks);
 
-		this.animateWalk(ModAnimationDefinitions.walk, limbSwing, limbSwingAmount, 2f, 2.5f);
-		this.animate(((CooperGolemEntity) entity).idleAnimationState, ModAnimationDefinitions.idle, ageInTicks, 1f);
-		this.animate(((CooperGolemEntity) entity).attackAnimationState, ModAnimationDefinitions.attack, ageInTicks, 1f);
-		this.animate(((CooperGolemEntity) entity).channelraysAnimationState, ModAnimationDefinitions.channelrays, ageInTicks, 1f);
+		this.animateWalk(CooperGolemAnimationDefinitions.walk, limbSwing, limbSwingAmount, 2f, 2.5f);
+		this.animate(((CooperGolemEntity) entity).idleAnimationState, CooperGolemAnimationDefinitions.idle, ageInTicks, 1f);
+		this.animate(((CooperGolemEntity) entity).attackAnimationState, CooperGolemAnimationDefinitions.attack, ageInTicks, 1f);
+		this.animate(((CooperGolemEntity) entity).channelraysAnimationState, CooperGolemAnimationDefinitions.channelrays, ageInTicks, 1f);
 	}
 
 	private void applyHeadRotation(float pNetHeadYaw, float pHeadPitch, float pAgeInTicks){

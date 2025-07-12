@@ -2,25 +2,31 @@ package aurum.aurum.energy;
 
 import net.minecraft.nbt.CompoundTag;
 
+import java.lang.reflect.Field;
+
 public class EnergyStorage implements IEnergyStorage {
     private float energyStored;
-    private final float maxEnergy;
+    private float maxEnergyStored;
     private final int transfer;
     private final int maxTransfer;
     private final int maxReceive;
 
     public EnergyStorage(int maxEnergy, int transfer, int maxTransfer, int maxReceive) {
-        this.maxEnergy = maxEnergy;
+        this.maxEnergyStored = maxEnergy;
         this.transfer = transfer;
         this.maxTransfer = maxTransfer;
         this.maxReceive = maxReceive;
         this.energyStored = 0;
     }
 
+    public void setMaxEnergyStored(float maxEnergyStored) {
+        this.maxEnergyStored = maxEnergyStored;
+    }
+
     @Override
     public float addEnergy(float amount, boolean simulate) {
         // Calcula la cantidad máxima de energía que se puede añadir
-        float energyToAdd = Math.min(amount, this.maxEnergy - this.energyStored);
+        float energyToAdd = Math.min(amount, this.maxEnergyStored - this.energyStored);
 
         // Si no es una simulación, actualiza el almacenamiento de energía
         if (!simulate) {
@@ -34,7 +40,7 @@ public class EnergyStorage implements IEnergyStorage {
     @Override
     public float consumeEnergy(float energy, boolean simulate) {
         // Calcula la cantidad máxima de energía que se puede extraer
-        float energyExtracted = Math.min(energyStored, Math.min(maxEnergy, energy));
+        float energyExtracted = Math.min(energyStored, Math.min(maxEnergyStored, energy));
 
         if (!simulate) {
             // Actualiza el almacenamiento de energía si no es una simulación
@@ -52,7 +58,7 @@ public class EnergyStorage implements IEnergyStorage {
 
     @Override
     public float getMaxEnergyStored() {
-        return maxEnergy;
+        return maxEnergyStored;
     }
 
     @Override
@@ -67,12 +73,46 @@ public class EnergyStorage implements IEnergyStorage {
 
     @Override
     public CompoundTag saveEnergyToTag(CompoundTag tag) {
-        return null;
+        // Si el tag es null, creamos uno nuevo
+        if (tag == null) {
+            tag = new CompoundTag();
+        }
+
+        // Guardamos todos los valores importantes
+        tag.putFloat("Energy", this.energyStored);
+        tag.putFloat("MaxEnergy", this.maxEnergyStored);
+        tag.putInt("Transfer", this.transfer);
+        tag.putInt("MaxTransfer", this.maxTransfer);
+        tag.putInt("MaxReceive", this.maxReceive);
+
+        return tag;
     }
 
     @Override
     public void loadEnergyFromTag(CompoundTag tag) {
+        if (tag == null) return;
 
+        // Cargamos los valores guardados
+        this.energyStored = tag.getFloat("Energy");
+        this.maxEnergyStored = tag.getFloat("MaxEnergy");
+
+        // Estos valores son final, pero los cargamos por si acaso
+        // (en caso de que se use reflexión o similar)
+        try {
+            Field transferField = this.getClass().getDeclaredField("transfer");
+            transferField.setAccessible(true);
+            transferField.setInt(this, tag.getInt("Transfer"));
+
+            Field maxTransferField = this.getClass().getDeclaredField("maxTransfer");
+            maxTransferField.setAccessible(true);
+            maxTransferField.setInt(this, tag.getInt("MaxTransfer"));
+
+            Field maxReceiveField = this.getClass().getDeclaredField("maxReceive");
+            maxReceiveField.setAccessible(true);
+            maxReceiveField.setInt(this, tag.getInt("MaxReceive"));
+        } catch (Exception e) {
+            System.err.println("Failed to load final fields from NBT: " + e.getMessage());
+        }
     }
 
     @Override
@@ -98,6 +138,6 @@ public class EnergyStorage implements IEnergyStorage {
 
     @Override
     public float getRemainingCapacity() {
-        return maxEnergy - energyStored;
+        return maxEnergyStored - energyStored;
     }
 }
