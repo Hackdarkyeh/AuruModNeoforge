@@ -4,7 +4,6 @@ import aurum.aurum.block.engineering.ArmorTable.AbstractArmorTableBlockEntity;
 import aurum.aurum.block.engineering.EnergyStorageBlock.EnergyStorageBlock;
 import aurum.aurum.block.engineering.EnergyStorageBlock.EnergyStorageBlockEntity;
 import aurum.aurum.block.engineering.ExtractorBlock.AbstractExtractorBlockEntity;
-import aurum.aurum.block.engineering.ExtractorBlock.ExtractorBlockEntity;
 import aurum.aurum.block.engineering.PipeBlock;
 import aurum.aurum.init.ModItems;
 import com.google.common.collect.Lists;
@@ -336,27 +335,27 @@ public abstract class AbstractEnergyGeneratorBlockEntity extends BaseContainerBl
         if (hasEnergyGeneratorUpdater){
             if (energy_generator_updater.getItem() == ModItems.ENERGY_GENERATOR_UPDATER_TIER1.get()){
                 pBlockEntity.energyGeneratedPerTick = 2;
-                pBlockEntity.energyTransferPerTick = 2;
+                pBlockEntity.energyTransferPerTick = 200;
                 pBlockEntity.MINENERGYCAPACITY = 200;
             }
             else if (energy_generator_updater.getItem() == ModItems.ENERGY_GENERATOR_UPDATER_TIER2.get()){
                 pBlockEntity.energyGeneratedPerTick = 3;
-                pBlockEntity.energyTransferPerTick = 3;
+                pBlockEntity.energyTransferPerTick = 300;
                 pBlockEntity.MINENERGYCAPACITY = 300;
             }
             else if (energy_generator_updater.getItem() == ModItems.ENERGY_GENERATOR_UPDATER_TIER3.get()){
                 pBlockEntity.energyGeneratedPerTick = 4;
-                pBlockEntity.energyTransferPerTick = 4;
+                pBlockEntity.energyTransferPerTick = 400;
                 pBlockEntity.MINENERGYCAPACITY = 400;
             }
             else if (energy_generator_updater.getItem() == ModItems.ENERGY_GENERATOR_UPDATER_TIER4.get()){
                 pBlockEntity.energyGeneratedPerTick = 5;
-                pBlockEntity.energyTransferPerTick = 5;
-                pBlockEntity.MINENERGYCAPACITY = 500;
+                pBlockEntity.energyTransferPerTick = 50;
+                pBlockEntity.MINENERGYCAPACITY = 800;
             }
         }else{
             pBlockEntity.energyGeneratedPerTick = 1;
-            pBlockEntity.energyTransferPerTick = 1;
+            pBlockEntity.energyTransferPerTick = 100;
             pBlockEntity.MINENERGYCAPACITY = 100;
         }
 
@@ -609,10 +608,6 @@ public abstract class AbstractEnergyGeneratorBlockEntity extends BaseContainerBl
 
 
 
-
-
-
-
     private void detectAdjacentBlocksGradual() {
         Queue<BlockPos> queue = new LinkedList<>();
         Set<BlockPos> visited = new HashSet<>();
@@ -735,8 +730,8 @@ public abstract class AbstractEnergyGeneratorBlockEntity extends BaseContainerBl
             if (storageEntity instanceof EnergyStorageBlockEntity storage) {
                 if (storage.getEnergyStored() >= 0) {
                     if (extractor.energyStored < extractor.energyCapacity) {
-                        extractor.energyStored += 1;
-                        storage.consumeEnergy(1, false);
+                        extractor.energyStored += energyTransferPerTick;
+                        storage.consumeEnergy(energyTransferPerTick, false);
                         if (storage.getEnergyStored() <= 0) {
                             break;
                         }
@@ -752,8 +747,8 @@ public abstract class AbstractEnergyGeneratorBlockEntity extends BaseContainerBl
             if (storageEntity instanceof EnergyStorageBlockEntity storage) {
                 if (storage.getEnergyStored() >= 0) {
                     if (armorTable.energyStored < armorTable.energyCapacity) {
-                        armorTable.energyStored += 1;
-                        storage.consumeEnergy(1, false);
+                        armorTable.energyStored += energyTransferPerTick;
+                        storage.consumeEnergy(energyTransferPerTick, false);
                         if (storage.getEnergyStored() <= 0) {
                             break;
                         }

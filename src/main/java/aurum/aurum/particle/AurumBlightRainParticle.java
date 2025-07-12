@@ -1,71 +1,82 @@
 package aurum.aurum.particle;
 
-
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.SimpleParticleType;
-import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.world.level.levelgen.Heightmap;
-
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.NotNull;
 
-@OnlyIn(Dist.CLIENT)
 public class AurumBlightRainParticle extends TextureSheetParticle {
+    // Configuración ajustable
+    private static final float GRAVITY = 0.5F;
+    private static final float BASE_SIZE = 0.2F;
+    private static final int BASE_LIFETIME = 20;
+    private static final float FADE_START = 0.8F; // 80% del lifetime
+
+    private final SpriteSet sprites;
 
     public static AurumBlightRainParticleProvider provider(SpriteSet spriteSet) {
         return new AurumBlightRainParticleProvider(spriteSet);
     }
 
     public static class AurumBlightRainParticleProvider implements ParticleProvider<SimpleParticleType> {
-        private final SpriteSet spriteSet;
+        private final SpriteSet sprites;
 
-        public AurumBlightRainParticleProvider(SpriteSet spriteSet) {
-            this.spriteSet = spriteSet;
+        public AurumBlightRainParticleProvider(SpriteSet sprites) {
+            this.sprites = sprites;
         }
 
         @Override
-        public Particle createParticle(SimpleParticleType typeIn, ClientLevel worldIn, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
-            return new AurumBlightRainParticle(worldIn, x, y, z, xSpeed, ySpeed, zSpeed, this.spriteSet);
+        public Particle createParticle(SimpleParticleType type, ClientLevel level,
+                                       double x, double y, double z,
+                                       double xSpeed, double ySpeed, double zSpeed) {
+            return new AurumBlightRainParticle(level, x, y, z, xSpeed, ySpeed, zSpeed, this.sprites);
         }
     }
 
-    private final SpriteSet spriteSet;
-
-
-    protected AurumBlightRainParticle(ClientLevel level, double x, double y, double z, double xd, double yd, double zd, SpriteSet spriteSet) {
+    protected AurumBlightRainParticle(ClientLevel level, double x, double y, double z,
+                                      double xd, double yd, double zd, SpriteSet sprites) {
         super(level, x, y, z, xd, yd, zd);
-        this.gravity = 30.0F; // Gravedad aplicada a la partícula
-        this.friction = 0.2F; // Fricción que afecta el movimiento
-        this.xd = xd;
-        this.yd = yd;
-        this.zd = zd;
-        this.quadSize *= 1.5F; // Tamaño de la partícula
-        this.lifetime = 360; // Duración de la partícula
-        this.setSize(0.01F, 0.01F); // Tamaño de la partícula
-        this.pickSprite(spriteSet);
-        this.spriteSet = spriteSet;
+        this.sprites = sprites;
+
+        // Configuración física
+        this.gravity = GRAVITY;
+        this.friction = 0.98F;
+
+        // Apariencia
+        this.quadSize = BASE_SIZE * (0.8F + random.nextFloat() * 0.4F); // Variación de tamaño
+        this.lifetime = (int)(BASE_LIFETIME * (0.8 + random.nextDouble() * 0.4));
+        this.setSpriteFromAge(sprites);
+
+        // Movimiento inicial
+        this.xd = xd * 0.1;
+        this.yd = yd * 1.5; // Acelera la caída
+        this.zd = zd * 0.1;
     }
 
     @Override
     public void tick() {
-        this.setSpriteFromAge(spriteSet);
         super.tick();
-        int groundHeight = level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, new BlockPos((int) x, 0, (int) z)).getY();
 
+        // Actualizar sprite según edad
+        this.setSpriteFromAge(sprites);
 
-        if (y <= groundHeight) {
-            this.remove(); // Remover la partícula cuando su vida termine
+        // Efecto de desvanecimiento
+        if (this.age >= this.lifetime * FADE_START) {
+            this.alpha = 1.0F - (float)(this.age - this.lifetime * FADE_START) / (float)(this.lifetime * (1.0F - FADE_START));
+        }
+
+        // Verificar colisión con el suelo
+        BlockPos pos = BlockPos.containing(this.x, this.y, this.z);
+        if (this.onGround || this.level.getBlockState(pos).isSolid()) {
+            this.remove();
         }
     }
 
     @Override
     public @NotNull ParticleRenderType getRenderType() {
-        return ParticleRenderType.PARTICLE_SHEET_OPAQUE; // Tipo de renderizado
+        return ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT;
     }
-
 }
-
-
-
