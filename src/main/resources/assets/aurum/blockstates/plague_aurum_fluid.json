@@ -1,7 +1,7 @@
 {
   "variants": {
-    "": {
-      "model": "aurum:block/plague_aurum_fluid"
-    }
+    "": { "model": "aurum:block/plague_aurum_fluid" }
   }
 }
+
+

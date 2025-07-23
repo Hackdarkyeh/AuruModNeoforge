@@ -13,7 +13,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 public class AurumBucketItem  extends BucketItem {
     private final int energyStored; // Energía que almacena este cubo
     public AurumBucketItem() {
-        super(ModFluids.AURUMROSA.get(), new Item.Properties().craftRemainder(Items.BUCKET).stacksTo(1).rarity(Rarity.RARE));
+        super(ModFluids.AURUM_ROSA.get(), new Item.Properties().craftRemainder(Items.BUCKET).stacksTo(1).rarity(Rarity.RARE));
         this.energyStored = 10; // Asigna la energía que contiene el cubo
     }
 

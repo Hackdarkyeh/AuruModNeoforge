@@ -35,33 +35,55 @@ public class RetaliateAgainstAttackersGoal extends TargetGoal {
         minionSpawns.put("minecraft:skeleton", 1);
     }
 
+    // En RetaliateAgainstAttackersGoal.java
     @Override
     public boolean canUse() {
-        if (cooldown-- > 0) return false;
 
         LivingEntity currentTarget = mob.getTarget();
         LivingEntity attacker = mob.getLastHurtByMob();
 
-        if (attacker == null) return false;
+        // Obtener una lista de atacantes recientes (requiere una nueva propiedad en SoreBossEntity)
+        // Por ejemplo, List<LivingEntity> recentAttackers = ((SoreBossEntity)mob).getRecentAttackers();
+        // int numberOfAttackers = recentAttackers.size();
 
-        // Caso 1: No hay objetivo actual
-        if (currentTarget == null) {
-            return true;
+        if (attacker == null) {
+            // Si no hay un último atacante, verificar si hay un objetivo actual válido
+            if (currentTarget != null && currentTarget.isAlive() && currentTarget.isAttackable()) {
+                return false; // Continúa con el objetivo actual si es válido
+            }
+            return false; // No hay atacante y no hay objetivo válido
         }
 
-        // Caso 2: Comparar fuerza de los objetivos
-        float currentTargetPower = calculateEntityPower(currentTarget);
-        float attackerPower = calculateEntityPower(attacker);
-
-        if (attackerPower < currentTargetPower) {
-            spawnMinions(attacker, 1); // Invoca aliados para el atacante débil
+        // Si el atacante es el objetivo actual y es válido, no hay necesidad de cambiar
+        if (currentTarget == attacker && attacker.isAlive() && attacker.isAttackable()) {
             return false;
-        } else if (attackerPower > currentTargetPower) {
-            spawnMinions(mob, 2); // Invoca refuerzos para Sore
-            return true;
         }
 
-        return false;
+        // Si el atacante no es válido, intentar encontrar otro objetivo o salir
+        if (!attacker.isAlive() || !attacker.isAttackable()) {
+            mob.setLastHurtByMob(null); // Limpiar atacante inválido
+            return false;
+        }
+
+        // Caso 1: No hay objetivo actual o el objetivo actual es inválido/débil
+        if (cooldown-- > 0 ) {
+            if (currentTarget == null || !currentTarget.isAlive() || !currentTarget.isAttackable() ||
+                    calculateEntityPower(attacker) > calculateEntityPower(currentTarget) * 1.2) { // Atacante significativamente más fuerte
+                this.mob.setTarget(attacker);
+                spawnMinions(mob, 1); // Invoca refuerzos para Sore
+                cooldown = 150; // 7.5 segundos de cooldown 
+                return true;
+            }
+
+            // Caso 2: El atacante es "fuerte" pero no lo suficiente para cambiar el objetivo
+            if (calculateEntityPower(attacker) > calculateEntityPower(currentTarget) * 0.8) { // Atacante comparable
+                spawnMinions(mob, 1); // Invoca un aliado para Sore
+                cooldown = 150;
+                return false; // No cambia de objetivo principal, pero invoca
+            }
+
+        }
+        return false; // No cambia de objetivo
     }
 
     private float calculateEntityPower(LivingEntity entity) {

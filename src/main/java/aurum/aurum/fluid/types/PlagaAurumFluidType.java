@@ -1,9 +1,15 @@
 package aurum.aurum.fluid.types;
 
 import aurum.aurum.init.ModFluidTypes;
+import com.mojang.blaze3d.shaders.FogShape;
+import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.Camera;
+import net.minecraft.client.renderer.FogRenderer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.Rarity;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.pathfinder.PathType;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -23,7 +29,8 @@ public class PlagaAurumFluidType extends FluidType {
     @SubscribeEvent
     public static void registerFluidTypeExtensions(RegisterClientExtensionsEvent event) {
         event.registerFluidType(new IClientFluidTypeExtensions() {
-            private static final ResourceLocation STILL_TEXTURE = ResourceLocation.parse("aurum:block/plague_aurum_fluid"), FLOWING_TEXTURE = ResourceLocation.parse("aurum:block/flowing_plague_aurum_fluid");
+            private static final ResourceLocation STILL_TEXTURE = ResourceLocation.parse("aurum:block/plague_aurum_fluid_overlay"),
+                    FLOWING_TEXTURE = ResourceLocation.parse("aurum:block/plague_aurum_fluid_flow");
 
             @Override
             public ResourceLocation getStillTexture() {
@@ -34,6 +41,18 @@ public class PlagaAurumFluidType extends FluidType {
             public ResourceLocation getFlowingTexture() {
                 return FLOWING_TEXTURE;
             }
+
+            @Override
+            public void modifyFogRender(Camera camera, FogRenderer.FogMode mode, float renderDistance, float partialTick, float nearDistance, float farDistance, FogShape shape) {
+                Entity entity = camera.getEntity();
+                Level world = entity.level();
+                RenderSystem.setShaderFogShape(FogShape.SPHERE);
+                RenderSystem.setShaderFogStart(0f);
+                RenderSystem.setShaderFogEnd(Math.min(48f, renderDistance));
+            }
+
+
         }, ModFluidTypes.AURUMROSA_TYPE.get());
     }
 }
+

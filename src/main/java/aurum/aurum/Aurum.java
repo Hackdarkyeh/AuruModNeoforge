@@ -162,7 +162,9 @@ public class Aurum {
             .displayItems((parameters, output) -> {
                 output.accept(EXAMPLE_ITEM.get()); // Añade el item de ejemplo a la pestaña. Para tus propias pestañas, este método es preferido sobre el evento
                 output.accept(WITHERED_GRASS_BLOCK.get()); // Añade el item de bloque de ejemplo a la pestaña
+                output.accept(FROZEN_WITHERED_GRASS_BLOCK.get()); // Añade el item de hierba marchita congelada a la pestaña
                 output.accept(WITHERED_DIRT_BLOCK.get()); // Añade el item de bloque de tierra marchita a la pestaña
+                output.accept(FROZEN_WITHERED_DIRT_BLOCK.get()); // Añade el item de bloque de tierra marchita congelada a la pestaña
                 output.accept(ANCIENT_AURUM_GRASS_BLOCK.get()); // Añade el item de hierba de Aurum a la pestaña
                 output.accept(ANCIENT_AURUM_DIRT_BLOCK.get()); // Añade el item de tierra de Aurum a la pestaña
                 output.accept(DRY_WITHERED_GRASS_BLOCK.get()); // Añade el item de hierba marchita seca a la pestaña

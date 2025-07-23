@@ -28,16 +28,14 @@ public class SorePhase2Goal extends Goal {
     @Override
     public void tick() {
         // Cambio dinámico de armas
-        if (switchCooldown-- <= 0) {
+        if (switchCooldown-- <= 0 && boss.getTarget() != null) {
             LivingEntity target = boss.getTarget();
             if (target != null) {
                 double distance = boss.distanceTo(target);
 
                 if (distance < 3) {
                     boss.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.NETHERITE_SWORD));
-                } else if (distance < 10) {
-                    boss.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.BOW));
-                } else {
+                } else if (distance > 3) {
                     boss.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.TRIDENT));
                 }
                 switchCooldown = 40;
@@ -50,12 +48,12 @@ public class SorePhase2Goal extends Goal {
         }
     }
 
+    // En SorePhase2Goal.java - en shootLightning()
     private void shootLightning() {
         LivingEntity target = boss.getTarget();
         if (target != null) {
-            LightningBolt lightning = new LightningBossLightning(EntityType.LIGHTNING_BOLT, boss.level());
-            lightning.moveTo(target.getX(), target.getY(), target.getZ());
-            boss.level().addFreshEntity(lightning);
+            // Usa el método estático de LightningBossLightning para asegurar que el owner se pase correctamente
+            LightningBossLightning.spawn(boss, target.position()); //
         }
     }
 }

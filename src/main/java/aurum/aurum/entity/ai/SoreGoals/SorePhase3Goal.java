@@ -1,6 +1,7 @@
 package aurum.aurum.entity.ai.SoreGoals;
 
 import aurum.aurum.entity.SoreBoss.SoreBossEntity;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -77,12 +78,28 @@ public class SorePhase3Goal extends Goal {
         }
     }
 
+    // En SorePhase3Goal.java
     private Vec3 findSafeTeleportPosition() {
-        // Lógica para encontrar posición segura
-        return boss.position().add(
-                boss.getRandom().nextGaussian() * 5,
-                0,
-                boss.getRandom().nextGaussian() * 5
-        );
+        // Lógica mejorada para encontrar posición segura
+        for (int i = 0; i < 10; i++) {
+            double randX = boss.getX() + (boss.getRandom().nextDouble() * 16.0 - 8.0);
+            double randY = boss.getY() + (boss.getRandom().nextDouble() * 8.0 - 4.0);
+            double randZ = boss.getZ() + (boss.getRandom().nextDouble() * 16.0 - 8.0);
+            Vec3 testPos = new Vec3(randX, randY, randZ);
+
+            // Convierte Vec3 a BlockPos para obtener el estado del bloque
+            BlockPos posDebajo = BlockPos.containing(testPos); // Bloque directamente debajo de donde estaría la entidad
+            BlockPos posCuerpo = BlockPos.containing(testPos); // Bloque a la altura del cuerpo de la entidad
+            BlockPos posCabeza = BlockPos.containing(testPos.x(), testPos.y() + 1.0, testPos.z()); // Bloque por encima de la cabeza
+
+            // Simple check: Que el bloque debajo sea sólido y haya espacio para el cuerpo del jefe.
+            // isCollisionShapeFullBlock(LevelReader, BlockPos) es la forma moderna de comprobar la "solidez" para la colisión.
+            if (boss.level().getBlockState(posDebajo).isCollisionShapeFullBlock(boss.level(), posDebajo) && // Que tenga un bloque sólido debajo
+                    !boss.level().getBlockState(posCuerpo).isCollisionShapeFullBlock(boss.level(), posCuerpo) && // Que no esté dentro de un bloque sólido a la altura de los pies
+                    !boss.level().getBlockState(posCabeza).isCollisionShapeFullBlock(boss.level(), posCabeza)) { // Que haya espacio para el cuerpo (arriba de los pies)
+                return testPos;
+            }
+        }
+        return boss.position(); // Fallback si no encuentra una posición segura después de 10 intentos
     }
 }

@@ -23,28 +23,26 @@ public class SorePhase1Goal extends Goal {
         return boss.getCurrentPhase() == 1;
     }
 
+    // En SorePhase1Goal.java
     @Override
     public void tick() {
-        super.tick(); // No olvides llamar al super.tick()
+        super.tick();
+        LivingEntity target = boss.getTarget();
 
-        LivingEntity target = boss.getTarget(); // Obtiene el objetivo actual (jugador)
-
-        // Solo ejecutar ataques si hay un objetivo (jugador) y está vivo
         if (target != null && target.isAlive()) {
-            // Teletransporte defensivo cuando la salud es baja y está siendo atacado
-            if (teleportCooldown-- <= 0 &&
-                    boss.getHealth() < boss.getMaxHealth() * 0.1 &&
-                    boss.hurtTime > 0) { // hurtTime > 0 indica que recibió daño recientemente
+            // Teletransporte defensivo
+            if (teleportCooldown-- <= 0 && (boss.getHealth() < boss.getMaxHealth() * 0.2 || boss.hurtTime > 0)) { // Más flexible
                 teleportAwayFromDanger();
-                teleportCooldown = 100;
+                teleportCooldown = 100 + boss.getRandom().nextInt(50);
             }
 
-            // Ataque con TNT cuando está seguro (no ha recibido daño recientemente)
-            if (tntCooldown-- <= 0 &&
-                    boss.getRandom().nextFloat() < 0.3f &&
-                    boss.hurtTime == 0) { // hurtTime == 0 indica que no recibió daño recientemente
-                launchTNT();
-                tntCooldown = 200;
+            // Ataque con TNT: Más propenso si está rodeado o el target está cerca.
+            if (tntCooldown-- <= 0 && boss.getRandom().nextFloat() < 0.2f) { // Menor probabilidad, pero siempre posible
+                // Si el jugador está cerca o hay múltiples entidades cerca
+                if (boss.distanceTo(target) < 5 || boss.level().getEntitiesOfClass(LivingEntity.class, boss.getBoundingBox().inflate(5), e -> e != boss && e.isAttackable()).size() > 2) {
+                    launchTNT();
+                    tntCooldown = 150 + boss.getRandom().nextInt(50);
+                }
             }
         }
     }

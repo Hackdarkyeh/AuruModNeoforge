@@ -11,7 +11,8 @@ import net.minecraft.world.level.material.FluidState;
 import net.neoforged.neoforge.fluids.BaseFlowingFluid;
 
 public abstract class PlagaAurumFluid extends BaseFlowingFluid {
-    public static final BaseFlowingFluid.Properties PROPERTIES = new BaseFlowingFluid.Properties(() -> ModFluidTypes.AURUMROSA_TYPE.get(), () -> ModFluids.AURUMROSA.get(), () -> ModFluids.FLOWING_AURUMROSA.get())
+    public static final BaseFlowingFluid.Properties PROPERTIES = new BaseFlowingFluid.Properties(() -> ModFluidTypes.AURUMROSA_TYPE.get(), () ->
+            ModFluids.AURUM_ROSA.get(), () -> ModFluids.FLOWING_AURUMROSA.get())
             .explosionResistance(100f).bucket(() -> ModItems.AURUMROSA_BUCKET.get()).block(() -> (LiquidBlock) ModBlocks.PLAGUE_AURUM_BLOCK.get());
 
     private PlagaAurumFluid() {

@@ -1,10 +1,10 @@
 {
-  "aquifers_enabled": true,
+  "aquifers_enabled": false,
   "default_block": {
     "Name": "minecraft:stone"
   },
   "default_fluid": {
-    "Name": "minecraft:lava",
+    "Name": "minecraft:air",
     "Properties": {
       "level": "0"
     }
@@ -194,7 +194,7 @@
     }
   },
   "ore_veins_enabled": false,
-  "sea_level": 20,
+  "sea_level": -64,
   "spawn_target": [
     {
       "continentalness": [
@@ -248,68 +248,6 @@
   "surface_rule": {
     "type": "minecraft:sequence",
     "sequence": [
-      {
-        "type": "minecraft:condition",
-        "if_true": {
-          "type": "minecraft:vertical_gradient",
-          "false_at_and_above": {
-            "above_bottom": 5
-          },
-          "random_name": "minecraft:bedrock_floor",
-          "true_at_and_below": {
-            "above_bottom": 0
-          }
-        },
-        "then_run": {
-          "type": "minecraft:condition",
-          "if_true": {
-            "type": "minecraft:not",
-            "invert": {
-              "type": "minecraft:biome",
-              "biome_is": [
-                "aurum:dim1_biome6_void_river"
-              ]
-            }
-          },
-          "then_run": {
-            "type": "minecraft:block",
-            "result_state": {
-              "Name": "minecraft:bedrock"
-            }
-          }
-        }
-      },
-      {
-        "type": "minecraft:condition",
-        "if_true": {
-          "type": "minecraft:vertical_gradient",
-          "false_at_and_above": {
-            "absolute": 8
-          },
-          "random_name": "minecraft:deepslate",
-          "true_at_and_below": {
-            "absolute": 0
-          }
-        },
-        "then_run": {
-          "type": "minecraft:condition",
-          "if_true": {
-            "type": "minecraft:not",
-            "invert": {
-              "type": "minecraft:biome",
-              "biome_is": [
-                "aurum:dim1_biome6_void_river"
-              ]
-            }
-          },
-          "then_run": {
-            "type": "minecraft:block",
-            "result_state": {
-              "Name": "minecraft:deepslate"
-            }
-          }
-        }
-      },
       {
         "type": "minecraft:condition",
         "if_true": {
@@ -396,6 +334,53 @@
                     "type": "minecraft:block",
                     "result_state": {
                       "Name": "aurum:withered_dirt_block"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "type": "minecraft:condition",
+        "if_true": {
+          "type": "minecraft:biome",
+          "biome_is": [
+            "aurum:dim1_biome4_blue"
+          ]
+        },
+        "then_run": {
+          "type": "minecraft:sequence",
+          "sequence": [
+            {
+              "type": "minecraft:condition",
+              "if_true": {
+                "type": "minecraft:above_preliminary_surface"
+              },
+              "then_run": {
+                "type": "minecraft:sequence",
+                "sequence": [
+                  {
+                    "type": "minecraft:condition",
+                    "if_true": {
+                      "type": "minecraft:stone_depth",
+                      "offset": 0,
+                      "surface_type": "floor",
+                      "add_surface_depth": false,
+                      "secondary_depth_range": 0
+                    },
+                    "then_run": {
+                      "type": "minecraft:block",
+                      "result_state": {
+                        "Name": "aurum:frozen_withered_grass_block"
+                      }
+                    }
+                  },
+                  {
+                    "type": "minecraft:block",
+                    "result_state": {
+                      "Name": "aurum:frozen_withered_dirt_block"
                     }
                   }
                 ]

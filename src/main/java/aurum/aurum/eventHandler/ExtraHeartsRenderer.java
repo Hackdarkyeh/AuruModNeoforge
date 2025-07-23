@@ -37,7 +37,7 @@ public class ExtraHeartsRenderer {
         Minecraft minecraft = Minecraft.getInstance();
         LocalPlayer player = minecraft.player;
 
-        if (player == null || player.isCreative()) return; // No renderizar corazones si el jugador está en creativo
+        if (player == null || player.isCreative() || player.isSpectator()) return; // No renderizar corazones si el jugador está en creativo
 
         int maxHealth = (int) player.getAttributeValue(Attributes.MAX_HEALTH);
 

@@ -50,6 +50,11 @@ public class ModBlocks {
                     .strength(4f).requiresCorrectToolForDrops().sound(SoundType.GRASS)));
 
     public static final DeferredBlock<Block> WITHERED_GRASS_BLOCK = registerBlock("withered_grass_block", WitheredGrassBlock::new);
+    public static final DeferredBlock<Block> FROZEN_WITHERED_GRASS_BLOCK = registerBlock("frozen_withered_grass_block", FrozenWitheredGrassBlock::new);
+
+    public static final DeferredBlock<Block> FROZEN_WITHERED_DIRT_BLOCK = registerBlock("frozen_withered_dirt_block",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(4f).requiresCorrectToolForDrops().sound(SoundType.GRASS)));
 
     public static final DeferredBlock<Block> DRY_WITHERED_GRASS_BLOCK = registerBlock("dry_withered_grass_block", DryWitheredGrassBlock::new);
     public static final DeferredBlock<Block> DRY_WITHERED_DIRT_BLOCK = registerBlock("dry_withered_dirt_block", DryWitheredDirtBlock::new);

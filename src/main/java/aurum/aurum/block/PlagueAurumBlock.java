@@ -13,7 +13,7 @@ import net.minecraft.world.level.material.PushReaction;
 
 public class PlagueAurumBlock extends LiquidBlock {
     public PlagueAurumBlock() {
-        super(ModFluids.AURUMROSA.get(), BlockBehaviour.Properties.of().mapColor(MapColor.FIRE).strength(100f).lightLevel(s -> 7).noCollission().noLootTable().liquid().pushReaction(PushReaction.DESTROY).sound(SoundType.EMPTY).replaceable());
+        super(ModFluids.AURUM_ROSA.get(), BlockBehaviour.Properties.of().mapColor(MapColor.FIRE).strength(100f).noCollission().noLootTable().liquid().pushReaction(PushReaction.DESTROY).sound(SoundType.EMPTY).replaceable());
     }
 
     @Override

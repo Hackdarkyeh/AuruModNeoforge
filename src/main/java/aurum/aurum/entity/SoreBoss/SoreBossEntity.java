@@ -115,15 +115,19 @@ public class SoreBossEntity extends Monster implements NeutralMob {
         };
     }
 
+    // En SoreBossEntity.java
     @Override
     public void registerGoals() {
-        // Comportamientos específicos por fase
+        this.goalSelector.addGoal(1, new MeleeAttackGoal(this, 1.0D, false));
+        // Permitir que el boss siempre tenga un objetivo
+        this.targetSelector.addGoal(1, new NearestAttackableTargetGoal<>(this, Player.class, true));
+        // Asegúrate de que la retalación no siempre sobreescriba el objetivo principal si ya hay uno
+        this.targetSelector.addGoal(2, new RetaliateAgainstAttackersGoal(this)); // Menor prioridad que NearestAttackableTargetGoal para jugadores
         this.goalSelector.addGoal(3, new SorePhase1Goal(this));
         this.goalSelector.addGoal(3, new SorePhase2Goal(this));
         this.goalSelector.addGoal(3, new SorePhase3Goal(this));
         this.goalSelector.addGoal(3, new SorePhase4Goal(this));
-        this.goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.0D, false));
-        this.targetSelector.addGoal(1, new NearestAttackableTargetGoal<>(this, Player.class, true));
-        this.targetSelector.addGoal(2, new RetaliateAgainstAttackersGoal(this));
+        this.goalSelector.addGoal(2, new SoreFlightGoal(this)); // Prioridad para el vuelo
+
     }
 }

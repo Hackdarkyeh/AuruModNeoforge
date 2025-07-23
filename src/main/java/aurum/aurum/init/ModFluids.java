@@ -17,7 +17,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 public class ModFluids {
     public static final DeferredRegister<Fluid> REGISTRY_FLUIDS = DeferredRegister.create(BuiltInRegistries.FLUID, Aurum.MODID);
 
-    public static final DeferredHolder<Fluid, FlowingFluid> AURUMROSA = REGISTRY_FLUIDS.register("plague_aurum_fluid", PlagaAurumFluid.Source::new);
+    public static final DeferredHolder<Fluid, FlowingFluid> AURUM_ROSA = REGISTRY_FLUIDS.register("plague_aurum_fluid", PlagaAurumFluid.Source::new);
     public static final DeferredHolder<Fluid, FlowingFluid> FLOWING_AURUMROSA = REGISTRY_FLUIDS.register("flowing_plague_aurum_fluid", PlagaAurumFluid.Flowing::new);
 
 
@@ -25,7 +25,7 @@ public class ModFluids {
     public static class FluidsClientSideHandler {
         @SubscribeEvent
         public static void clientSetup(FMLClientSetupEvent event) {
-            ItemBlockRenderTypes.setRenderLayer(AURUMROSA.get(), RenderType.solid());
+            ItemBlockRenderTypes.setRenderLayer(AURUM_ROSA.get(), RenderType.solid());
             ItemBlockRenderTypes.setRenderLayer(FLOWING_AURUMROSA.get(), RenderType.solid());
         }
     }
