@@ -2,13 +2,15 @@ package aurum.aurum.init;
 
 
 import aurum.aurum.block.*;
+import aurum.aurum.block.AntiElytraBlock.AntiElytraBlock;
 import aurum.aurum.block.SoulModificationTable.SoulModificationTableBlock;
-import aurum.aurum.block.engineering.*;
 import aurum.aurum.block.engineering.ArmorTable.ArmorTableBlock;
+import aurum.aurum.block.engineering.DarkEnergyTable.DarkEnergyTableBlock;
 import aurum.aurum.block.engineering.EnergyGeneratorBlock.EnergyGeneratorBlock;
 import aurum.aurum.block.engineering.EnergyStorageBlock.EnergyStorageBlock;
 import aurum.aurum.block.engineering.ExtractorBlock.ExtractorBlock;
 import aurum.aurum.block.engineering.PedestalBlock.PedestalBlock;
+import aurum.aurum.block.engineering.PipeSystem.PipeBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.player.Player;
@@ -79,6 +81,7 @@ public class ModBlocks {
         ModItems.ITEMS_REGISTRY.register(name, () -> new BlockItem(block.get(), new Item.Properties()));
     }
     public static final DeferredBlock<Block> PLAGUE_AURUM_BLOCK = BLOCK_REGISTRY.register("plague_aurum_block", PlagueAurumBlock::new);
+    public static final DeferredBlock<Block> SOUL_FLUID_BLOCK = BLOCK_REGISTRY.register("soul_fluid_block", SoulFluidBlock::new);
 
 
 
@@ -127,12 +130,45 @@ public class ModBlocks {
     public static final DeferredBlock<Block> SOUL_MODIFICATION_TABLE_BLOCK = registerBlock("soul_modification_table_block", SoulModificationTableBlock::new);
 
 
+    public static final DeferredBlock<Block> ANTI_ELYTRA_BLOCK = registerBlock("anti_elytra_block", AntiElytraBlock::new);
+
+
+    public static final DeferredBlock<Block> AMBAR_LEAVES = registerBlock("ambar_leaves",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(0.2f).sound(SoundType.GRASS).noOcclusion().isSuffocating((state, world, pos) -> false)
+                    .isViewBlocking((state, world, pos) -> false).lightLevel((state) -> 1)));
+
+    public static final DeferredBlock<Block> AMBAR_LOG_DRY = registerBlock("ambar_log_dry",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(2f).sound(SoundType.WOOD).requiresCorrectToolForDrops()));
+
+
+    public static final DeferredBlock<Block> VETALITA = registerBlock("vetalita_stone",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(6f).requiresCorrectToolForDrops().sound(SoundType.STONE)));
+
+    public static final DeferredBlock<Block> CERULEO = registerBlock("ceruleo_stone",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(6f).requiresCorrectToolForDrops().sound(SoundType.STONE)));
+    public static final DeferredBlock<Block> TOBA = registerBlock("toba_stone",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(6f).requiresCorrectToolForDrops().sound(SoundType.STONE)));
+
+
+    public static final DeferredBlock<Block> DARK_ENERGY_TABLE = registerBlock("dark_energy_table",
+            DarkEnergyTableBlock::new);
+
+
+
 
     private static <T extends Block> DeferredBlock<T> registerBlock(String name, Supplier<T> block) {
         DeferredBlock<T> toReturn = BLOCK_REGISTRY.register(name, block);
         registerBlockItem(name, toReturn);
         return toReturn;
     }
+
+
+
 
 
 

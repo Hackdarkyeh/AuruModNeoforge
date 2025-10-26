@@ -6,13 +6,13 @@ import java.lang.reflect.Field;
 
 public class EnergyStorage implements IEnergyStorage {
     private float energyStored;
-    private float maxEnergyStored;
+    private float maxCapacity;
     private final int transfer;
     private final int maxTransfer;
     private final int maxReceive;
 
     public EnergyStorage(int maxEnergy, int transfer, int maxTransfer, int maxReceive) {
-        this.maxEnergyStored = maxEnergy;
+        this.maxCapacity = maxEnergy;
         this.transfer = transfer;
         this.maxTransfer = maxTransfer;
         this.maxReceive = maxReceive;
@@ -20,13 +20,13 @@ public class EnergyStorage implements IEnergyStorage {
     }
 
     public void setMaxEnergyStored(float maxEnergyStored) {
-        this.maxEnergyStored = maxEnergyStored;
+        this.maxCapacity = maxEnergyStored;
     }
 
     @Override
     public float addEnergy(float amount, boolean simulate) {
         // Calcula la cantidad máxima de energía que se puede añadir
-        float energyToAdd = Math.min(amount, this.maxEnergyStored - this.energyStored);
+        float energyToAdd = Math.min(amount, this.maxCapacity - this.energyStored);
 
         // Si no es una simulación, actualiza el almacenamiento de energía
         if (!simulate) {
@@ -40,7 +40,7 @@ public class EnergyStorage implements IEnergyStorage {
     @Override
     public float consumeEnergy(float energy, boolean simulate) {
         // Calcula la cantidad máxima de energía que se puede extraer
-        float energyExtracted = Math.min(energyStored, Math.min(maxEnergyStored, energy));
+        float energyExtracted = Math.min(energyStored, Math.min(maxCapacity, energy));
 
         if (!simulate) {
             // Actualiza el almacenamiento de energía si no es una simulación
@@ -57,13 +57,13 @@ public class EnergyStorage implements IEnergyStorage {
     }
 
     @Override
-    public float getMaxEnergyStored() {
-        return maxEnergyStored;
+    public float getCapacity() {
+        return maxCapacity;
     }
 
     @Override
     public boolean canReceive() {
-        return false;
+        return energyStored < maxCapacity;
     }
 
     @Override
@@ -80,7 +80,7 @@ public class EnergyStorage implements IEnergyStorage {
 
         // Guardamos todos los valores importantes
         tag.putFloat("Energy", this.energyStored);
-        tag.putFloat("MaxEnergy", this.maxEnergyStored);
+        tag.putFloat("MaxEnergy", this.maxCapacity);
         tag.putInt("Transfer", this.transfer);
         tag.putInt("MaxTransfer", this.maxTransfer);
         tag.putInt("MaxReceive", this.maxReceive);
@@ -94,7 +94,7 @@ public class EnergyStorage implements IEnergyStorage {
 
         // Cargamos los valores guardados
         this.energyStored = tag.getFloat("Energy");
-        this.maxEnergyStored = tag.getFloat("MaxEnergy");
+        this.maxCapacity = tag.getFloat("MaxEnergy");
 
         // Estos valores son final, pero los cargamos por si acaso
         // (en caso de que se use reflexión o similar)
@@ -118,7 +118,7 @@ public class EnergyStorage implements IEnergyStorage {
     @Override
     public float receiveEnergy(float maxReceive, boolean simulate) {
         // Calcular la cantidad de energía que puede ser recibida
-        float energyAvailableToReceive = Math.min(this.getMaxEnergyStored() - this.getEnergyStored(), maxReceive);
+        float energyAvailableToReceive = Math.min(this.getCapacity() - this.getEnergyStored(), maxReceive);
 
         // Si es una simulación, solo devolvemos la cantidad que se podría recibir
         if (simulate) {
@@ -138,6 +138,6 @@ public class EnergyStorage implements IEnergyStorage {
 
     @Override
     public float getRemainingCapacity() {
-        return maxEnergyStored - energyStored;
+        return maxCapacity - energyStored;
     }
 }

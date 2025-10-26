@@ -1,0 +1,74 @@
+{
+  // La clase base de estructura a usar para el comportamiento de la estructura. En este caso, minecraft:jigsaw es buena para la mayoría de las estructuras.
+  "type": "minecraft:jigsaw",
+
+    // la ruta al archivo json del grupo de plantillas a usar
+  "start_pool": "aurum:fortaleza_portal_dim_a_a",
+
+    // Esto es cuántas piezas alejadas de la pieza inicial puede aparecer una pieza de la estructura
+    // Piénsalo como la longitud de la rama de la estructura
+  "size": 15,
+
+    // Distancia máxima desde el centro a la que pueden aparecer piezas. No puede ser mayor de 128
+  "max_distance_from_center": 128,
+
+    // La etiqueta de bioma a usar para los biomas en los que puede aparecer esta estructura"
+  "biomes": "#aurum:has_structure/fortaleza_portal_dim_a",
+
+    // El paso de generación para cuándo generar la estructura. ¡hay 10 etapas entre las que puedes elegir!
+    // Esta etapa de estructura superficial coloca la estructura antes de que se generen plantas y minerales
+    // Consulta GenerationStep.Feature enum para todas las etapas que puedes usar y en qué orden
+  "step": "surface_structures",
+
+    // Esto añadirá tierra alrededor de la parte inferior de la estructura. (Basado en el valor y de la pieza inicial)
+    // Los tipos de valores permitidos aquí son: none, beard_thin, beard_box y bury
+    // Si no se desea ningún cambio de terreno, elimine este campo por completo.
+  "terrain_adaptation": "none",
+
+    // Dónde generar nuestra estructura en qué valor y si no está presente project_start_to_heightmap.
+    // start_height se puede usar para generar a un valor y fijo aleatorio haciendo algo como: "max_inclusive": { "below_top": 10 }, "min_inclusive": { "above_bottom": 32 }
+    // Si está presente project_start_to_heightmap, el valor y elegido en start_height se añadirá al valor y del terreno.
+    // Así que una altura de inicio que dé -5 hundirá la estructura 5 bloques en el terreno.
+  "start_height": {
+    "absolute": 60
+  },
+
+        // Hace que nuestra casa se ajuste a la tierra superior para que aparezca en ella. WORLD_SURFACE_WG se detendrá en el primer bloque que no sea aire.
+        // Para obtener tierra superior incluso en el fondo de los océanos, utiliza OCEAN_FLOOR_WG.
+        // Si no se desea ninguna proyección, elimine este campo por completo.
+  "project_start_to_heightmap": "OCEAN_FLOOR_WG",
+
+    // Mantén esto en falso. Esto es solo para los pueblos heredados de vainilla para que aparezca correctamente. ¡No necesitamos trucos aquí!
+  "use_expansion_hack": false,
+    // Opcional para controlar si la estructura se inundará al reemplazar el agua preexistente en el mundo.
+    // Establece esto en "ignore_waterlogging" si estás haciendo estructuras subterráneas que no quieres que se inunden por acuíferos.
+  "liquid_settings": "ignore_waterlogging",
+
+    // Qué mobs pueden aparecer con el tiempo en la estructura.
+    // Asegúrate de añadir el mob a la categoría correcta (monstruo, criatura, etc)
+  "spawn_overrides": {
+    "monster": {
+      "bounding_box": "full",
+      "spawns": [
+        { "type": "minecraft:blaze", "weight": 2, "minCount": 2, "maxCount": 6 },
+        { "type": "minecraft:wither_skeleton", "weight": 1, "minCount": 1, "maxCount": 3 }
+      ]
+    },
+    "creature": {
+      "bounding_box": "piece",
+      "spawns": [
+        { "type": "minecraft:strider", "weight": 1, "minCount": 1, "maxCount": 2 }
+      ]
+    }
+  },
+
+        // Si se desea que la estructura tenga diferentes versiones para diferentes dimensiones, utilice pool_aliases para cambiar los grupos de plantillas.
+        // Aquí, estamos cambiando el grupo de plantillas puente_pool a puente_nether_pool cuando la estructura genera en el Nether.
+        // Asegúrate de que tus piezas de estructura y grupos de plantillas estén configurados para que esto funcione correctamente.
+  "pool_aliases": [
+    //{
+     // "from": "aurum:fortaleza_portal_dim_a/puente_pool",
+     // "to": "aurum:puente_fortaleza/puente_nether_pool"
+    //}
+  ]
+}

@@ -21,6 +21,11 @@
 
   "aurum.aurum.insufficient_exp":" No tienes suficiente experiencia (30 Niveles)",
   "tooltip.armor.level": "Nivel de la pieza:%s",
-  "tooltip.aurum.tier": "Tier de la pieza:%s"
+  "tooltip.aurum.tier": "Tier de la pieza:%s",
+
+
+
+
+  "aurum.pipe_fluid_type" : "Tipo de fluido: %s"
 
 }

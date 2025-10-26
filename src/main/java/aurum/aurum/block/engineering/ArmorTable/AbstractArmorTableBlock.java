@@ -66,7 +66,6 @@ public abstract class AbstractArmorTableBlock extends BaseEntityBlock {
     /**
      * Called to open this furnace's container.
      *
-     * @see #//use
      */
     protected abstract void openContainer(Level pLevel, BlockPos pPos, Player pPlayer);
 

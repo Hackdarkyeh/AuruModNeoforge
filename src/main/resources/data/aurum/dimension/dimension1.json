@@ -117,25 +117,6 @@
           }
         },
         {
-          "biome": "aurum:dim1_biome5_river",
-          "parameters": {
-            "altitude": 0,
-            "humidity": 1,
-            "temperature": [
-              -0.8,
-              0.6
-            ],
-            "continentalness": [
-              0,
-              0.3
-            ],
-            "erosion": 0,
-            "weirdness": 1,
-            "depth": 0,
-            "offset": 1
-          }
-        },
-        {
           "biome": "aurum:dim1_biome6_void_river",
           "parameters": {
             "altitude": 0,
@@ -149,6 +130,34 @@
             "weirdness": 0.4,
             "depth": 0,
             "offset": 1
+          }
+        },
+        {
+          "biome": "aurum:dim1_biome7_void",
+          "parameters": {
+            "altitude": [
+                -1,
+                1
+            ],
+            "humidity": [
+                -1,
+                1
+            ],
+            "temperature": [
+                -1,
+                1
+            ],
+            "continentalness": [
+              -1,
+              -0.9
+            ],
+            "erosion": 0,
+            "weirdness": [
+                -1,
+                1
+            ],
+            "depth": 0,
+            "offset": 0
           }
         }
       ],

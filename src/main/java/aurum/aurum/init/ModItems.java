@@ -18,6 +18,7 @@ import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.Item;
 
 
+import net.minecraft.world.item.Tiers;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
@@ -30,12 +31,12 @@ public class ModItems {
     // Crea un nuevo item de comida con el id "aurum:example_id", nutrición 1 y saturación 2
     public static final DeferredRegister.Items ITEMS_REGISTRY = DeferredRegister.createItems(MODID);
 
-    public static final Supplier<Item> EXAMPLE_ITEM = ITEMS_REGISTRY.register("example_item", () -> new Item(new Item.Properties().food(new FoodProperties.Builder().nutrition(1).saturationModifier(2f).build())));
 
     public static final Supplier<Item> AURUM_HEALING_ITEM = ITEMS_REGISTRY.register("aurum_healing_item", AurumHealing::new);
 
 
     public static final Supplier<Item> AURUMROSA_BUCKET = ITEMS_REGISTRY.register("plague_aurum_bucket", AurumBucketItem::new);
+    public static final Supplier<Item> SOUL_BUCKET = ITEMS_REGISTRY.register("soul_fluid_bucket_item", SoulFluidBucketItem::new);
 
     public static final Supplier<Item> BATTERY_ITEM = ITEMS_REGISTRY.register("battery_item", BatteryItem::new);
 
@@ -55,12 +56,12 @@ public class ModItems {
     public static Supplier<Item> RANGE_EXTRACTOR_UPDATER_TIER_3 = ITEMS_REGISTRY.register("range_extractor_updater_tier3", RangeExtractorUpdaterTier3::new);
     public static Supplier<Item> RANGE_EXTRACTOR_UPDATER_TIER_4 = ITEMS_REGISTRY.register("range_extractor_updater_tier4", RangeExtractorUpdaterTier4::new);
     public static Supplier<Item> RANGE_EXTRACTOR_UPDATER_TIER_5 = ITEMS_REGISTRY.register("range_extractor_updater_tier5", RangeExtractorUpdaterTier5::new);
-    public static Supplier<Item> AURELITE_INGOT = ITEMS_REGISTRY.register("aurelite_ingot", Aurelite_ingot::new);
 
 
     public static Supplier<Item> VEILPIERCER = ITEMS_REGISTRY.register("veilpiercer", Veilpiercer::new);
 
 
+    public static Supplier<Item> AURELITE_INGOT = ITEMS_REGISTRY.register("aurelite_ingot", Aurelite_ingot::new);
 
     public static final DeferredItem<ModArmorItem> AURELITE_HELMET = ITEMS_REGISTRY.register("aurelite_helmet",
             () -> new ModArmorItem(ModArmorMaterials.AURELITE_ARMOR_MATERIAL_BASIC, ArmorItem.Type.HELMET,
@@ -90,6 +91,10 @@ public class ModItems {
     public static final Supplier<Item> EXPANSION_SOUL_TOTEM_2 = ITEMS_REGISTRY.register("expansion_soul_totem_2", () -> new SoulExpansions(2, 1000, 200));
     public static final Supplier<Item> EXPANSION_SOUL_TOTEM_3 = ITEMS_REGISTRY.register("expansion_soul_totem_3", () -> new SoulExpansions(3, 1000000, 300));
 
-    public static final Supplier<Item> AURELITE_SWORD = ITEMS_REGISTRY.register("aurelite_sword", AureliteSword::new);
+    public static final Supplier<Item> AURELITE_SWORD = ITEMS_REGISTRY.register("aurelite_sword",
+            () -> new AureliteSword(Tiers.DIAMOND, new Item.Properties().durability(1000), 1000)); // Ejemplo con Tier.DIAMOND y 1000 de energía máxima);
+
+    public static final Supplier<Item> PURIFIER = ITEMS_REGISTRY.register("purifier",
+            () -> new PurifierItem(new Item.Properties().stacksTo(1)));
 
 }

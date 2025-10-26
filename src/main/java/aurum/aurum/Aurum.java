@@ -38,6 +38,7 @@ import org.slf4j.Logger;
 import java.util.function.Supplier;
 
 import static aurum.aurum.init.ModBlockEntities.BLOCK_ENTITIES_REGISTRY;
+import static aurum.aurum.init.ModBlockEntities.DARK_ENERGY_TABLE_BLOCK;
 import static aurum.aurum.init.ModBlocks.*;
 import static aurum.aurum.init.ModEffects.EFFECTS_REGISTRY;
 import static aurum.aurum.init.ModItems.*;
@@ -92,14 +93,14 @@ public class Aurum {
 
         ModFluids.REGISTRY_FLUIDS.register(modEventBus);
         ModFluidTypes.REGISTRY_FLUID_TYPE.register(modEventBus);
-        ModStructures.register(modEventBus);
         ModMenuType.MENU_TYPE_REGISTRY.register(modEventBus);
 
         ModComponents.register(modEventBus); // <-- Añade esta línea
 
         NeoForge.EVENT_BUS.register(ArmorExpEventHandler.class);
 
-
+        STStructures.DEFERRED_REGISTRY_STRUCTURE.register(modEventBus);
+        STStructurePlacements.DEFERRED_REGISTRY_STRUCTURE_PLACEMENT_TYPE.register(modEventBus);
 
         // Registrar características configuradas
 
@@ -160,7 +161,6 @@ public class Aurum {
             .withTabsBefore(CreativeModeTabs.COMBAT)
             .icon(() -> AURUM_HEALING_ITEM.get().getDefaultInstance())
             .displayItems((parameters, output) -> {
-                output.accept(EXAMPLE_ITEM.get()); // Añade el item de ejemplo a la pestaña. Para tus propias pestañas, este método es preferido sobre el evento
                 output.accept(WITHERED_GRASS_BLOCK.get()); // Añade el item de bloque de ejemplo a la pestaña
                 output.accept(FROZEN_WITHERED_GRASS_BLOCK.get()); // Añade el item de hierba marchita congelada a la pestaña
                 output.accept(WITHERED_DIRT_BLOCK.get()); // Añade el item de bloque de tierra marchita a la pestaña
@@ -171,12 +171,14 @@ public class Aurum {
                 output.accept(DRY_WITHERED_DIRT_BLOCK.get()); // Añade el item de tierra marchita seca a la pestaña
                 output.accept(AURUM_HEALING_ITEM.get()); // Añade el item de curación de Aurum a la pestaña
                 output.accept(AURUMROSA_BUCKET.get()); // Añade el cubo de Aurum a la pestaña
+                output.accept(SOUL_BUCKET.get()); // Añade el cubo de Alma a la pestaña
                 output.accept(AURELITE_ORE.get()); // Añade el bloque de Aurum a la pestaña
                 output.accept(PIPE_BLOCK.get()); // Añade el bloque de tubería a la pestaña
                 output.accept(PANEL_BLOCK.get()); // Añade el bloque de panel a la pestaña
                 output.accept(EXTRACTOR_BLOCK.get()); // Añade el bloque de extractor a la pestaña
                 output.accept(ENERGY_STORAGE_BLOCK.get()); // Añade el bloque de almacenamiento de energía a la pestaña
                 output.accept(ENERGY_GENERATOR_BLOCK.get()); // Añade el bloque de generador de energía a la pestaña
+                output.accept(DARK_ENERGY_TABLE.get());
                 output.accept(BATTERY_ITEM.get()); // Añade el item de batería a la pestaña
                 output.accept(ENERGY_GENERATOR_UPDATER_TIER1.get()); // Añade el item de actualización de generador de energía de nivel 1 a la pestaña
                 output.accept(ENERGY_GENERATOR_UPDATER_TIER2.get()); // Añade el item de actualización de generador de energía de nivel 2 a la pestaña
@@ -209,9 +211,15 @@ public class Aurum {
                 output.accept(EXPANSION_SOUL_TOTEM_1.get());
                 output.accept(EXPANSION_SOUL_TOTEM_2.get());
                 output.accept(EXPANSION_SOUL_TOTEM_3.get());
-                output.accept(SOUL_MODIFICATION_TABLE_BLOCK.get());
-                output.accept(PEDESTAL.get());
-                output.accept(AURELITE_SWORD.get());
+                output.accept(SOUL_MODIFICATION_TABLE_BLOCK.get()); // Añade el bloque de la mesa de modificación de almas a la pestaña
+                output.accept(PEDESTAL.get()); // Añade el bloque de pedestal a la pestaña
+                output.accept(AURELITE_SWORD.get()); // Añade el item de espada de Aurum a la pestaña
+                output.accept(ANTI_ELYTRA_BLOCK.get()); // Añade el bloque anti-elytra a la pestaña
+                output.accept(AMBAR_LEAVES.get()); // Añade el bloque de hojas de ámbar a la pestaña
+                output.accept(AMBAR_LOG_DRY.get()); // Añade el bloque de tronco seco de ámbar a la pestaña
+                output.accept(VETALITA.get()); // Añade el bloque de tronco de vetalita a la pestaña
+                output.accept(CERULEO.get()); // Añade el bloque de planta de
+                output.accept(TOBA.get()); // Añade el bloque de planta de ámbar a la pestaña
             }).build());
 
 

@@ -344,7 +344,7 @@ public class CooperGolemEntity extends AbstractGolem implements NeutralMob {
 
 	// Método para obtener el nivel de energía actual como porcentaje
 	public int getEnergyPercentage() {
-		return (int) ((this.energyStorage.getEnergyStored() / (double) this.energyStorage.getMaxEnergyStored()) * 100);
+		return (int) ((this.energyStorage.getEnergyStored() / (double) this.energyStorage.getCapacity()) * 100);
 	}
 
 	// Método para comprobar si está canalizando rayos

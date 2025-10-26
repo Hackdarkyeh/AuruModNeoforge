@@ -1,0 +1,29 @@
+{
+  // Qué estructuras intentar generar si un lugar pasa la comprobación de colocación.
+  // Si dos o más estructuras de esta lista pueden generarse en un bioma en un lugar, se elige una al azar según el peso.
+  "structures": [
+    {
+      "structure": "aurum:fortaleza_portal_dim_a",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    // Tipo de colocación a usar. Aquí usamos nuestro tipo personalizado para permitir selección especial de posición.
+    "type": "aurum:distance_based_structure_placement",
+
+    // Asegúrate de que esto sea único y no coincida con el salt de otro conjunto de estructuras.
+    "salt": 895443435,
+
+    // Distancia promedio en chunks para intentos de generación.
+    "spacing": 60,
+
+    // Distancia mínima en chunks para intentos de generación.
+    // SIEMPRE DEBE SER MENOR QUE spacing ARRIBA
+    "separation": 20,
+
+    // Nuestro campo personalizado añadido al tipo de colocación.
+    // Asegura que esta estructura se genere a 1000 bloques del centro del mundo.
+    // Previene que nuestra estructura se genere en la isla del Ender Dragón.
+    "min_distance_from_world_origin": 1000
+  }
+}

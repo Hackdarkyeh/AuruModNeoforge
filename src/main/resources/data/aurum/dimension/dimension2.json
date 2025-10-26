@@ -117,25 +117,6 @@
           }
         },
         {
-          "biome": "aurum:dim1_biome5_river",
-          "parameters": {
-            "altitude": 0,
-            "humidity": 1,
-            "temperature": [
-              -0.8,
-              0.6
-            ],
-            "continentalness": [
-              0,
-              0.3
-            ],
-            "erosion": 0,
-            "weirdness": 1,
-            "depth": 0,
-            "offset": 1
-          }
-        },
-        {
           "biome": "aurum:dim1_biome6_void_river",
           "parameters": {
             "altitude": 0,

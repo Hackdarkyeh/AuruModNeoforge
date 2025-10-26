@@ -88,7 +88,7 @@ public class EnergyStorageBlock extends Block implements EntityBlock {
 
         // Recalcular la capacidad total
         int additionalCapacity = 10000; // Capacidad por bloque adicional
-        float newCapacity = master.energyStorage.getMaxEnergyStored() + additionalCapacity;
+        float newCapacity = master.energyStorage.getCapacity() + additionalCapacity;
 
 
         master.energyStorage.setMaxEnergyStored(newCapacity);

@@ -55,7 +55,7 @@ public class BatteryItem extends Item {
         }
 
         @Override
-        public float getMaxEnergyStored() {
+        public float getCapacity() {
             return MAX_ENERGY;
         }
 

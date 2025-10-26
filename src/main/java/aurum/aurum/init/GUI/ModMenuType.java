@@ -3,6 +3,7 @@ package aurum.aurum.init.GUI;
 import aurum.aurum.Aurum;
 import aurum.aurum.client.gui.Armor.SoulModificationTableMenu;
 import aurum.aurum.client.gui.ArmorTable.ArmorTableMenu;
+import aurum.aurum.client.gui.DarkEnergyTable.DarkEnergyTableMenu;
 import aurum.aurum.client.gui.EnergyGeneratorBlock.EnergyGeneratorMenu;
 import aurum.aurum.client.gui.ExtractorBlock.ExtractorMenu;
 import aurum.aurum.client.gui.Pedestal.PedestalMenu;
@@ -40,6 +41,9 @@ public class ModMenuType <T extends AbstractContainerMenu> implements FeatureEle
 
     public static final DeferredHolder<MenuType<?>, MenuType<SoulModificationTableMenu>> SOUL_MODIFICATION_TABLE =
             registerMenuType("soul_modification_table_menu", SoulModificationTableMenu::new);
+
+    public static final DeferredHolder<MenuType<?>, MenuType<DarkEnergyTableMenu>> DARK_ENERGY_TABLE =
+            MENU_TYPE_REGISTRY.register("dark_energy_table_menu", () -> new MenuType<>(DarkEnergyTableMenu::new, FeatureFlags.VANILLA_SET));;
 
     private static <T extends AbstractContainerMenu>DeferredHolder<MenuType<?>, MenuType<T>> registerMenuType(String name,
                                                                                                               IContainerFactory<T> factory) {

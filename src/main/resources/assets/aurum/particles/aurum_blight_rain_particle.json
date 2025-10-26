@@ -1,8 +1,6 @@
 {
   "textures": [
-    "aurum:aurum_blight_rain_particle_1",
-    "aurum:aurum_blight_rain_particle_2",
-    "aurum:aurum_blight_rain_particle_3",
-    "aurum:aurum_blight_rain_particle_4"
+    "aurum:aurum_blight_rain_particle_1_3",
+    "aurum:aurum_blight_rain_particle_1_4"
   ]
 }

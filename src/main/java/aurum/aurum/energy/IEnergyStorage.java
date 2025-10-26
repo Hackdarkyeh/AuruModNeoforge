@@ -10,7 +10,7 @@ public interface IEnergyStorage {
     float getEnergyStored();
 
     // Devuelve la capacidad máxima de almacenamiento de energía
-    float getMaxEnergyStored();
+    float getCapacity();
 
     // Añade energía al almacenamiento, con una opción para simular la operación
     float addEnergy(float energy, boolean simulate);
@@ -37,7 +37,11 @@ public interface IEnergyStorage {
     float receiveEnergy(float maxReceive, boolean simulate);
 
     void setStoredEnergy(float energyStored);
+
+
 }
+
+
 
 
 

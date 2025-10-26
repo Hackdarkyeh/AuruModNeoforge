@@ -3,6 +3,7 @@ package aurum.aurum.plugin;
 
 import aurum.aurum.block.engineering.EnergyStorageBlock.EnergyStorageBlock;
 import aurum.aurum.block.engineering.EnergyStorageBlock.EnergyStorageBlockEntity;
+import aurum.aurum.block.engineering.PipeSystem.PipeBlock;
 import aurum.aurum.entity.CooperGolemEntity;
 import aurum.aurum.plugin.JadeComponentsProvider.blocks.EnergyStorageComponentProvider;
 import aurum.aurum.plugin.JadeComponentsProvider.entities.CooperGolemComponentProvider;

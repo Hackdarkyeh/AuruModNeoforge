@@ -1,7 +1,8 @@
 package aurum.aurum.block.engineering.ExtractorBlock;
 
-import aurum.aurum.block.engineering.EnergyGeneratorBlock.EnergyGeneratorBlockEntity;
-import aurum.aurum.block.engineering.PipeBlock;
+import aurum.aurum.block.engineering.PipeSystem.PipeBlock;
+import aurum.aurum.energy.EnergyStorage;
+import aurum.aurum.energy.IEnergyConsumer;
 import aurum.aurum.init.ModBlocks;
 import aurum.aurum.init.ModItems;
 import com.google.common.collect.Lists;
@@ -35,7 +36,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.AbstractFurnaceBlock;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
@@ -44,7 +44,7 @@ import net.minecraft.world.phys.Vec3;
 import javax.annotation.Nullable;
 import java.util.*;
 
-public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEntity implements WorldlyContainer, RecipeCraftingHolder, StackedContentsCompatible {
+public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEntity implements WorldlyContainer, RecipeCraftingHolder, StackedContentsCompatible, IEnergyConsumer {
     protected static final int SLOT_INPUT = 0;
     protected static final int SLOT_FUEL = 1;
     protected static final int MINERAL_OUTPUT = 2;
@@ -53,14 +53,8 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
     private static final int[] SLOTS_FOR_DOWN = new int[]{2, 1};
     private static final int[] SLOTS_FOR_SIDES = new int[]{1};
     private static final int SLOTS_COUNT = 5;
-    public static final int DATA_LIT_DURATION = 1;
-    public static final int DATA_COOKING_PROGRESS = 2;
-    public static final int DATA_COOKING_TOTAL_TIME = 3;
-    public static final int NUM_DATA_VALUES = 4;
-    public static final int BURN_TIME_STANDARD = 200;
-    public static final int BURN_COOL_SPEED = 2;
+
     public int EXTRACTING_COST_AURELITE_ORE_TIME = 4000;
-    public static int EXTRACTING_COST_AURELITE_ORE =  1000000;
     private final RecipeType<? extends AbstractCookingRecipe> recipeType;
     protected NonNullList<ItemStack> items = NonNullList.withSize(SLOTS_COUNT, ItemStack.EMPTY);
     private float litTime;
@@ -68,13 +62,12 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
     int extractingProgress;
     int extractingTotalTime;
 
-    private static int MAX_TRANSFER_RATE = 10; // Tasa de transferencia máxima
     private boolean hasEnoughExperience = false; // Indica si el jugador tiene suficiente experiencia para extraer
     private int maxDistance = 10; // Distancia máxima de búsqueda de bloques de diamante
-    public int energyCapacity = 2000000; // Capacidad base mínima
-    public float energyStored = 0; // Energía almacenada actualmente
-    private EnergyGeneratorBlockEntity singleGeneratorInNetwork = null;
-
+    private final EnergyStorage energyStorage = new EnergyStorage(2000000, 0, 10, 10);; // Capacidad, tasa de transferencia
+    public float energyCapacity = this.getEnergyCapacity(); // Capacidad máxima de energía
+    private float energyStored = energyStorage.getEnergyStored();
+     // Energía almacenada actualmente
     private static final int FLOAT_SCALING_FACTOR = 1000; // Factor de escala
 
     @Nullable
@@ -97,9 +90,9 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
                 case 3:
                     return AbstractExtractorBlockEntity.this.extractingTotalTime;
                 case 4:
-                    return (int)AbstractExtractorBlockEntity.this.energyStored * FLOAT_SCALING_FACTOR;
+                    return (int)AbstractExtractorBlockEntity.this.energyStorage.getEnergyStored() * FLOAT_SCALING_FACTOR;
                 case 5:
-                    return AbstractExtractorBlockEntity.this.energyCapacity;
+                    return (int) AbstractExtractorBlockEntity.this.energyStorage.getCapacity();
                 case 6:
                     return AbstractExtractorBlockEntity.this.hasEnoughExperience ? 1 : 0;
 
@@ -300,7 +293,6 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
     }
 
     public static void serverTick(Level pLevel, BlockPos pPos, BlockState pState, AbstractExtractorBlockEntity pBlockEntity) {
-        BlockPos coordsEnergyGenerator = pBlockEntity.findSingleGeneratorInNetwork();
         boolean wasLit = pBlockEntity.isLit();
         boolean stateChanged = false;
         if (pLevel.hasNearbyAlivePlayer(pPos.getX(), pPos.getY(), pPos.getZ(), 5.0D)) {
@@ -326,28 +318,15 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
         ItemStack rangeExtractor = pBlockEntity.items.get(4); // Slot de extractor de rango
         updateRangeExtractor(pBlockEntity, rangeExtractor);
 
-        if (coordsEnergyGenerator != null) {
-            BlockEntity energyGeneratorBlockEntity = pBlockEntity.level.getBlockEntity(coordsEnergyGenerator);
-            if (energyGeneratorBlockEntity instanceof EnergyGeneratorBlockEntity) {
-                pBlockEntity.singleGeneratorInNetwork = (EnergyGeneratorBlockEntity) energyGeneratorBlockEntity;
-                boolean singleGeneratorInNetworkhasEnergy = pBlockEntity.singleGeneratorInNetwork.hasEnergy();
-                if (singleGeneratorInNetworkhasEnergy){
-                    pBlockEntity.singleGeneratorInNetwork.extractEnergyFromNetwork(pBlockEntity);
-                }
-                // Iniciar combustión si no está encendido pero tiene combustible y puede procesar
-                boolean hasEnergy = pBlockEntity.energyStored >= pBlockEntity.getExtractingDuration();
-                if (hasEnergy) {
-                    pBlockEntity.litTime = pBlockEntity.getExtractingDuration();
-                    pBlockEntity.litDuration = pBlockEntity.litTime;
-                    if (pBlockEntity.isLit()) {
-                        stateChanged = true;
-                        pBlockEntity.detectAdjacentBlocksGradual(pipeStack, pBlockEntity.maxDistance);
+        boolean hasEnergy = pBlockEntity.energyStorage.getEnergyStored() >= pBlockEntity.getExtractingDuration();
+        if (hasEnergy) {
+            pBlockEntity.litTime = pBlockEntity.getExtractingDuration();
+            pBlockEntity.litDuration = pBlockEntity.litTime;
+            if (pBlockEntity.isLit()) {
+                stateChanged = true;
+                pBlockEntity.detectAdjacentBlocksGradual(pipeStack, pBlockEntity.maxDistance);
 
-                    }
-                }
             }
-        }else{
-            pBlockEntity.singleGeneratorInNetwork = null;
         }
 
         // Procesar receta si está encendido
@@ -536,9 +515,39 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
     }
 
 
+    @Override
+    public float getEnergyStored() {
+        return this.energyStorage.getEnergyStored();
+    }
 
+    @Override
+    public float getEnergyCapacity() {
+        return this.energyStorage.getCapacity();
+    }
 
+    @Override
+    public void receiveEnergy(float amount) {
 
+    }
+
+    @Override
+    public boolean canReceiveEnergy() {
+        return false;
+    }
+
+    @Override
+    public boolean isActive() {
+        return true;
+    }
+
+    @Override
+    public float getEnergyDemand() {
+        return 0;
+    }
+
+    public void setEnergyStored(float energy) {
+        this.energyStorage.addEnergy(energy, false);
+    }
 
 
 
@@ -651,51 +660,6 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
                 .setValue(BlockStateProperties.FACING, Direction.DOWN); // Asegurar que la tubería esté orientada hacia abajo
         level.setBlockAndUpdate(pos, pipeState);
         pipeStack.shrink(1);
-    }
-
-
-    private BlockPos findSingleGeneratorInNetwork() {
-        Queue<BlockPos> queue = new LinkedList<>();
-        Set<BlockPos> visited = new HashSet<>();
-
-        queue.add(worldPosition);
-        visited.add(worldPosition);
-
-        while (!queue.isEmpty()) {
-            BlockPos currentPos = queue.poll();
-            assert level != null;
-
-            for (Direction direction : Direction.values()) {
-                BlockPos adjacentPos = currentPos.relative(direction);
-                if (visited.contains(adjacentPos)) continue;
-
-                BlockEntity adjacentStateEntity = level.getBlockEntity(adjacentPos);
-                BlockState adjacentState = level.getBlockState(adjacentPos);
-                if (adjacentStateEntity instanceof EnergyGeneratorBlockEntity) {
-                    // Generador encontrado adyacente
-                    return adjacentPos;
-                }
-
-                if (adjacentState.getBlock() instanceof PipeBlock) {
-                    queue.add(adjacentPos);
-                    visited.add(adjacentPos);
-
-                    // Comprobar generadores adyacentes a esta tubería
-                    for (Direction adjDirection : Direction.values()) {
-                        BlockPos sidePos = adjacentPos.relative(adjDirection);
-                        if (visited.contains(sidePos)) continue;
-
-                        BlockEntity sideState = level.getBlockEntity(sidePos);
-                        if (sideState instanceof EnergyGeneratorBlockEntity) {
-                            // Generador encontrado adyacente a una tubería
-                            return sidePos;
-                        }
-                    }
-                }
-            }
-        }
-
-        return null; // No se encontró generador en la red
     }
 
     public List<RecipeHolder<?>> getRecipesToAwardAndPopExperience(ServerLevel pLevel, Vec3 pPopVec) {

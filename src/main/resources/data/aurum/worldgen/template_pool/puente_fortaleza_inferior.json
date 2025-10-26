@@ -1,0 +1,17 @@
+{
+  // Más información sobre los template pools se puede encontrar aquí: https://minecraft.gamepedia.com/Custom_world_generation#JSON_format_8
+  // Sí, los archivos json de worldgen pueden tener comentarios. Minecraft hace un análisis "tolerante" de estos archivos json.
+
+  "fallback": "minecraft:empty",
+  "elements": [
+    {
+      "weight": 150,
+      "element": {
+        "location": "aurum:puente_fortaleza_inferior",
+        "processors": "minecraft:empty",
+        "projection": "rigid",
+        "element_type": "minecraft:single_pool_element"
+      }
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "replace": false,
+
+  "_comment1": " Esta etiqueta de bioma puede especificar el bioma directamente. O especificar otra etiqueta de bioma comenzando con # ",
+  "_comment2": " Una entrada también puede expandirse para tener un campo 'required' establecido en false. Esta entrada se omitirá si la etiqueta o el bioma no existe. ",
+  "_comment3": " ¡Esto es perfecto para soportar biomas de mods y datapacks! NeoForge proporciona etiquetas `c` que puedes usar. ",
+  "_comment4": " Etiquetas `c` de NeoForge: https://github.com/neoforged/NeoForge/tree/1.21.1/src/generated/resources/data/c/tags/worldgen/biome ",
+  "_comment5": " Etiquetas `minecraft` de Minecraft: https://github.com/misode/mcmeta/tree/b7e7f5282f9cc2ca1bd01e9a4911beab4725cb4b/data/minecraft/tags/worldgen/biome ",
+  "_comment6": " Por favor, usa etiquetas de bioma `c` y `minecraft` tanto como sea posible para maximizar la compatibilidad con mods/datapacks. ",
+  "values": [
+    "#aurum:is_dim1_biome7_void",
+    {
+      "id": "#c:is_dim1_biome7_void",
+      "required": false
+    }
+  ]
+}

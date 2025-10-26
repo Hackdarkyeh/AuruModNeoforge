@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "aurum:block/ambar_log_dry"
+  },
+  "render_type": "solid"
+}

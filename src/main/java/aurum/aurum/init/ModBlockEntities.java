@@ -1,8 +1,9 @@
 package aurum.aurum.init;
 
+import aurum.aurum.block.AntiElytraBlock.AntiElytraBlockEntity;
 import aurum.aurum.block.SoulModificationTable.SoulModificationTableBlockEntity;
-import aurum.aurum.block.engineering.ArmorTable.ArmorTableBlock;
 import aurum.aurum.block.engineering.ArmorTable.ArmorTableBlockEntity;
+import aurum.aurum.block.engineering.DarkEnergyTable.DarkEnergyTableBlockEntity;
 import aurum.aurum.block.engineering.EnergyGeneratorBlock.EnergyGeneratorBlockEntity;
 import aurum.aurum.block.engineering.EnergyStorageBlock.EnergyStorageBlockEntity;
 import aurum.aurum.block.engineering.ExtractorBlock.ExtractorBlockEntity;
@@ -62,4 +63,23 @@ public class ModBlockEntities {
                     ModBlocks.SOUL_MODIFICATION_TABLE_BLOCK.get() // Bloque asociado
             ).build(null)
     );
+
+    public static final Supplier<BlockEntityType<AntiElytraBlockEntity>> ANTI_ELYTRA_BLOCK_ENTITY = BLOCK_ENTITIES_REGISTRY.register(
+            "anti_elytra_block_entity",
+            () -> BlockEntityType.Builder.of(
+                    AntiElytraBlockEntity::new, // Constructor de la entidad
+                    ModBlocks.ANTI_ELYTRA_BLOCK.get() // Bloque asociado
+            ).build(null)
+    );
+
+
+    public static final Supplier<BlockEntityType<DarkEnergyTableBlockEntity>> DARK_ENERGY_TABLE_BLOCK = BLOCK_ENTITIES_REGISTRY.register(
+            "dark_energy_table_block",
+            () -> BlockEntityType.Builder.of(
+                    DarkEnergyTableBlockEntity::new,
+                    ModBlocks.DARK_ENERGY_TABLE.get()
+            ).build(null));
+
+
+
 }

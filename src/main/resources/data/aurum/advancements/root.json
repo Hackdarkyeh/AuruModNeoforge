@@ -1,0 +1,31 @@
+{
+  "display": {
+    "icon": {
+      "item": "aurum:aurelite_ingot",
+      "nbt": "{\"isCreativeTabIcon\":1b}"
+    },
+    "title": {
+      "translate": "advancements.aurum.root.title"
+    },
+    "description": {
+      "translate": "advancements.aurum.root.description"
+    },
+    "frame": "task",
+    "show_toast": false,
+    "announce_to_chat": true,
+    "hidden": false,
+    "background": "aurum:textures/advancements/aurelite_ingot.png"
+  },
+  "rewards": {},
+  "criteria": {
+    "instant_granted": {
+      "trigger": "minecraft:tick",
+      "conditions": {}
+    }
+  },
+  "requirements": [
+    [
+      "instant_granted"
+    ]
+  ]
+}

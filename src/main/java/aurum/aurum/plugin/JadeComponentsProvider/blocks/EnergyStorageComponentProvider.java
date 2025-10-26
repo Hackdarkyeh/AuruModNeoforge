@@ -23,7 +23,7 @@ public enum EnergyStorageComponentProvider implements IBlockComponentProvider, I
     public void appendServerData(CompoundTag data, BlockAccessor accessor) {
         if (accessor.getBlockEntity() instanceof EnergyStorageBlockEntity energyStorageBlockEntity) {
             data.putFloat("EnergyPercentage", energyStorageBlockEntity.getEnergyStored());
-            data.putFloat("MaxEnergy", energyStorageBlockEntity.getMaxEnergyStored());
+            data.putFloat("MaxEnergy", energyStorageBlockEntity.getCapacity());
         }
     }
 

@@ -10,4 +10,10 @@ public class WitheredGrassBlockHandle {
             world.setBlock(BlockPos.containing(x, y, z), ModBlocks.WITHERED_DIRT_BLOCK.get().defaultBlockState(), 3);
         }
     }
+
+    public static void execute2(LevelAccessor world, double x, double y, double z) {
+        if (world.getBlockState(BlockPos.containing(x, y + 1, z)).canOcclude()) {
+            world.setBlock(BlockPos.containing(x, y, z), ModBlocks.DRY_WITHERED_DIRT_BLOCK.get().defaultBlockState(), 3);
+        }
+    }
 }

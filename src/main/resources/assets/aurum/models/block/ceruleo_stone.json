@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "aurum:block/ceruleo_stone"
+  },
+  "render_type": "solid"
+}

@@ -24,6 +24,6 @@ public class DryWitheredGrassBlock extends Block {
     @Override
     public void randomTick(BlockState blockstate, ServerLevel world, BlockPos pos, RandomSource random) {
         super.randomTick(blockstate, world, pos, random);
-        WitheredGrassBlockHandle.execute(world, pos.getX(), pos.getY(), pos.getZ());
+        WitheredGrassBlockHandle.execute2(world, pos.getX(), pos.getY(), pos.getZ());
     }
 }

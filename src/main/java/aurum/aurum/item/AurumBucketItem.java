@@ -22,19 +22,25 @@ public class AurumBucketItem  extends BucketItem {
         Level world = context.getLevel();
         BlockPos pos = context.getClickedPos();
         Player player = context.getPlayer();
-        ItemStack itemStack = context.getItemInHand();
 
-        if (!world.isClientSide) {
-            BlockEntity blockEntity = world.getBlockEntity(pos);
-            if (blockEntity instanceof EnergyGeneratorBlockEntity generator) {
-                // Si es un generador de energía, almacenamos la energía en él
-                //generator.addEnergy(this.energyStored, false); // Añadimos la energía del cubo al generador
+        // First, check if the block is an EnergyGeneratorBlockEntity.
+        BlockEntity blockEntity = world.getBlockEntity(pos);
+        if (blockEntity instanceof EnergyGeneratorBlockEntity generator) {
+            if (!world.isClientSide) {
+                // Uncomment the code to add energy if you want to use this functionality.
+                // generator.addEnergy(this.energyStored, false);
 
-                // Cambiamos el item al cubo vacío
-                player.setItemInHand(context.getHand(), new ItemStack(Items.BUCKET));
+                // Check if the player is in creative mode before changing the item.
+                // This prevents unexpected behavior.
+                if (!player.getAbilities().instabuild) {
+                    player.setItemInHand(context.getHand(), new ItemStack(Items.BUCKET));
+                }
+                return InteractionResult.sidedSuccess(world.isClientSide);
             }
         }
-        return InteractionResult.sidedSuccess(world.isClientSide);
+
+        // If it's not a generator, fall back to the default bucket behavior.
+        return super.useOn(context);
     }
 
     public int getEnergyStored() {
