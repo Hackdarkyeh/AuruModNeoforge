@@ -1,4 +1,4 @@
-package aurum.aurum.energy;
+package aurum.aurum.energy.engineering;
 
 public enum EnergyDeviceType {
     MACHINE,    // Prioridad alta - necesita energía para funcionar

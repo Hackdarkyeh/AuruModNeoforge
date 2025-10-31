@@ -1,7 +1,7 @@
 package aurum.aurum.item;
 
-import aurum.aurum.energy.EnergyStorage;
-import aurum.aurum.energy.IEnergyStorage;
+import aurum.aurum.energy.engineering.EnergyStorage;
+import aurum.aurum.energy.engineering.IEnergyStorage;
 import net.minecraft.world.item.Item;
 import net.minecraft.nbt.CompoundTag;
 import net.neoforged.neoforge.capabilities.ICapabilityProvider;

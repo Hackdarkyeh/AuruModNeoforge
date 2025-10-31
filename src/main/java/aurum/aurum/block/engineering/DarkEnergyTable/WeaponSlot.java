@@ -1,6 +1,6 @@
 package aurum.aurum.block.engineering.DarkEnergyTable;
 
-import aurum.aurum.energy.IDarkEnergyWeapon;
+import aurum.aurum.energy.ArmorAndWeapons.IEnergyWeapon;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
@@ -13,7 +13,7 @@ public class WeaponSlot extends Slot {
 
     @Override
     public boolean mayPlace(ItemStack pStack) {
-        return pStack.getItem() instanceof IDarkEnergyWeapon;
+        return pStack.getItem() instanceof IEnergyWeapon;
     }
 
     @Override

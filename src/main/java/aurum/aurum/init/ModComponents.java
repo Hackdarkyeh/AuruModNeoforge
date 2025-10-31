@@ -1,7 +1,9 @@
 package aurum.aurum.init;
 
+import aurum.aurum.item.ArmorItem.ArmorEnergyData;
 import aurum.aurum.item.ArmorItem.ArmorExpData;
 import aurum.aurum.item.ArmorItem.ArmorTierData;
+import aurum.aurum.item.Swords.AureliteSword;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.netty.buffer.ByteBuf;
@@ -47,4 +49,20 @@ public class ModComponents {
                     .persistent(ArmorExpData.CODEC)
                     .networkSynchronized(ArmorExpData.STREAM_CODEC)
             );
+    // En ModComponents.java
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<ArmorEnergyData>> ARMOR_ENERGY =
+            REGISTRAR.register("armor_energy",
+                    () -> DataComponentType.<ArmorEnergyData>builder()
+                            .persistent(ArmorEnergyData.CODEC)
+                            .networkSynchronized(ArmorEnergyData.STREAM_CODEC)
+                            .build());
+
+
+    // En ModComponents.java
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<AureliteSword.EnergyData>> SWORD_ENERGY_DATA =
+            REGISTRAR.register("sword_energy",
+                    () -> DataComponentType.<AureliteSword.EnergyData>builder()
+                            .persistent(AureliteSword.EnergyData.CODEC)
+                            .networkSynchronized(AureliteSword.EnergyData.STREAM_CODEC)
+                            .build());
 }

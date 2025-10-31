@@ -21,7 +21,9 @@ public abstract class AbstractExtractorMenu extends AbstractContainerMenu {
     public static final int PROTECTOR = 3;
     public static final int RANGE_EXTRACTOR = 4;
     public static final int SLOT_COUNT = 5;
-    public static final int DATA_COUNT = 4;
+
+    public static final int DATA_COUNT = 9;
+
     private static final int USE_ROW_SLOT_START = 30;
     private static final int USE_ROW_SLOT_END = 39;
     private final Container container;
@@ -35,7 +37,7 @@ public abstract class AbstractExtractorMenu extends AbstractContainerMenu {
     protected AbstractExtractorMenu(
             MenuType<?> pMenuType, RecipeType<? extends AbstractCookingRecipe> pRecipeType, int pContainerId, Inventory pPlayerInventory
     ) {
-        this(pMenuType, pRecipeType, pContainerId, pPlayerInventory, new SimpleContainer(SLOT_COUNT), new SimpleContainerData(7));
+        this(pMenuType, pRecipeType, pContainerId, pPlayerInventory, new SimpleContainer(SLOT_COUNT), new SimpleContainerData(DATA_COUNT));
     }
 
     protected AbstractExtractorMenu(
@@ -49,7 +51,7 @@ public abstract class AbstractExtractorMenu extends AbstractContainerMenu {
         super(pMenuType, pContainerId);
         this.recipeType = pRecipeType;
         checkContainerSize(pContainer, SLOT_COUNT);
-        checkContainerDataCount(pData, 7);
+        checkContainerDataCount(pData, DATA_COUNT);
         this.container = pContainer;
         this.data = pData;
         this.level = pPlayerInventory.player.level();
@@ -153,11 +155,20 @@ public abstract class AbstractExtractorMenu extends AbstractContainerMenu {
 
 
     public int getCurrenEnergy() {
-        return this.data.get(4) / FLOAT_SCALING_FACTOR;
+        return this.data.get(4);
     }
+
+    public int getCurrenDarkEnergy() {
+        return this.data.get(7);
+    }
+
 
     public int getMaxEnergy() {
         return this.data.get(5);
+    }
+
+    public int getMaxDarkEnergy() {
+        return this.data.get(8);
     }
 
     public boolean hasInsufficientExp(){
@@ -188,6 +199,12 @@ public abstract class AbstractExtractorMenu extends AbstractContainerMenu {
     public float getEnergyProgress() {
         int currentEnergy = this.data.get(4);
         int maxEnergy = this.data.get(5);
+        return Mth.clamp((float) currentEnergy / (float) maxEnergy, 0.0F, 1.0F);
+    }
+
+    public float getDarkEnergyProgress() {
+        int currentEnergy = getCurrenDarkEnergy();
+        int maxEnergy = getMaxDarkEnergy();
         return Mth.clamp((float) currentEnergy / (float) maxEnergy, 0.0F, 1.0F);
     }
 

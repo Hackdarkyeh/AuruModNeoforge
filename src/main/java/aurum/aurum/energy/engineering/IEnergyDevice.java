@@ -1,4 +1,4 @@
-package aurum.aurum.energy;
+package aurum.aurum.energy.engineering;
 
 public interface IEnergyDevice {
     float getEnergyStored();

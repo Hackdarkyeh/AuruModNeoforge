@@ -1,4 +1,4 @@
-package aurum.aurum.energy;
+package aurum.aurum.energy.engineering;
 
 // Para máquinas que consumen energía para funcionar
 public interface IEnergyConsumer {

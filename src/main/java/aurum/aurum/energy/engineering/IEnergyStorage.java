@@ -1,6 +1,4 @@
-package aurum.aurum.energy;
-
-import net.minecraft.nbt.CompoundTag;
+package aurum.aurum.energy.engineering;
 
 import net.minecraft.nbt.CompoundTag;
 

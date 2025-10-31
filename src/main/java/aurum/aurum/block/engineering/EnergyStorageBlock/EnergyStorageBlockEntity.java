@@ -2,8 +2,8 @@ package aurum.aurum.block.engineering.EnergyStorageBlock;
 
 import aurum.aurum.block.engineering.EnergyGeneratorBlock.AbstractEnergyGeneratorBlockEntity;
 import aurum.aurum.block.engineering.PipeSystem.PipeBlock;
-import aurum.aurum.energy.EnergyStorage;
-import aurum.aurum.energy.IEnergyStorage;
+import aurum.aurum.energy.engineering.EnergyStorage;
+import aurum.aurum.energy.engineering.IEnergyStorage;
 import aurum.aurum.init.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -452,9 +452,6 @@ public class EnergyStorageBlockEntity extends BlockEntity implements IEnergyStor
         float energyRatio = oldEnergy / oldCapacity;
         float newEnergy = newCapacity * energyRatio;
 
-        System.out.println("🔀 REDISTRIBUCIÓN - Antes: " + oldEnergy + "/" + oldCapacity +
-                " - Después: " + newEnergy + "/" + newCapacity +
-                " - Ratio: " + energyRatio);
 
         this.energyStorage.setMaxEnergyStored(newCapacity);
         this.energyStorage.setStoredEnergy(newEnergy);
@@ -519,7 +516,6 @@ public class EnergyStorageBlockEntity extends BlockEntity implements IEnergyStor
 
         // Verificar si todavía está conectado al maestro
         if (!isConnectedToMaster()) {
-            System.out.println("🔀 Bloque " + worldPosition + " perdió conexión con maestro " + masterPos);
             becomeMaster(); // Convertirse en maestro de un nuevo grupo
         }
     }
@@ -564,7 +560,6 @@ public class EnergyStorageBlockEntity extends BlockEntity implements IEnergyStor
     private void becomeMaster() {
         if (level == null || level.isClientSide) return;
 
-        System.out.println("👑 Bloque " + worldPosition + " se convierte en maestro");
 
         this.isMaster = true;
         this.masterPos = this.worldPosition;

@@ -1,9 +1,13 @@
 package aurum.aurum.block.engineering.DarkEnergyTable;
 
-import aurum.aurum.block.engineering.EnergyGeneratorBlock.EnergyGeneratorBlockEntity;
-import aurum.aurum.block.engineering.PipeSystem.PipeBlock;
-import aurum.aurum.energy.EnergyStorage;
-import aurum.aurum.energy.IEnergyConsumer;
+
+import aurum.aurum.block.engineering.PipeSystem.PipeNetworkUtils;
+import aurum.aurum.energy.ArmorAndWeapons.EnergyConfig;
+import aurum.aurum.energy.engineering.EnergyStorage;
+import aurum.aurum.energy.engineering.IEnergyConsumer;
+import aurum.aurum.init.ModItems;
+import aurum.aurum.item.ArmorItem.ModArmorItem;
+import aurum.aurum.item.Swords.AureliteSword;
 import com.google.common.collect.Lists;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
@@ -27,7 +31,6 @@ import net.minecraft.world.item.crafting.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.AbstractFurnaceBlock;
 import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
@@ -35,7 +38,7 @@ import net.minecraft.world.phys.Vec3;
 import javax.annotation.Nullable;
 import java.util.*;
 
-public abstract class AbstractDarkEnergyTableBlockEntity extends BaseContainerBlockEntity implements WorldlyContainer, RecipeCraftingHolder, StackedContentsCompatible, IEnergyConsumer {
+public abstract class AbstractDarkEnergyTableBlockEntity extends BaseContainerBlockEntity implements WorldlyContainer, RecipeCraftingHolder, StackedContentsCompatible, IEnergyConsumer, PipeNetworkUtils.IEnergyDevice {
     // Definición de slots
     public static final int PURIFIER_SLOT = 0;          // Slot para el purificador
     public static final int WEAPON_SLOT = 1;            // Slot para el arma a recargar
@@ -46,20 +49,25 @@ public abstract class AbstractDarkEnergyTableBlockEntity extends BaseContainerBl
     protected NonNullList<ItemStack> items = NonNullList.withSize(SLOTS_COUNT, ItemStack.EMPTY);
 
     // Almacenamiento de energía
-    private final EnergyStorage energyStorage = new EnergyStorage(10000, 100, 100, 100); // Capacidad, tasa de transferencia
-    private final EnergyStorage darkEnergyStorage = new EnergyStorage(10000, 100, 100, 100); // Capacidad, tasa de transferencia
-    private final EnergyStorage cleanEnergyStorage = new EnergyStorage(10000, 100, 100, 100);
+    private final EnergyStorage energyStorage = new EnergyStorage(100000, 100, 100, 100); // Capacidad, tasa de transferencia
+    private final EnergyStorage darkEnergyStorage = new EnergyStorage(1000, 100, 100, 100); // Capacidad, tasa de transferencia
+    private final EnergyStorage cleanEnergyStorage = new EnergyStorage(100000, 100, 100, 100);
     private final RecipeType<? extends AbstractCookingRecipe> recipeType;
     private float litTime;
-    float litDuration;
     int extractingProgress;
     int extractingTotalTime;
 
-    int SCALING_FACTOR = 1000; // Factor de escala para energía almacenada
 
-    private float energyStored = getEnergyStored(); // Energía almacenada actualmente
     private int processingProgress = 0;
     private int maxProcessingTime = 200; // Tiempo en ticks para procesar un purificador
+
+
+    private static final int REQUIRED_ELECTRIC_ENERGY = 1000;  // Energía eléctrica requerida
+    private static final int REQUIRED_DARK_ENERGY = 100;       // Energía oscura requerida
+    private static final int CLEAN_ENERGY_PRODUCTION = 1000;    // Energía limpia producida dark_energy x 10
+    private static final int PURIFIER_DURABILITY_COST = 3;     // Durabilidad consumida del purificador
+
+
 
     @Nullable
     private static volatile Map<Item, Integer> fuelCache;
@@ -119,8 +127,9 @@ public abstract class AbstractDarkEnergyTableBlockEntity extends BaseContainerBl
         this.litTime = pTag.getInt("BurnTime");
         this.extractingProgress = pTag.getInt("ExtractorTime");
         this.extractingTotalTime = pTag.getInt("CookTimeTotal");
-        this.energyStored = pTag.getFloat("EnergyStorage");
-        this.litDuration = this.getExtractingDuration();
+        this.energyStorage.setStoredEnergy(pTag.getFloat("EnergyStorageT"));
+        this.darkEnergyStorage.setStoredEnergy(pTag.getFloat("DarkEnergyStorage"));
+        this.cleanEnergyStorage.setStoredEnergy(pTag.getFloat("CleanEnergyStorage"));
     }
 
     @Override
@@ -129,25 +138,28 @@ public abstract class AbstractDarkEnergyTableBlockEntity extends BaseContainerBl
         pTag.putFloat("BurnTime", this.litTime);
         pTag.putInt("ExtractorTime", this.extractingProgress);
         pTag.putInt("CookTimeTotal", this.extractingTotalTime);
-        pTag.putFloat("EnergyStorage", this.energyStorage.getEnergyStored());
+        pTag.putFloat("EnergyStorageT", this.energyStorage.getEnergyStored());
+        pTag.putFloat("DarkEnergyStorage", this.darkEnergyStorage.getEnergyStored());
+        pTag.putFloat("CleanEnergyStorage", this.cleanEnergyStorage.getEnergyStored());
         ContainerHelper.saveAllItems(pTag, this.items, pRegistries);
     }
 
+    // En AbstractDarkEnergyTableBlockEntity.java - Añadir este método al serverTick
+
     public static void serverTick(Level pLevel, BlockPos pPos, BlockState pState, AbstractDarkEnergyTableBlockEntity pBlockEntity) {
-        BlockPos coordsEnergyGenerator = pBlockEntity.findSingleGeneratorInNetwork();
         boolean wasLit = pBlockEntity.isLit();
         boolean stateChanged = false;
-        if (pLevel.hasNearbyAlivePlayer(pPos.getX(), pPos.getY(), pPos.getZ(), 5.0D)) {
-            if (pLevel.getNearestPlayer(pPos.getX(), pPos.getY(), pPos.getZ(), 5, false).experienceLevel == 30) {
-            }else{
-            }
-        }
-
 
         // Reducir tiempo de combustión si está encendido
         if (pBlockEntity.isLit()) {
             pBlockEntity.litTime--;
         }
+
+        // PROCESAMIENTO DE ENERGÍA - Nueva funcionalidad
+        processEnergyConversion(pBlockEntity);
+
+        // NUEVO: Recargar items con energía
+        rechargeItems(pBlockEntity);
 
         // Actualizar el estado visual si cambió
         if (wasLit != pBlockEntity.isLit()) {
@@ -162,8 +174,82 @@ public abstract class AbstractDarkEnergyTableBlockEntity extends BaseContainerBl
         }
     }
 
-    protected float getExtractingDuration() {
-        return this.energyStored;
+    // Método para recargar items
+    private static void rechargeItems(AbstractDarkEnergyTableBlockEntity blockEntity) {
+        ItemStack weaponStack = blockEntity.items.get(WEAPON_SLOT);
+
+        if (!weaponStack.isEmpty()) {
+            // Recargar espada con energía oscura
+            if (weaponStack.getItem() instanceof AureliteSword sword) {
+                if (blockEntity.darkEnergyStorage.getEnergyStored() >= EnergyConfig.General.ENERGY_TRANSFER_RATE) {
+                    if (sword.addDarkEnergy(weaponStack, EnergyConfig.General.ENERGY_TRANSFER_RATE)) {
+                        blockEntity.darkEnergyStorage.consumeEnergy(EnergyConfig.General.ENERGY_TRANSFER_RATE, false);
+                        blockEntity.setChanged();
+                    }
+                }
+
+                // Reparar con energía limpia
+                if (blockEntity.cleanEnergyStorage.getEnergyStored() >= EnergyConfig.AureliteSword.ENERGY_REPAIR_AMOUNT) {
+                    if (sword.addCleanEnergy(weaponStack, EnergyConfig.General.ENERGY_TRANSFER_RATE)) {
+                        blockEntity.cleanEnergyStorage.consumeEnergy(EnergyConfig.AureliteSword.ENERGY_REPAIR_AMOUNT, false);
+                        blockEntity.setChanged();
+                    }
+                }
+            }
+
+            // Recargar armadura (si el slot lo permite)
+            if (weaponStack.getItem() instanceof ModArmorItem armor) {
+                if (blockEntity.darkEnergyStorage.getEnergyStored() >= EnergyConfig.General.ENERGY_TRANSFER_RATE) {
+                    if (armor.addDarkEnergy(weaponStack, EnergyConfig.General.ENERGY_TRANSFER_RATE)) {
+                        blockEntity.darkEnergyStorage.consumeEnergy(EnergyConfig.General.ENERGY_TRANSFER_RATE, false);
+                        blockEntity.setChanged();
+                    }
+                }
+
+                // Reparar armadura con energía limpia
+                if (blockEntity.cleanEnergyStorage.getEnergyStored() >= EnergyConfig.AureliteArmor.ENERGY_REPAIR_AMOUNT) {
+                    if (armor.addCleanEnergy(weaponStack, EnergyConfig.General.ENERGY_TRANSFER_RATE)) {
+                        blockEntity.cleanEnergyStorage.consumeEnergy(EnergyConfig.AureliteArmor.ENERGY_REPAIR_AMOUNT, false);
+                        blockEntity.setChanged();
+                    }
+                }
+            }
+        }
+    }
+
+    // Método para procesar la conversión de energía
+    private static void processEnergyConversion(AbstractDarkEnergyTableBlockEntity blockEntity) {
+        // Verificar si hay purificador en el slot
+        ItemStack purifier = blockEntity.items.get(PURIFIER_SLOT);
+
+        if (!purifier.isEmpty() && purifier.is(ModItems.PURIFIER.get())) {
+            // Verificar si tenemos suficiente energía eléctrica y oscura
+            boolean hasEnoughElectricEnergy = blockEntity.energyStorage.getEnergyStored() >= REQUIRED_ELECTRIC_ENERGY;
+            boolean hasEnoughDarkEnergy = blockEntity.darkEnergyStorage.getEnergyStored() >= REQUIRED_DARK_ENERGY;
+            boolean hasSpaceForCleanEnergy = blockEntity.cleanEnergyStorage.getEnergyStored() < blockEntity.cleanEnergyStorage.getCapacity();
+
+            // Verificar que el purificador tenga durabilidad suficiente
+            boolean purifierHasDurability = purifier.getDamageValue() < purifier.getMaxDamage();
+
+            if (hasEnoughElectricEnergy && hasEnoughDarkEnergy && hasSpaceForCleanEnergy && purifierHasDurability) {
+                // Consumir energías
+                blockEntity.energyStorage.consumeEnergy(REQUIRED_ELECTRIC_ENERGY, false);
+                blockEntity.darkEnergyStorage.consumeEnergy(REQUIRED_DARK_ENERGY, false);
+
+                // Producir energía limpia
+                blockEntity.cleanEnergyStorage.addEnergy(CLEAN_ENERGY_PRODUCTION, false);
+
+                // Consumir durabilidad del purificador
+                purifier.setDamageValue(purifier.getDamageValue() + PURIFIER_DURABILITY_COST);
+
+                // Si el purificador se rompió, eliminarlo
+                if (purifier.getDamageValue() >= purifier.getMaxDamage()) {
+                    blockEntity.items.set(PURIFIER_SLOT, ItemStack.EMPTY);
+                }
+
+                blockEntity.setChanged();
+            }
+        }
     }
 
 
@@ -178,9 +264,26 @@ public abstract class AbstractDarkEnergyTableBlockEntity extends BaseContainerBl
         return energyStorage.getCapacity();
     }
 
+
+    @Override
+    public float getDarkEnergyCapacity() {
+        return darkEnergyStorage.getCapacity();
+    }
+
+    @Override
+    public float getDarkEnergyStored() {
+        return darkEnergyStorage.getEnergyStored();
+    }
+
     @Override
     public void receiveEnergy(float amount) {
-
+        this.energyStorage.addEnergy(amount, false);
+        setChanged(); // Importante para guardar el estado
+    }
+    @Override
+    public void receiveDarkEnergy(float amount) {
+        this.darkEnergyStorage.addEnergy(amount, false);
+        setChanged(); // Importante para guardar el estado
     }
 
     @Override
@@ -190,16 +293,16 @@ public abstract class AbstractDarkEnergyTableBlockEntity extends BaseContainerBl
 
     @Override
     public boolean isActive() {
-        return false;
+        if (this.energyStorage.getEnergyStored() > 0) {;
+            return true;
+        }else{
+            return false;
+        }
     }
 
     @Override
     public float getEnergyDemand() {
         return 0;
-    }
-
-    public void setEnergyStored(float energy) {
-        this.energyStorage.addEnergy(energy, false);
     }
 
     /**
@@ -299,59 +402,6 @@ public abstract class AbstractDarkEnergyTableBlockEntity extends BaseContainerBl
     }
 
 
-
-
-
-
-
-
-
-
-
-
-    private BlockPos findSingleGeneratorInNetwork() {
-        Queue<BlockPos> queue = new LinkedList<>();
-        Set<BlockPos> visited = new HashSet<>();
-
-        queue.add(worldPosition);
-        visited.add(worldPosition);
-
-        while (!queue.isEmpty()) {
-            BlockPos currentPos = queue.poll();
-            assert level != null;
-
-            for (Direction direction : Direction.values()) {
-                BlockPos adjacentPos = currentPos.relative(direction);
-                if (visited.contains(adjacentPos)) continue;
-
-                BlockEntity adjacentStateEntity = level.getBlockEntity(adjacentPos);
-                BlockState adjacentState = level.getBlockState(adjacentPos);
-                if (adjacentStateEntity instanceof EnergyGeneratorBlockEntity) {
-                    // Generador encontrado adyacente
-                    return adjacentPos;
-                }
-
-                if (adjacentState.getBlock() instanceof PipeBlock) {
-                    queue.add(adjacentPos);
-                    visited.add(adjacentPos);
-
-                    // Comprobar generadores adyacentes a esta tubería
-                    for (Direction adjDirection : Direction.values()) {
-                        BlockPos sidePos = adjacentPos.relative(adjDirection);
-                        if (visited.contains(sidePos)) continue;
-
-                        BlockEntity sideState = level.getBlockEntity(sidePos);
-                        if (sideState instanceof EnergyGeneratorBlockEntity) {
-                            // Generador encontrado adyacente a una tubería
-                            return sidePos;
-                        }
-                    }
-                }
-            }
-        }
-
-        return null; // No se encontró generador en la red
-    }
 
     public List<RecipeHolder<?>> getRecipesToAwardAndPopExperience(ServerLevel pLevel, Vec3 pPopVec) {
         List<RecipeHolder<?>> list = Lists.newArrayList();

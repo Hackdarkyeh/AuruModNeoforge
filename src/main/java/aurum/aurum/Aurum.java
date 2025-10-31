@@ -174,6 +174,7 @@ public class Aurum {
                 output.accept(SOUL_BUCKET.get()); // Añade el cubo de Alma a la pestaña
                 output.accept(AURELITE_ORE.get()); // Añade el bloque de Aurum a la pestaña
                 output.accept(PIPE_BLOCK.get()); // Añade el bloque de tubería a la pestaña
+                output.accept(PIPE_DARK_BLOCK.get()); // Añade el bloque de tubería oscura a la pestaña
                 output.accept(PANEL_BLOCK.get()); // Añade el bloque de panel a la pestaña
                 output.accept(EXTRACTOR_BLOCK.get()); // Añade el bloque de extractor a la pestaña
                 output.accept(ENERGY_STORAGE_BLOCK.get()); // Añade el bloque de almacenamiento de energía a la pestaña

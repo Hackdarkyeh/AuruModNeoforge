@@ -1,6 +1,6 @@
 package aurum.aurum.block.SoulModificationTable;
 
-import aurum.aurum.energy.IEnergyConsumer;
+import aurum.aurum.energy.engineering.IEnergyConsumer;
 import com.google.common.collect.Lists;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;

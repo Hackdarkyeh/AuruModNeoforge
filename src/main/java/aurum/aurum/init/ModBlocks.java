@@ -10,6 +10,7 @@ import aurum.aurum.block.engineering.EnergyGeneratorBlock.EnergyGeneratorBlock;
 import aurum.aurum.block.engineering.EnergyStorageBlock.EnergyStorageBlock;
 import aurum.aurum.block.engineering.ExtractorBlock.ExtractorBlock;
 import aurum.aurum.block.engineering.PedestalBlock.PedestalBlock;
+import aurum.aurum.block.engineering.PipeSystem.DarkPipeBlock;
 import aurum.aurum.block.engineering.PipeSystem.PipeBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
@@ -86,6 +87,8 @@ public class ModBlocks {
 
 
     public static final DeferredBlock<Block> PIPE_BLOCK = registerBlock("pipe", PipeBlock::new);
+    public static final DeferredBlock<Block> PIPE_DARK_BLOCK = registerBlock("dark_pipe", DarkPipeBlock::new);
+
     public static final DeferredBlock<Block> PANEL_BLOCK = registerBlock("panel", PipeBlock::new);
     public static final DeferredBlock<Block> EXTRACTOR_BLOCK = registerBlock("extractor_block", ExtractorBlock::new);
     public static final DeferredBlock<Block> ENERGY_STORAGE_BLOCK = registerBlock("energy_storage_block", EnergyStorageBlock::new);

@@ -2,6 +2,8 @@ package aurum.aurum.block.engineering.ArmorTable;
 
 import aurum.aurum.block.engineering.EnergyGeneratorBlock.EnergyGeneratorBlockEntity;
 import aurum.aurum.block.engineering.PipeSystem.PipeBlock;
+import aurum.aurum.energy.engineering.EnergyStorage;
+import aurum.aurum.energy.engineering.IEnergyConsumer;
 import com.google.common.collect.Maps;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import net.minecraft.SharedConstants;
@@ -36,7 +38,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import javax.annotation.Nullable;
 import java.util.*;
 
-public abstract class AbstractArmorTableBlockEntity extends BaseContainerBlockEntity implements WorldlyContainer, RecipeCraftingHolder, StackedContentsCompatible {
+public abstract class AbstractArmorTableBlockEntity extends BaseContainerBlockEntity implements WorldlyContainer, RecipeCraftingHolder, StackedContentsCompatible, IEnergyConsumer {
     protected static final int SLOT_INPUT = 0;
     protected static final int SLOT_FUEL = 1;
     protected static final int MINERAL_OUTPUT = 2;
@@ -63,7 +65,7 @@ public abstract class AbstractArmorTableBlockEntity extends BaseContainerBlockEn
     public int energyCapacity = 2000000; // Capacidad base mínima
     public float energyStored = 0; // Energía almacenada actualmente
     private EnergyGeneratorBlockEntity singleGeneratorInNetwork = null;
-
+    private final EnergyStorage energyStorage = new EnergyStorage(energyCapacity, 0, 0, 1);
     private static final int FLOAT_SCALING_FACTOR = 1000; // Factor de escala
 
     @Nullable
@@ -419,7 +421,35 @@ public abstract class AbstractArmorTableBlockEntity extends BaseContainerBlockEn
     }
 
 
+    @Override
+    public float getEnergyDemand() {
+        return 0;
+    }
 
+    @Override
+    public boolean isActive() {
+        return false;
+    }
 
+    @Override
+    public boolean canReceiveEnergy() {
+        return true;
+    }
+
+    @Override
+    public void receiveEnergy(float amount) {
+        this.energyStorage.addEnergy(amount, false);
+        setChanged(); // Importante para guardar el estado
+    }
+
+    @Override
+    public float getEnergyCapacity() {
+        return 0;
+    }
+
+    @Override
+    public float getEnergyStored() {
+        return 0;
+    }
 }
 

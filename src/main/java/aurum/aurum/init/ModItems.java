@@ -92,7 +92,7 @@ public class ModItems {
     public static final Supplier<Item> EXPANSION_SOUL_TOTEM_3 = ITEMS_REGISTRY.register("expansion_soul_totem_3", () -> new SoulExpansions(3, 1000000, 300));
 
     public static final Supplier<Item> AURELITE_SWORD = ITEMS_REGISTRY.register("aurelite_sword",
-            () -> new AureliteSword(Tiers.DIAMOND, new Item.Properties().durability(1000), 1000)); // Ejemplo con Tier.DIAMOND y 1000 de energía máxima);
+            () -> new AureliteSword(Tiers.DIAMOND, new Item.Properties().durability(1000))); // Ejemplo con Tier.DIAMOND y 1000 de energía máxima);
 
     public static final Supplier<Item> PURIFIER = ITEMS_REGISTRY.register("purifier",
             () -> new PurifierItem(new Item.Properties().stacksTo(1)));

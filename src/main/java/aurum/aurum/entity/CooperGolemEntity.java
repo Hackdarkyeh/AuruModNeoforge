@@ -1,7 +1,7 @@
 
 package aurum.aurum.entity;
 
-import aurum.aurum.energy.EnergyStorage;
+import aurum.aurum.energy.engineering.EnergyStorage;
 import aurum.aurum.entity.ai.CooperGolemAttackGoal;
 import aurum.aurum.entity.ai.ExtinguishFireGoal;
 import net.minecraft.core.BlockPos;

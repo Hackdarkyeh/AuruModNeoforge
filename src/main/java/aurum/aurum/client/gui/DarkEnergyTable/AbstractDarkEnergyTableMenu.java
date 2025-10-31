@@ -3,9 +3,7 @@ package aurum.aurum.client.gui.DarkEnergyTable;
 import aurum.aurum.block.engineering.DarkEnergyTable.DarkEnergyTableBlockEntity;
 import aurum.aurum.block.engineering.DarkEnergyTable.PurifierSlot;
 import aurum.aurum.block.engineering.DarkEnergyTable.WeaponSlot;
-import aurum.aurum.block.engineering.EnergyGeneratorBlock.Slots.EnergyGeneratorFuelSlot;
-import aurum.aurum.block.engineering.EnergyGeneratorBlock.Slots.EnergyGeneratorUpdaterSlot;
-import aurum.aurum.init.ModBlocks;
+import aurum.aurum.energy.ArmorAndWeapons.IEnergyWeapon;
 import aurum.aurum.init.ModItems;
 import net.minecraft.util.Mth;
 import net.minecraft.world.Container;
@@ -16,14 +14,15 @@ import net.minecraft.world.inventory.*;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.AbstractCookingRecipe;
 import net.minecraft.world.item.crafting.RecipeType;
-import net.minecraft.world.item.crafting.SingleRecipeInput;
 import net.minecraft.world.level.Level;
 
 public abstract class AbstractDarkEnergyTableMenu extends AbstractContainerMenu {
-    public static final int INGREDIENT_SLOT = 0;
-    public static final int FUEL_SLOT = 1;
-    public static final int RESULT_SLOT = 2;
-    public static final int SLOT_COUNT = 2;
+    private static final int INGREDIENT_SLOT = 0;
+    private static final int FUEL_SLOT = 1;
+    private static final int RESULT_SLOT = 2;
+    private static final int SLOT_COUNT = 2;
+    private static final int DATA_COUNT = 8;
+
     private final Container container;
     private final ContainerData data;
     protected final Level level;
@@ -35,7 +34,7 @@ public abstract class AbstractDarkEnergyTableMenu extends AbstractContainerMenu 
     protected AbstractDarkEnergyTableMenu(
             MenuType<?> pMenuType, RecipeType<? extends AbstractCookingRecipe> pRecipeType, int pContainerId, Inventory pPlayerInventory
     ) {
-        this(pMenuType, pRecipeType, pContainerId, pPlayerInventory, new SimpleContainer(2), new SimpleContainerData(8));
+        this(pMenuType, pRecipeType, pContainerId, pPlayerInventory, new SimpleContainer(SLOT_COUNT), new SimpleContainerData(DATA_COUNT));
     }
 
     protected AbstractDarkEnergyTableMenu(
@@ -49,7 +48,7 @@ public abstract class AbstractDarkEnergyTableMenu extends AbstractContainerMenu 
         super(pMenuType, pContainerId);
         this.recipeType = pRecipeType;
         checkContainerSize(pContainer, SLOT_COUNT);
-        checkContainerDataCount(pData, 8);
+        checkContainerDataCount(pData, DATA_COUNT);
         this.container = pContainer;
         this.data = pData;
         this.level = pPlayerInventory.player.level();
@@ -82,46 +81,56 @@ public abstract class AbstractDarkEnergyTableMenu extends AbstractContainerMenu 
     /**
      * Handle when the stack in slot {@code index} is shift-clicked. Normally this moves the stack between the player inventory and the other inventory(s).
      */
+    // En tu DarkEnergyTableMenu.java
     @Override
-    public ItemStack quickMoveStack(Player pPlayer, int pIndex) {
+    public ItemStack quickMoveStack(Player player, int index) {
         ItemStack itemstack = ItemStack.EMPTY;
-        Slot slot = this.slots.get(pIndex);
+        Slot slot = this.slots.get(index);
 
         if (slot != null && slot.hasItem()) {
             ItemStack itemstack1 = slot.getItem();
             itemstack = itemstack1.copy();
 
-            int inventoryStart = SLOT_COUNT; // Índice inicial del inventario
-            int inventoryEnd = this.slots.size(); // Tamaño del inventario
+            // Definir los slots de destino
+            final int purifierSlot = 0; // Slot del purificador
+            final int weaponSlot = 1;   // Slot del arma
+            final int playerInventoryStart = 2;
+            final int playerInventoryEnd = 38; // 36 slots de inventario + 2 del container
 
-            if (pIndex == RESULT_SLOT) { // Slot de salida
-                if (!this.moveItemStackTo(itemstack1, inventoryStart, inventoryEnd, true)) {
-                    return ItemStack.EMPTY;
+            // Si el click viene del inventario del jugador
+            if (index >= playerInventoryStart && index <= playerInventoryEnd) {
+                // Intentar mover al slot de purificador
+                if (itemstack1.is(ModItems.PURIFIER.get())) {
+                    if (!this.moveItemStackTo(itemstack1, purifierSlot, purifierSlot + 1, false)) {
+                        return ItemStack.EMPTY;
+                    }
                 }
-
-                slot.onQuickCraft(itemstack1, itemstack);
-            } else if (pIndex != FUEL_SLOT && pIndex != INGREDIENT_SLOT ) { // Slots normales
-                if (this.canSmelt(itemstack1)) { // Si se puede fundir
-                    if (!this.moveItemStackTo(itemstack1, 0, 1, false)) {
+                // Intentar mover al slot de arma
+                else if (itemstack1.getItem() instanceof IEnergyWeapon) {
+                    if (!this.moveItemStackTo(itemstack1, weaponSlot, weaponSlot + 1, false)) {
                         return ItemStack.EMPTY;
                     }
-                } else if (this.isFuel(itemstack1)) { // Si es combustible
-                    if (!this.moveItemStackTo(itemstack1, 1, 2, false)) {
-                        return ItemStack.EMPTY;
-                    }
-                }else if (pIndex >= inventoryStart && pIndex < 31) { // Slots del inventario
-                    if (!this.moveItemStackTo(itemstack1, 31, inventoryEnd, false)) {
-                        return ItemStack.EMPTY;
-                    }
-                } else if (pIndex >= 31 && pIndex < inventoryEnd && !this.moveItemStackTo(itemstack1, inventoryStart, 31, false)) {
-                    return ItemStack.EMPTY;
                 }
-            } else if (!this.moveItemStackTo(itemstack1, inventoryStart, inventoryEnd, false)) {
+                // Si es del hotbar, mover al inventario principal
+                else if (index >= playerInventoryStart + 27 && index <= playerInventoryEnd) {
+                    if (!this.moveItemStackTo(itemstack1, playerInventoryStart, playerInventoryStart + 27, false)) {
+                        return ItemStack.EMPTY;
+                    }
+                }
+                // Si es del inventario principal, mover al hotbar
+                else if (index >= playerInventoryStart && index < playerInventoryStart + 27) {
+                    if (!this.moveItemStackTo(itemstack1, playerInventoryStart + 27, playerInventoryEnd, false)) {
+                        return ItemStack.EMPTY;
+                    }
+                }
+            }
+            // Si el click viene del container, mover al inventario del jugador
+            else if (!this.moveItemStackTo(itemstack1, playerInventoryStart, playerInventoryEnd, false)) {
                 return ItemStack.EMPTY;
             }
 
             if (itemstack1.isEmpty()) {
-                slot.setByPlayer(ItemStack.EMPTY);
+                slot.set(ItemStack.EMPTY);
             } else {
                 slot.setChanged();
             }
@@ -130,19 +139,10 @@ public abstract class AbstractDarkEnergyTableMenu extends AbstractContainerMenu 
                 return ItemStack.EMPTY;
             }
 
-            slot.onTake(pPlayer, itemstack1);
+            slot.onTake(player, itemstack1);
         }
 
         return itemstack;
-    }
-
-
-    protected boolean canSmelt(ItemStack pStack) {
-        return this.level.getRecipeManager().getRecipeFor((RecipeType<AbstractCookingRecipe>)this.recipeType, new SingleRecipeInput(pStack), this.level).isPresent();
-    }
-
-    public boolean isFuel(ItemStack pStack) {
-        return pStack.getBurnTime(this.recipeType) > 0;
     }
 
     public float getBurnProgress() {
@@ -157,12 +157,41 @@ public abstract class AbstractDarkEnergyTableMenu extends AbstractContainerMenu 
         return Mth.clamp((float) currentEnergy / (float) maxEnergy, 0.0F, 1.0F);
     }
 
-    public float getCurrenEnergy() {
+    public float getDarkEnergyProgress() {
+        int currentEnergy = getDarkEnergyStored();
+        int maxEnergy = getDarkEnergyCapacity();
+        return Mth.clamp((float) currentEnergy / (float) maxEnergy, 0.0F, 1.0F);
+    }
+
+
+    public float getCleanEnergyProgress() {
+        int currentEnergy = getCleanEnergyStored();
+        int maxEnergy = getMaxCleanEnergyStored();
+        return Mth.clamp((float) currentEnergy / (float) maxEnergy, 0.0F, 1.0F);
+    }
+
+    public float getCurrentEnergy() {
         return (float) this.data.get(6);
     }
 
     public float getMaxEnergy() {
         return (float) this.data.get(7);
+    }
+
+    public float getCurrentDarkEnergy() {
+        return (float) this.data.get(0);
+    }
+
+    public int getDarkEnergyCapacity() {
+        return this.data.get(1);
+    }
+
+    public float getCurrentCleanEnergy() {
+        return (float) this.data.get(2);
+    }
+
+    public int getCleanEnergyCapacity() {
+        return this.data.get(3);
     }
 
 
@@ -180,45 +209,12 @@ public abstract class AbstractDarkEnergyTableMenu extends AbstractContainerMenu 
         return this.data.get(0) > 0;
     }
 
-
-
-
-
-
-    public boolean isBeingProcessed() {
-        return data.get(3) > 0;
-    }
-
-    public int getScaledProgress() {
-        int progress = data.get(4);
-        int maxProgress = data.get(5);
-        int progressArrowSize = 24; // Esto es el ancho en píxeles de la flecha de progreso en la GUI
-
-        if (maxProgress == 0 || progress == 0) {
-            return 0;
-        }
-
-        return progress * progressArrowSize / maxProgress;
-    }
-
     public int getDarkEnergyStored() {
         return data.get(0);
     }
 
     public int getMaxDarkEnergyStored() {
         return data.get(1);
-    }
-
-    public int getScaledDarkEnergy() {
-        int energy = data.get(0);
-        int maxEnergy = data.get(1);
-        int energyBarSize = 50; // Altura de la barra de energía en la GUI
-
-        if (maxEnergy == 0 || energy == 0) {
-            return 0;
-        }
-
-        return energy * energyBarSize / maxEnergy;
     }
 
     public int getCleanEnergyStored() {
@@ -228,30 +224,5 @@ public abstract class AbstractDarkEnergyTableMenu extends AbstractContainerMenu 
     public int getMaxCleanEnergyStored() {
         return data.get(3);
     }
-
-    public int getScaledCleanEnergy() {
-        int energy = data.get(2);
-        int maxEnergy = data.get(3);
-        int energyBarSize = 50; // Altura de la barra de energía en la GUI
-
-        if (maxEnergy == 0 || energy == 0) {
-            return 0;
-        }
-
-        return energy * energyBarSize / maxEnergy;
-    }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 }

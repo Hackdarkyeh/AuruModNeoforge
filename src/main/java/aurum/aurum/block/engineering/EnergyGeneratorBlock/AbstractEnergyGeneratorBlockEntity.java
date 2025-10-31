@@ -346,23 +346,23 @@ public abstract class AbstractEnergyGeneratorBlockEntity extends BaseContainerBl
         if (hasEnergyGeneratorUpdater){
             if (energy_generator_updater.getItem() == ModItems.ENERGY_GENERATOR_UPDATER_TIER1.get()){
                 pBlockEntity.energyGeneratedPerTick = 2;
-                pBlockEntity.energyTransferPerTick = 200;
+                pBlockEntity.energyTransferPerTick = 1;
             }
             else if (energy_generator_updater.getItem() == ModItems.ENERGY_GENERATOR_UPDATER_TIER2.get()){
                 pBlockEntity.energyGeneratedPerTick = 3;
-                pBlockEntity.energyTransferPerTick = 300;
+                pBlockEntity.energyTransferPerTick = 2;
             }
             else if (energy_generator_updater.getItem() == ModItems.ENERGY_GENERATOR_UPDATER_TIER3.get()){
                 pBlockEntity.energyGeneratedPerTick = 4;
-                pBlockEntity.energyTransferPerTick = 400;
+                pBlockEntity.energyTransferPerTick = 2;
             }
             else if (energy_generator_updater.getItem() == ModItems.ENERGY_GENERATOR_UPDATER_TIER4.get()){
                 pBlockEntity.energyGeneratedPerTick = 5;
-                pBlockEntity.energyTransferPerTick = 50;
+                pBlockEntity.energyTransferPerTick = 3;
             }
         }else{
             pBlockEntity.energyGeneratedPerTick = 1;
-            pBlockEntity.energyTransferPerTick = 100;
+            pBlockEntity.energyTransferPerTick = 1;
         }
 
         RecipeHolder<?> recipeHolder = hasInput
@@ -638,7 +638,6 @@ public abstract class AbstractEnergyGeneratorBlockEntity extends BaseContainerBl
                             currentlyDetectedMasters.add(masterPos);
 
                             if (!detectedMasterStorages.containsKey(masterPos)) {
-                                System.out.println("🔌 RECONEXIÓN - Maestro detectado: " + masterPos);
                                 masterStorage.syncWithGenerator(this);
 
                                 float masterEnergy = masterStorage.getEnergyStored();
@@ -656,7 +655,6 @@ public abstract class AbstractEnergyGeneratorBlockEntity extends BaseContainerBl
                     if (extractorEntity instanceof AbstractExtractorBlockEntity extractor) {
                         if (!detectedExtractors.containsKey(adjacentPos)) {
                             detectedExtractors.put(adjacentPos, extractor);
-                            System.out.println("Extractor detectado en: " + adjacentPos);
                         }
                     }
                 } else if(adjacentState.getBlock() instanceof DarkEnergyTableBlock){
@@ -664,7 +662,6 @@ public abstract class AbstractEnergyGeneratorBlockEntity extends BaseContainerBl
                     if (darkEnergyTableEntity instanceof AbstractDarkEnergyTableBlockEntity darkEnergyTable) {
                         if (!detectedDarkEnergyTable.containsKey(adjacentPos)) {
                             detectedDarkEnergyTable.put(adjacentPos, darkEnergyTable);
-                            System.out.println("DarkEnergyTable detectado en: " + adjacentPos);
                         }
                     }
                 } else {
@@ -696,7 +693,6 @@ public abstract class AbstractEnergyGeneratorBlockEntity extends BaseContainerBl
             if (!currentlyDetectedMasters.contains(masterPos)) {
                 if (!isMasterStillConnected(masterPos)) {
                     mastersToRemove.add(masterPos);
-                    System.out.println("🔌 MAESTRO PERDIDO - Ya no está conectado: " + masterPos);
                 }
             }
         }
@@ -736,10 +732,6 @@ public abstract class AbstractEnergyGeneratorBlockEntity extends BaseContainerBl
             float storageCapacity = (data != null) ? data[0] : 0;
             float energyStorage = (data != null) ? data[1] : 0;
 
-            System.out.println("❌ MAESTRO eliminado: " + masterToRemove +
-                    " - Energía: " + energyStorage +
-                    " - Capacidad: " + storageCapacity);
-
             energyStoredVisible -= energyStorage;
             totalCapacityGestion -= storageCapacity;
 
@@ -778,95 +770,7 @@ public abstract class AbstractEnergyGeneratorBlockEntity extends BaseContainerBl
         }
     }
 
-    private void distributeEnergy() {
-        updateConnectedExtractors();
-        updateConnectedDarkEnergyTables();
-        detectConnectedGenerators();
 
-        int machinesNeedingEnergy = 0;
-        float availableEnergy = Math.min(energyStoredVisible, energyTransferPerTick);
-
-        for (BlockPos extractorPos : connectedExtractors) {
-            AbstractExtractorBlockEntity extractor = detectedExtractors.get(extractorPos);
-            if (extractor != null && extractor.getEnergyStored() < extractor.energyCapacity) {
-                machinesNeedingEnergy++;
-            }
-        }
-
-        for (BlockPos tablePos : connectedDarkEnergyTable) {
-            AbstractDarkEnergyTableBlockEntity table = detectedDarkEnergyTable.get(tablePos);
-            if (table != null && table.getEnergyStored() < table.getEnergyCapacity()) {
-                machinesNeedingEnergy++;
-            }
-        }
-
-        if (machinesNeedingEnergy > 0) {
-            if(availableEnergy > 0) {
-                float energyPerMachine = availableEnergy / machinesNeedingEnergy;
-                for (BlockPos extractorPos : connectedExtractors) {
-                    AbstractExtractorBlockEntity extractor = detectedExtractors.get(extractorPos);
-                    if (extractor != null && extractor.getEnergyStored() < extractor.getEnergyCapacity()) {
-                        float energyNeeded = extractor.getEnergyCapacity() - extractor.getEnergyStored();
-                        float energyToSend = Math.min(energyPerMachine, energyNeeded);
-
-                        if (energyToSend > 0 && energyStoredVisible >= energyToSend) {
-                            this.energyStoredVisible -= energyToSend;
-                            extractor.setEnergyStored(energyToSend);
-                        }
-                    }
-                }
-
-                for (BlockPos tablePos : connectedDarkEnergyTable) {
-                    AbstractDarkEnergyTableBlockEntity table = detectedDarkEnergyTable.get(tablePos);
-                    if (table != null && table.getEnergyStored() < table.getEnergyCapacity()) {
-                        float energyNeeded = table.getEnergyCapacity() - table.getEnergyStored();
-                        float energyToSend = Math.min(energyPerMachine, energyNeeded);
-
-                        if (energyToSend > 0 && energyStoredVisible >= energyToSend) {
-                            this.energyStoredVisible -= energyToSend;
-                            table.setEnergyStored(energyToSend);
-                        }
-                    }
-                }
-            }
-        } else {
-            for (BlockPos masterPos : detectedMasterStorages.keySet()) {
-                BlockEntity storageEntity = level.getBlockEntity(masterPos);
-                if (storageEntity instanceof EnergyStorageBlockEntity storage) {
-                    if (this.energyStoredVisible > 0 && storage.canReceive()) {
-                        int storageSpace = (int) (storage.getCapacity() - storage.getEnergyStored());
-                        if (storageSpace > 0) {
-                            float energyToTransfer = Math.min(
-                                    Math.min(this.energyStoredVisible, energyTransferPerTick),
-                                    storageSpace
-                            );
-
-                            if (energyToTransfer > 0) {
-                                storage.addEnergy(energyToTransfer, false);
-                                this.energyStoredVisible -= energyToTransfer;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        // Sincronizar energía entre generadores conectados
-        float totalEnergy = 0;
-        for (BlockPos masterPos : detectedMasterStorages.keySet()) {
-            float[] data = detectedMasterStorages.get(masterPos);
-            if (data != null) {
-                totalEnergy += data[1]; // Energía
-            }
-        }
-
-        for (BlockPos generatorPos : connectedGenerators) {
-            BlockEntity generatorEntity = level.getBlockEntity(generatorPos);
-            if (generatorEntity instanceof AbstractEnergyGeneratorBlockEntity generator) {
-                generator.energyStoredVisible = totalEnergy;
-            }
-        }
-    }
 
     public void extractEnergyFromNetwork(AbstractArmorTableBlockEntity armorTable) {
         for (BlockPos masterPos : detectedMasterStorages.keySet()) {
@@ -892,14 +796,86 @@ public abstract class AbstractEnergyGeneratorBlockEntity extends BaseContainerBl
     }
 
     public void generateEnergy() {
-        this.energyStoredVisible = Math.min(this.energyStoredVisible + energyGeneratedPerTick, this.totalCapacityGestion);
+        // ✅ GENERAR energía 1:1 y enviar directamente a un almacén aleatorio
+        if (detectedMasterStorages.isEmpty()) {
+            // Si no hay almacenes, generar localmente como fallback
+            this.energyStoredVisible = Math.min(this.energyStoredVisible + energyGeneratedPerTick, this.totalCapacityGestion);
+            return;
+        }
+
+        // ✅ SELECCIONAR un almacén maestro aleatorio que tenga espacio
+        List<BlockPos> mastersWithSpace = new ArrayList<>();
+        for (BlockPos masterPos : detectedMasterStorages.keySet()) {
+            BlockEntity storageEntity = level.getBlockEntity(masterPos);
+            if (storageEntity instanceof EnergyStorageBlockEntity storage) {
+                if (storage.getRemainingCapacity() >= energyGeneratedPerTick) {
+                    mastersWithSpace.add(masterPos);
+                }
+            }
+        }
+
+        // Si no hay almacenes con espacio, usar cualquier almacén
+        if (mastersWithSpace.isEmpty()) {
+            mastersWithSpace = new ArrayList<>(detectedMasterStorages.keySet());
+        }
+
+        if (!mastersWithSpace.isEmpty()) {
+            BlockPos randomMasterPos = mastersWithSpace.get(level.random.nextInt(mastersWithSpace.size()));
+            BlockEntity storageEntity = level.getBlockEntity(randomMasterPos);
+
+            if (storageEntity instanceof EnergyStorageBlockEntity storage) {
+                // ✅ ENVIAR energía directamente al almacén seleccionado
+                float energyActuallyAdded = storage.addEnergy(energyGeneratedPerTick, false);
+
+                if (energyActuallyAdded > 0) {
+
+                    // ✅ ACTUALIZAR datos locales del almacén
+                    float[] masterData = detectedMasterStorages.get(randomMasterPos);
+                    if (masterData != null) {
+                        masterData[1] = storage.getEnergyStored(); // Actualizar energía real
+                    }
+
+                    // ✅ SINCRONIZAR energyStoredVisible con la energía total real
+                    syncEnergyWithStorages();
+                }
+            }
+        }
     }
 
     public void synchronizeEnergy() {
         if (!detectedMasterStorages.isEmpty() || !detectedExtractors.isEmpty() || !detectedDarkEnergyTable.isEmpty()) {
-            distributeEnergy();
+            // ✅ SOLO sincronizar con la energía real de los almacenes
+            syncEnergyWithStorages();
+
+            // ✅ SOLO distribuir a extractores y dark energy tables
+            distributeEnergyToMachines();
         }
     }
+
+    // ✅ NUEVO MÉTODO: Sincronizar energyStoredVisible con la energía real de los almacenes
+    private void syncEnergyWithStorages() {
+        float totalRealEnergy = 0;
+
+        for (Map.Entry<BlockPos, float[]> entry : detectedMasterStorages.entrySet()) {
+            BlockPos masterPos = entry.getKey();
+            BlockEntity storageEntity = level.getBlockEntity(masterPos);
+
+            if (storageEntity instanceof EnergyStorageBlockEntity storage) {
+                // Obtener energía REAL del storage
+                float realEnergy = storage.getEnergyStored();
+                totalRealEnergy += realEnergy;
+
+                // Actualizar datos locales con valores reales
+                entry.getValue()[1] = realEnergy;
+            }
+        }
+
+        // Sincronizar energyStoredVisible con la energía real total
+        this.energyStoredVisible = totalRealEnergy;
+
+    }
+
+
 
     public boolean hasEnergy() {
         return energyStoredVisible > 0;
@@ -911,7 +887,6 @@ public abstract class AbstractEnergyGeneratorBlockEntity extends BaseContainerBl
         for (BlockPos masterPos : detectedMasterStorages.keySet()) {
             if (!isMasterStillConnected(masterPos)) {
                 mastersToRemove.add(masterPos);
-                System.out.println("❌ ELIMINANDO MAESTRO DESCONECTADO: " + masterPos);
             }
         }
 
@@ -974,13 +949,11 @@ public abstract class AbstractEnergyGeneratorBlockEntity extends BaseContainerBl
     private void removeExtractor(BlockPos extractorPos) {
         detectedExtractors.remove(extractorPos);
         connectedExtractors.remove(extractorPos);
-        System.out.println("❌ Extractor removido de la red: " + extractorPos);
     }
 
     private void removeDarkEnergyTable(BlockPos darkEnergyTablePos) {
         detectedDarkEnergyTable.remove(darkEnergyTablePos);
         connectedDarkEnergyTable.remove(darkEnergyTablePos);
-        System.out.println("❌ DarkEnergyTable removido de la red: " + darkEnergyTablePos);
     }
 
     private void updateGeneratorCapacity(Queue<Map.Entry<BlockPos, Float>> storageQueue) {
@@ -1010,21 +983,16 @@ public abstract class AbstractEnergyGeneratorBlockEntity extends BaseContainerBl
                     float[] storageData = new float[] {capacity, energy};
                     detectedMasterStorages.put(masterPos, storageData);
 
-                    System.out.println("🔋 NUEVO MAESTRO agregado: " + masterPos +
-                            " - Energía: " + energy + " - Capacidad: " + capacity);
+
                 }
             }
         }
 
         if (!processedMasters.isEmpty()) {
-            // ✅ CALCULAR TOTALES DESDE CERO
             this.totalCapacityGestion = calculateTotalCapacity();
             this.energyStoredVisible = calculateTotalEnergy();
             adjustGeneratorCapacity(totalCapacityGestion);
 
-            System.out.println("🎯 CAPACIDAD ACTUALIZADA - Energía total: " + energyStoredVisible +
-                    " / Capacidad total: " + totalCapacityGestion +
-                    " - Maestros totales: " + detectedMasterStorages.size());
         }
     }
 
@@ -1070,13 +1038,18 @@ public abstract class AbstractEnergyGeneratorBlockEntity extends BaseContainerBl
         if (level != null && !level.isClientSide) {
             if (storageCapacity == 0 && storageEnergy == 0) {
                 detectedMasterStorages.remove(masterPos);
-                System.out.println("🗑️ MAESTRO removido: " + masterPos);
             } else {
-                float[] masterData = new float[] {storageCapacity, storageEnergy};
-                detectedMasterStorages.put(masterPos, masterData);
-                System.out.println("🔄 MAESTRO actualizado: " + masterPos +
-                        " - Energía: " + storageEnergy +
-                        " - Capacidad: " + storageCapacity);
+                // ✅ ACTUALIZAR con datos REALES del storage
+                BlockEntity storageEntity = level.getBlockEntity(masterPos);
+                if (storageEntity instanceof EnergyStorageBlockEntity storage) {
+                    float realEnergy = storage.getEnergyStored();
+                    float realCapacity = storage.getCapacity();
+
+                    float[] masterData = new float[] {realCapacity, realEnergy};
+                    detectedMasterStorages.put(masterPos, masterData);
+
+
+                }
             }
 
             recalculateTotalEnergyAndCapacity();
@@ -1088,17 +1061,28 @@ public abstract class AbstractEnergyGeneratorBlockEntity extends BaseContainerBl
         float totalCapacity = 0;
 
         for (Map.Entry<BlockPos, float[]> entry : detectedMasterStorages.entrySet()) {
-            float[] data = entry.getValue();
-            totalCapacity += data[0];
-            totalEnergy += data[1];
+            BlockPos masterPos = entry.getKey();
+            BlockEntity storageEntity = level.getBlockEntity(masterPos);
+
+            if (storageEntity instanceof EnergyStorageBlockEntity storage) {
+                // ✅ USAR ENERGÍA REAL del storage, no los datos locales
+                float realEnergy = storage.getEnergyStored();
+                float realCapacity = storage.getCapacity();
+
+                totalCapacity += realCapacity;
+                totalEnergy += realEnergy;
+
+                // Actualizar datos locales con valores reales
+                entry.getValue()[0] = realCapacity;
+                entry.getValue()[1] = realEnergy;
+            }
         }
 
         this.totalCapacityGestion = totalCapacity;
-        this.energyStoredVisible = totalEnergy;
+        this.energyStoredVisible = totalEnergy; // ✅ Usar energía real
         adjustGeneratorCapacity(totalCapacityGestion);
 
-        System.out.println("🔢 RECALCULADO - Maestros: " + detectedMasterStorages.size() +
-                ", Energía: " + energyStoredVisible + ", Capacidad: " + totalCapacityGestion);
+
 
         setChanged();
         if (level != null) {
@@ -1110,6 +1094,110 @@ public abstract class AbstractEnergyGeneratorBlockEntity extends BaseContainerBl
     public void forceDetection() {
         this.forceRedetection = true;
         this.ticksSinceLastDetection = DETECTION_INTERVAL;
-        System.out.println("🔄 DETECCIÓN FORZADA solicitada");
     }
+
+
+    // ✅ MÉTODO CORREGIDO: Solo distribuir energía a máquinas, no a almacenes
+    private void distributeEnergyToMachines() {
+        updateConnectedExtractors();
+        updateConnectedDarkEnergyTables();
+
+        int machinesNeedingEnergy = 0;
+        float totalEnergyNeeded = 0;
+
+        // Calcular energía total necesaria
+        for (BlockPos extractorPos : connectedExtractors) {
+            AbstractExtractorBlockEntity extractor = detectedExtractors.get(extractorPos);
+            if (extractor != null && extractor.getEnergyStored() < extractor.energyCapacity) {
+                machinesNeedingEnergy++;
+                totalEnergyNeeded += (extractor.getEnergyCapacity() - extractor.getEnergyStored());
+            }
+        }
+
+        for (BlockPos tablePos : connectedDarkEnergyTable) {
+            AbstractDarkEnergyTableBlockEntity table = detectedDarkEnergyTable.get(tablePos);
+            if (table != null && table.getEnergyStored() < table.getEnergyCapacity()) {
+                machinesNeedingEnergy++;
+                totalEnergyNeeded += (table.getEnergyCapacity() - table.getEnergyStored());
+            }
+        }
+
+        if (machinesNeedingEnergy > 0 && totalEnergyNeeded > 0) {
+            float availableEnergy = Math.min(totalEnergyNeeded, energyTransferPerTick);
+            float energyPerMachine = availableEnergy / machinesNeedingEnergy;
+
+            // Distribuir a extractores
+            for (BlockPos extractorPos : connectedExtractors) {
+                AbstractExtractorBlockEntity extractor = detectedExtractors.get(extractorPos);
+                if (extractor != null && extractor.getEnergyStored() < extractor.getEnergyCapacity()) {
+                    float energyNeeded = extractor.getEnergyCapacity() - extractor.getEnergyStored();
+                    float energyToSend = Math.min(energyPerMachine, energyNeeded);
+
+                    if (energyToSend > 0) {
+                        // ✅ CONSUMIR energía del network para alimentar la máquina
+                        if (consumeEnergyFromNetwork(energyToSend)) {
+                            extractor.receiveEnergy(energyToSend); // Usar método específico del extractor
+                        }
+                    }
+                }
+            }
+
+            // Distribuir a dark energy tables
+            for (BlockPos tablePos : connectedDarkEnergyTable) {
+                AbstractDarkEnergyTableBlockEntity table = detectedDarkEnergyTable.get(tablePos);
+                if (table != null && table.getEnergyStored() < table.getEnergyCapacity()) {
+                    float energyNeeded = table.getEnergyCapacity() - table.getEnergyStored();
+                    float energyToSend = Math.min(energyPerMachine, energyNeeded);
+
+                    if (energyToSend > 0) {
+                        // ✅ CONSUMIR energía del network para alimentar la máquina
+                        if (consumeEnergyFromNetwork(energyToSend)) {
+                            table.receiveEnergy(energyToSend); // Usar método específico de la tabla
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // ✅ NUEVO MÉTODO: Consumir energía del network de almacenes
+    // ✅ MÉTODO CORREGIDO: Consumir energía del network de almacenes
+    private boolean consumeEnergyFromNetwork(float energyToConsume) {
+        if (detectedMasterStorages.isEmpty()) return false;
+
+        // ✅ BUSCAR un almacén que tenga energía disponible
+        List<BlockPos> mastersWithEnergy = new ArrayList<>();
+        for (BlockPos masterPos : detectedMasterStorages.keySet()) {
+            BlockEntity storageEntity = level.getBlockEntity(masterPos);
+            if (storageEntity instanceof EnergyStorageBlockEntity storage) {
+                if (storage.getEnergyStored() >= energyToConsume) {
+                    mastersWithEnergy.add(masterPos);
+                }
+            }
+        }
+
+        if (mastersWithEnergy.isEmpty()) return false;
+
+        // ✅ SELECCIONAR un almacén aleatorio con energía
+        BlockPos selectedMaster = mastersWithEnergy.get(level.random.nextInt(mastersWithEnergy.size()));
+        BlockEntity storageEntity = level.getBlockEntity(selectedMaster);
+
+        if (storageEntity instanceof EnergyStorageBlockEntity storage) {
+            float consumed = storage.consumeEnergy(energyToConsume, false);
+            if (consumed >= energyToConsume) {
+                // ✅ ACTUALIZAR datos locales
+                float[] masterData = detectedMasterStorages.get(selectedMaster);
+                if (masterData != null) {
+                    masterData[1] = storage.getEnergyStored();
+                }
+                // ✅ SINCRONIZAR energyStoredVisible
+                syncEnergyWithStorages();
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+
 }

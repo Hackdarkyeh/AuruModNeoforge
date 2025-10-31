@@ -15,6 +15,7 @@ public abstract class AbstractExtractorScreen<T extends AbstractExtractorMenu> e
     private final ResourceLocation texture;
     private final ResourceLocation extractorProgressSprite;
     private final ResourceLocation energyProgressSprite;
+    private final ResourceLocation darkEnergyProgressSprite;
 
     public AbstractExtractorScreen(
             T pMenu,
@@ -23,13 +24,15 @@ public abstract class AbstractExtractorScreen<T extends AbstractExtractorMenu> e
             Component pTitle,
             ResourceLocation pTexture,
             ResourceLocation pListProgressSprite,
-            ResourceLocation energyProgressSprite
+            ResourceLocation energyProgressSprite,
+            ResourceLocation darkEnergyProgressSprite
     ) {
         super(pMenu, pPlayerInventory, pTitle);
         //this.recipeBookComponent = pRecipeBookComponent;
         this.texture = pTexture;
         this.extractorProgressSprite = pListProgressSprite;
         this.energyProgressSprite = energyProgressSprite;
+        this.darkEnergyProgressSprite = darkEnergyProgressSprite;
     }
 
     @Override
@@ -91,6 +94,15 @@ public abstract class AbstractExtractorScreen<T extends AbstractExtractorMenu> e
                 energyBarWidth, energyProgress       // Dimensiones visibles (ancho fijo, altura variable)
         );
 
+        int darkEnergyProgress = Mth.ceil(this.menu.getDarkEnergyProgress() * energyBarHeight); // Calcular progreso en píxeles
+        pGuiGraphics.blitSprite(
+                this.darkEnergyProgressSprite,          // Sprite de la barra de energía
+                energyBarWidth, energyBarHeight,    // Dimensiones completas del sprite
+                0, energyBarHeight - darkEnergyProgress, // Coordenadas para dibujar desde abajo hacia arriba
+                i + 125, j + 21 + (energyBarHeight - darkEnergyProgress), // Posición en la GUI
+                energyBarWidth, darkEnergyProgress       // Dimensiones visibles (ancho fijo, altura variable)
+        );
+
     }
 
     @Override
@@ -101,13 +113,21 @@ public abstract class AbstractExtractorScreen<T extends AbstractExtractorMenu> e
         // Obtener energía actual y máxima desde el menú
         float currentEnergy = this.menu.getCurrenEnergy(); // Índice de energía actual
         float maxEnergy = this.menu.getMaxEnergy();     // Índice de capacidad máxima
+        float currentDarkEnergy = this.menu.getCurrenDarkEnergy(); // Índice de energía actual
+        float maxDarkEnergy = this.menu.getMaxDarkEnergy();     // Índice de capacidad
 
         // Mostrar [energía actual] / [capacidad máxima]
         String energyText = formatEnergyValue(maxEnergy);
         guiGraphics.drawString(this.font, energyText, 15, 18, -12829636, false); // Posición y color ajustables
 
         String energyText2 = formatEnergyValue(currentEnergy);
-        guiGraphics.drawString(this.font, energyText2, 17, 65, -12829636, false); // Posición y color ajustables
+        guiGraphics.drawString(this.font, energyText2, 15, 65, -12829636, false); // Posición y color ajustables
+
+        String darkMaxEnergyText = formatEnergyValue(maxDarkEnergy);
+        guiGraphics.drawString(this.font, darkMaxEnergyText, 136, 18, -12829636, false); // Posición y color ajustables
+
+        String darkEnergyText = formatEnergyValue(currentDarkEnergy);
+        guiGraphics.drawString(this.font, darkEnergyText, 136, 65, -12829636, false); // Posición y color ajustables
 
         if (this.menu.hasInsufficientExp()) {
             Component message = Component.translatable("aurum.aurum.insufficient_exp");

@@ -1,8 +1,10 @@
 package aurum.aurum.block.engineering.ExtractorBlock;
 
+import aurum.aurum.block.engineering.PipeSystem.DarkPipeBlock;
 import aurum.aurum.block.engineering.PipeSystem.PipeBlock;
-import aurum.aurum.energy.EnergyStorage;
-import aurum.aurum.energy.IEnergyConsumer;
+import aurum.aurum.block.engineering.PipeSystem.PipeNetworkUtils;
+import aurum.aurum.energy.engineering.EnergyStorage;
+import aurum.aurum.energy.engineering.IEnergyConsumer;
 import aurum.aurum.init.ModBlocks;
 import aurum.aurum.init.ModItems;
 import com.google.common.collect.Lists;
@@ -43,6 +45,7 @@ import net.minecraft.world.phys.Vec3;
 
 import javax.annotation.Nullable;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEntity implements WorldlyContainer, RecipeCraftingHolder, StackedContentsCompatible, IEnergyConsumer {
     protected static final int SLOT_INPUT = 0;
@@ -53,6 +56,10 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
     private static final int[] SLOTS_FOR_DOWN = new int[]{2, 1};
     private static final int[] SLOTS_FOR_SIDES = new int[]{1};
     private static final int SLOTS_COUNT = 5;
+
+    private static final int DATA_COUNT = 9;
+
+    private final Map<BlockPos, PipeNetworkUtils.IEnergyDevice> connectedDarkEnergyDevices = new HashMap<>();
 
     public int EXTRACTING_COST_AURELITE_ORE_TIME = 4000;
     private final RecipeType<? extends AbstractCookingRecipe> recipeType;
@@ -65,10 +72,9 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
     private boolean hasEnoughExperience = false; // Indica si el jugador tiene suficiente experiencia para extraer
     private int maxDistance = 10; // Distancia máxima de búsqueda de bloques de diamante
     private final EnergyStorage energyStorage = new EnergyStorage(2000000, 0, 10, 10);; // Capacidad, tasa de transferencia
+    private final EnergyStorage darkEnergyStorage = new EnergyStorage(20000, 0, 10, 10);; // Capacidad, tasa de transferencia
+
     public float energyCapacity = this.getEnergyCapacity(); // Capacidad máxima de energía
-    private float energyStored = energyStorage.getEnergyStored();
-     // Energía almacenada actualmente
-    private static final int FLOAT_SCALING_FACTOR = 1000; // Factor de escala
 
     @Nullable
     private static volatile Map<Item, Integer> fuelCache;
@@ -82,19 +88,23 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
                         return Mth.floor(((double) litTime / litDuration) * Short.MAX_VALUE);
                     }
 
-                    return (int )AbstractExtractorBlockEntity.this.litTime * FLOAT_SCALING_FACTOR;
+                    return (int )AbstractExtractorBlockEntity.this.litTime;
                 case 1:
-                    return (int) Math.min(AbstractExtractorBlockEntity.this.litDuration, Short.MAX_VALUE) * FLOAT_SCALING_FACTOR;
+                    return (int) Math.min(AbstractExtractorBlockEntity.this.litDuration, Short.MAX_VALUE);
                 case 2:
                     return AbstractExtractorBlockEntity.this.extractingProgress;
                 case 3:
                     return AbstractExtractorBlockEntity.this.extractingTotalTime;
                 case 4:
-                    return (int)AbstractExtractorBlockEntity.this.energyStorage.getEnergyStored() * FLOAT_SCALING_FACTOR;
+                    return (int)AbstractExtractorBlockEntity.this.energyStorage.getEnergyStored();
                 case 5:
                     return (int) AbstractExtractorBlockEntity.this.energyStorage.getCapacity();
                 case 6:
                     return AbstractExtractorBlockEntity.this.hasEnoughExperience ? 1 : 0;
+                case 7:
+                    return (int) AbstractExtractorBlockEntity.this.darkEnergyStorage.getEnergyStored();
+                case 8:
+                    return (int) AbstractExtractorBlockEntity.this.darkEnergyStorage.getCapacity();
 
                 default:
                     return 0;
@@ -105,10 +115,10 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
         public void set(int p_58433_, int p_58434_) {
             switch (p_58433_) {
                 case 0:
-                    AbstractExtractorBlockEntity.this.litTime = p_58434_ / (float) FLOAT_SCALING_FACTOR;
+                    AbstractExtractorBlockEntity.this.litTime = p_58434_ ;
                     break;
                 case 1:
-                    AbstractExtractorBlockEntity.this.litDuration = p_58434_ / (float) FLOAT_SCALING_FACTOR;
+                    AbstractExtractorBlockEntity.this.litDuration = p_58434_;
                     break;
                 case 2:
                     AbstractExtractorBlockEntity.this.extractingProgress = p_58434_;
@@ -117,7 +127,7 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
                     AbstractExtractorBlockEntity.this.extractingTotalTime = p_58434_;
                     break;
                 case 4:
-                    AbstractExtractorBlockEntity.this.energyStored = p_58434_;
+                    AbstractExtractorBlockEntity.this.energyStorage.setStoredEnergy(p_58434_);
                     break;
                 case 5:
                     AbstractExtractorBlockEntity.this.energyCapacity = p_58434_;
@@ -130,7 +140,7 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
 
         @Override
         public int getCount() {
-            return 7;
+            return DATA_COUNT;
         }
     };
     private final Object2IntOpenHashMap<ResourceLocation> recipesUsed = new Object2IntOpenHashMap<>();
@@ -259,7 +269,7 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
     }
 
     private boolean isLit() {
-        return this.litTime > 0;
+        return this.energyStorage.getEnergyStored() > 0;
     }
 
     @Override
@@ -270,8 +280,9 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
         this.litTime = pTag.getInt("BurnTime");
         this.extractingProgress = pTag.getInt("ExtractorTime");
         this.extractingTotalTime = pTag.getInt("CookTimeTotal");
-        this.energyStored = pTag.getInt("EnergyStorage");
+        this.energyStorage.setStoredEnergy(pTag.getInt("EnergyStorage"));
         this.litDuration = this.getExtractingDuration();
+        this.darkEnergyStorage.setStoredEnergy(pTag.getInt("DarkEnergyStorage"));
         //CompoundTag compoundtag = pTag.getCompound("RecipesUsed");
         /*
         for (String s : compoundtag.getAllKeys()) {
@@ -285,11 +296,9 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
         pTag.putFloat("BurnTime", this.litTime);
         pTag.putInt("ExtractorTime", this.extractingProgress);
         pTag.putInt("CookTimeTotal", this.extractingTotalTime);
-        pTag.putFloat("EnergyStorage", this.energyStored);
+        pTag.putFloat("EnergyStorage", this.energyStorage.getEnergyStored());
+        pTag.putFloat("DarkEnergyStorage", this.darkEnergyStorage.getEnergyStored());
         ContainerHelper.saveAllItems(pTag, this.items, pRegistries);
-        //CompoundTag compoundtag = new CompoundTag();
-        //this.recipesUsed.forEach((p_187449_, p_187450_) -> compoundtag.putInt(p_187449_.toString(), p_187450_));
-        //pTag.put("RecipesUsed", compoundtag);
     }
 
     public static void serverTick(Level pLevel, BlockPos pPos, BlockState pState, AbstractExtractorBlockEntity pBlockEntity) {
@@ -322,18 +331,17 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
         if (hasEnergy) {
             pBlockEntity.litTime = pBlockEntity.getExtractingDuration();
             pBlockEntity.litDuration = pBlockEntity.litTime;
-            if (pBlockEntity.isLit()) {
-                stateChanged = true;
-                pBlockEntity.detectAdjacentBlocksGradual(pipeStack, pBlockEntity.maxDistance);
-
-            }
+            stateChanged = true;
+            pBlockEntity.detectAdjacentBlocksGradual(pipeStack, pBlockEntity.maxDistance);
+            pBlockEntity.processDarkEnergy();
+            pBlockEntity.energyStorage.consumeEnergy(1, false);
         }
 
         // Procesar receta si está encendido
-        if (pBlockEntity.isLit() && pBlockEntity.hasConnectedPipesToAurelite(pBlockEntity.maxDistance) && pBlockEntity.canExtractAurelite() ) {
+        if (hasEnergy && pBlockEntity.hasConnectedPipesToAurelite(pBlockEntity.maxDistance) && pBlockEntity.canExtractAurelite() ) {
             pBlockEntity.extractingProgress++;
-            pBlockEntity.energyStored -= 500;
-
+            pBlockEntity.energyStorage.consumeEnergy(600,false);
+            pBlockEntity.darkEnergyStorage.addEnergy(1, false);
             if (pBlockEntity.extractingProgress == pBlockEntity.extractingTotalTime) {
                 pBlockEntity.extractingProgress = 0;
 
@@ -376,11 +384,11 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
     }
 
     protected float getExtractingDuration() {
-        return this.energyStored;
+        return this.energyStorage.getEnergyStored();
     }
 
     private boolean canExtractAurelite() {
-        return this.energyStored >= 500;
+        return this.energyStorage.getEnergyStored() >= 500;
     }
 
     @Override
@@ -527,7 +535,8 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
 
     @Override
     public void receiveEnergy(float amount) {
-
+        this.energyStorage.addEnergy(amount, false);
+        setChanged(); // Importante para guardar el estado
     }
 
     @Override
@@ -544,11 +553,6 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
     public float getEnergyDemand() {
         return 0;
     }
-
-    public void setEnergyStored(float energy) {
-        this.energyStorage.addEnergy(energy, false);
-    }
-
 
 
     private void detectAdjacentBlocksGradual(ItemStack pipeStack, int maxDistance) {
@@ -684,6 +688,76 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
 
         ExperienceOrb.award(pLevel, pPopVec, i);
     }
+
+
+
+    // Método para generar/distribuir energía oscura (llamar en serverTick)
+    public void processDarkEnergy() {
+        if (this.darkEnergyStorage.getEnergyStored() <= 0) return;
+
+        // 1. Encontrar dispositivos conectados a través de Dark Pipes
+        Map<BlockPos, PipeNetworkUtils.IEnergyDevice> devices =
+                PipeNetworkUtils.findConnectedDevices(level, worldPosition,
+                        PipeNetworkUtils.IEnergyDevice.class, DarkPipeBlock.class);
+
+        this.connectedDarkEnergyDevices.clear();
+        this.connectedDarkEnergyDevices.putAll(devices);
+
+        // 2. Filtrar dispositivos que pueden recibir energía
+        List<PipeNetworkUtils.IEnergyDevice> receivers = devices.values().stream()
+                .filter(PipeNetworkUtils.IEnergyDevice::canReceiveEnergy)
+                .collect(Collectors.toList());
+
+        if (receivers.isEmpty()) return;
+
+        // 3. Distribuir energía considerando pérdidas
+        distributeDarkEnergy(receivers);
+    }
+
+    private void distributeDarkEnergy(List<PipeNetworkUtils.IEnergyDevice> receivers) {
+        float availableEnergy = this.darkEnergyStorage.getEnergyStored();
+        if (availableEnergy <= 0) return;
+
+        // Distribuir en pequeños incrementos para evitar el "llenado de tirón"
+        float energyPerTick = Math.min(availableEnergy, 10f); // Máximo 10 por tick
+
+        for (PipeNetworkUtils.IEnergyDevice device : receivers) {
+            if (availableEnergy <= 0) break;
+
+            BlockPos devicePos = findDevicePosition(device);
+            if (devicePos == null) continue;
+
+            // Calcular pérdidas
+            float energyLossPercentage = PipeNetworkUtils.calculateEnergyLoss(level, worldPosition, devicePos, DarkPipeBlock.class);
+
+            // Enviar un pequeño incremento
+            float energyToSend = Math.min(energyPerTick, availableEnergy);
+            float energyAfterLoss = energyToSend * (1 - energyLossPercentage);
+
+            // Verificar si el dispositivo puede recibir esta energía
+            float energyNeeded = device.getDarkEnergyCapacity() - device.getDarkEnergyStored();
+            float actualEnergy = Math.min(energyAfterLoss, energyNeeded);
+
+            if (actualEnergy > 0) {
+                device.receiveDarkEnergy(actualEnergy);
+                availableEnergy -= energyToSend;
+            }
+        }
+
+        this.darkEnergyStorage.setStoredEnergy(availableEnergy);
+    }
+
+    private BlockPos findDevicePosition(PipeNetworkUtils.IEnergyDevice device) {
+        return connectedDarkEnergyDevices.entrySet().stream()
+                .filter(entry -> entry.getValue() == device)
+                .map(Map.Entry::getKey)
+                .findFirst()
+                .orElse(null);
+    }
+
+
+
+
 
 }
 
