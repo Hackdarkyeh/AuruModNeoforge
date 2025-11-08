@@ -1,7 +1,7 @@
 package aurum.aurum.init;
 
 import aurum.aurum.block.AntiElytraBlock.AntiElytraBlockEntity;
-import aurum.aurum.block.SoulModificationTable.SoulModificationTableBlockEntity;
+import aurum.aurum.block.ArmorSystem.SoulModificationTable.SoulModificationTableBlockEntity;
 import aurum.aurum.block.engineering.ArmorTable.ArmorTableBlockEntity;
 import aurum.aurum.block.engineering.DarkEnergyTable.DarkEnergyTableBlockEntity;
 import aurum.aurum.block.engineering.EnergyGeneratorBlock.EnergyGeneratorBlockEntity;

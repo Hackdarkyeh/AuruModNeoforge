@@ -1,4 +1,4 @@
-package aurum.aurum.block.SoulModificationTable;
+package aurum.aurum.block.ArmorSystem.SoulModificationTable;
 
 import aurum.aurum.energy.engineering.IEnergyConsumer;
 import com.google.common.collect.Lists;

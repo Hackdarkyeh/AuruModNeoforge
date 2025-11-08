@@ -1,4 +1,4 @@
-package aurum.aurum.client.gui.Armor;
+package aurum.aurum.client.gui.SoulModificationTableMenu;
 
 import aurum.aurum.item.ArmorItem.ArmorExpansions;
 import aurum.aurum.item.ArmorItem.SoulExpansions;

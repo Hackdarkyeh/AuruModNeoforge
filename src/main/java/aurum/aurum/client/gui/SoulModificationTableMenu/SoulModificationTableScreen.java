@@ -1,4 +1,4 @@
-package aurum.aurum.client.gui.Armor;
+package aurum.aurum.client.gui.SoulModificationTableMenu;
 
 import aurum.aurum.Aurum;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -28,6 +28,12 @@ public class SoulModificationTableScreen extends AbstractContainerScreen<SoulMod
         int y = (height - imageHeight) / 2;
 
         guiGraphics.blit(GUI_TEXTURE, x, y, 0, 0, imageWidth, imageHeight);
+    }
+
+    @Override
+    public void removed() {
+        super.removed();
+
     }
 }
 

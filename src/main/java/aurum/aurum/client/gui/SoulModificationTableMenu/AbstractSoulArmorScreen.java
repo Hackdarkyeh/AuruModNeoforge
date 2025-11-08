@@ -1,4 +1,4 @@
-package aurum.aurum.client.gui.Armor;
+package aurum.aurum.client.gui.SoulModificationTableMenu;
 
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;

@@ -1,6 +1,6 @@
-package aurum.aurum.block.SoulModificationTable;
+package aurum.aurum.block.ArmorSystem.SoulModificationTable;
 
-import aurum.aurum.client.gui.Armor.SoulModificationTableMenu;
+import aurum.aurum.client.gui.SoulModificationTableMenu.SoulModificationTableMenu;
 import aurum.aurum.init.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;

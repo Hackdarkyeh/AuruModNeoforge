@@ -1,5 +1,5 @@
-package aurum.aurum.client.gui.Armor;
-import aurum.aurum.block.SoulModificationTable.SoulModificationTableBlockEntity;
+package aurum.aurum.client.gui.SoulModificationTableMenu;
+import aurum.aurum.block.ArmorSystem.SoulModificationTable.SoulModificationTableBlockEntity;
 import aurum.aurum.init.GUI.ModMenuType;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;

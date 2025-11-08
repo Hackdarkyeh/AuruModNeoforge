@@ -3,7 +3,7 @@ package aurum.aurum.init;
 
 import aurum.aurum.block.*;
 import aurum.aurum.block.AntiElytraBlock.AntiElytraBlock;
-import aurum.aurum.block.SoulModificationTable.SoulModificationTableBlock;
+import aurum.aurum.block.ArmorSystem.SoulModificationTable.SoulModificationTableBlock;
 import aurum.aurum.block.engineering.ArmorTable.ArmorTableBlock;
 import aurum.aurum.block.engineering.DarkEnergyTable.DarkEnergyTableBlock;
 import aurum.aurum.block.engineering.EnergyGeneratorBlock.EnergyGeneratorBlock;

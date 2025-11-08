@@ -1,6 +1,6 @@
 package aurum.aurum.init.GUI;
 
-import aurum.aurum.client.gui.Armor.SoulModificationTableScreen;
+import aurum.aurum.client.gui.SoulModificationTableMenu.SoulModificationTableScreen;
 import aurum.aurum.client.gui.ArmorTable.ArmorTableScreen;
 import aurum.aurum.client.gui.DarkEnergyTable.DarkEnergyTableScreen;
 import aurum.aurum.client.gui.EnergyGeneratorBlock.EnergyGeneratorScreen;

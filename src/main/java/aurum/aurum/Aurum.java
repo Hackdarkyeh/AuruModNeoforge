@@ -1,7 +1,7 @@
 package aurum.aurum;
 
 import aurum.aurum.Commands.AurumBlightCommands;
-import aurum.aurum.block.SoulModificationTable.SoulModificationTableBlockEntityRenderer;
+import aurum.aurum.block.ArmorSystem.SoulModificationTable.SoulModificationTableBlockEntityRenderer;
 import aurum.aurum.block.engineering.PedestalBlock.PedestalBlockEntityRenderer;
 import aurum.aurum.client.renderer.CooperGolemRenderer;
 import aurum.aurum.client.renderer.SoreRenderer;
@@ -38,7 +38,6 @@ import org.slf4j.Logger;
 import java.util.function.Supplier;
 
 import static aurum.aurum.init.ModBlockEntities.BLOCK_ENTITIES_REGISTRY;
-import static aurum.aurum.init.ModBlockEntities.DARK_ENERGY_TABLE_BLOCK;
 import static aurum.aurum.init.ModBlocks.*;
 import static aurum.aurum.init.ModEffects.EFFECTS_REGISTRY;
 import static aurum.aurum.init.ModItems.*;

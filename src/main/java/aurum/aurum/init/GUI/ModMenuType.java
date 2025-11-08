@@ -1,7 +1,7 @@
 package aurum.aurum.init.GUI;
 
 import aurum.aurum.Aurum;
-import aurum.aurum.client.gui.Armor.SoulModificationTableMenu;
+import aurum.aurum.client.gui.SoulModificationTableMenu.SoulModificationTableMenu;
 import aurum.aurum.client.gui.ArmorTable.ArmorTableMenu;
 import aurum.aurum.client.gui.DarkEnergyTable.DarkEnergyTableMenu;
 import aurum.aurum.client.gui.EnergyGeneratorBlock.EnergyGeneratorMenu;
