@@ -20,25 +20,6 @@ public class ModItemTagProvider extends ItemTagsProvider {
 
     @Override
     protected void addTags(HolderLookup.Provider provider) {
-        /*
-        tag(ModTags.Items.TRANSFORMABLE_ITEMS)
-                .add(ModItems.BISMUTH.get())
-                .add(ModItems.RAW_BISMUTH.get())
-                .add(Items.COAL)
-                .add(Items.STICK)
-                .add(Items.COMPASS);
-
-        tag(ItemTags.SWORDS)
-                .add(ModItems.BISMUTH_SWORD.get());
-        tag(ItemTags.PICKAXES)
-                .add(ModItems.BISMUTH_PICKAXE.get());
-        tag(ItemTags.SHOVELS)
-                .add(ModItems.BISMUTH_SHOVEL.get());
-        tag(ItemTags.AXES)
-                .add(ModItems.BISMUTH_AXE.get());
-        tag(ItemTags.HOES)
-                .add(ModItems.BISMUTH_HOE.get());
-        */
         System.out.println("Adding item tags");
         tag(ModTags.Items.ABILITY_ITEMS).
                 add(ModItems.EXPANSION_SUPER_SPEED.get())

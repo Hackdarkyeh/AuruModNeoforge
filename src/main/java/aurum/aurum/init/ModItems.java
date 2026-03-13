@@ -1,7 +1,7 @@
 package aurum.aurum.init;
 
 import aurum.aurum.item.ArmorItem.ArmorExpansions;
-import aurum.aurum.item.ArmorItem.SoulExpansions;
+import aurum.aurum.item.SoulExpansions;
 import aurum.aurum.item.*;
 import aurum.aurum.item.ArmorItem.ModArmorItem;
 import aurum.aurum.item.EnergyGeneratorTier.EnergyGeneratorUpdaterTier1;
@@ -13,7 +13,6 @@ import aurum.aurum.item.ExtractorPeakTier.ExtractorPeakUpdaterTier2;
 import aurum.aurum.item.ExtractorPeakTier.ExtractorPeakUpdaterTier3;
 import aurum.aurum.item.RangeExtractor.*;
 import aurum.aurum.item.Swords.AureliteSword;
-import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.Item;
 

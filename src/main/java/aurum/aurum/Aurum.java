@@ -1,6 +1,7 @@
 package aurum.aurum;
 
 import aurum.aurum.Commands.AurumBlightCommands;
+import aurum.aurum.Commands.GenerateBridgesCommand;
 import aurum.aurum.block.ArmorSystem.SoulModificationTable.SoulModificationTableBlockEntityRenderer;
 import aurum.aurum.block.engineering.PedestalBlock.PedestalBlockEntityRenderer;
 import aurum.aurum.client.renderer.CooperGolemRenderer;
@@ -31,6 +32,7 @@ import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.data.event.GatherDataEvent;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import org.slf4j.Logger;
@@ -84,6 +86,7 @@ public class Aurum {
         ModParticles.REGISTRY.register(modEventBus);
 
         NeoForge.EVENT_BUS.register(AurumBlightCommands.class);
+        NeoForge.EVENT_BUS.register(GenerateBridgesCommand.class);
         NeoForge.EVENT_BUS.register(AurumBlightRain.class);
 
         ModEntities.ENTITY_REGISTER.register(modEventBus);
@@ -107,9 +110,9 @@ public class Aurum {
 
         // Registra la ForgeConfigSpec de nuestro mod para que Forge pueda crear y cargar el archivo de configuración por nosotros
         //ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Config.SPEC);
+        modEventBus.register(DataGenerators.class);
+
     }
-
-
 
     private void commonSetup(final FMLCommonSetupEvent event) {
         // Algun código de configuración común

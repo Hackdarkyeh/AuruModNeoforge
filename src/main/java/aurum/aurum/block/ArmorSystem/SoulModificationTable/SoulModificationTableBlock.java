@@ -1,6 +1,7 @@
 package aurum.aurum.block.ArmorSystem.SoulModificationTable;
 
 
+import aurum.aurum.init.ModBlockEntities;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvents;
@@ -12,12 +13,15 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.NoteBlockInstrument;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.phys.BlockHitResult;
 
+import javax.annotation.Nullable;
 import java.util.function.ToIntFunction;
 
 public class SoulModificationTableBlock extends AbstractSoulModificationTableBlock {
@@ -87,12 +91,17 @@ public class SoulModificationTableBlock extends AbstractSoulModificationTableBlo
                 return ItemInteractionResult.SUCCESS;
             }
 
-            if(soulModificationTableBlockEntity.inventory.getStackInSlot(0).isEmpty() && !stack.isEmpty()) {
-                soulModificationTableBlockEntity.inventory.insertItem(0, stack.copy(), false);
+            if(!stack.isEmpty() && soulModificationTableBlockEntity.inventory.getStackInSlot(0).isEmpty()) {
+                // Usar setItem para que se invoque toda la lógica de sincronización
+                ItemStack insertStack = stack.copy();
+                insertStack.setCount(1);
+                soulModificationTableBlockEntity.setItem(0, insertStack);
                 stack.shrink(1);
                 level.playSound(player, pos, SoundEvents.ITEM_PICKUP, SoundSource.BLOCKS, 1f, 2f);
-            } else if(stack.isEmpty()) {
+            } else if(stack.isEmpty() && !soulModificationTableBlockEntity.inventory.getStackInSlot(0).isEmpty()) {
+                // Extraer usando setItem para consistencia
                 ItemStack stackOnPedestal = soulModificationTableBlockEntity.inventory.extractItem(0, 1, false);
+                soulModificationTableBlockEntity.setItem(0, ItemStack.EMPTY);
                 player.setItemInHand(InteractionHand.MAIN_HAND, stackOnPedestal);
                 soulModificationTableBlockEntity.clearContents();
                 level.playSound(player, pos, SoundEvents.ITEM_PICKUP, SoundSource.BLOCKS, 1f, 1f);
@@ -100,6 +109,12 @@ public class SoulModificationTableBlock extends AbstractSoulModificationTableBlo
         }
 
         return ItemInteractionResult.SUCCESS;
+    }
+
+    @Nullable
+    @Override
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level pLevel, BlockState pState, BlockEntityType<T> pBlockEntityType) {
+        return createFurnaceTicker(pLevel, pBlockEntityType, ModBlockEntities.SOUL_MODIFICATION_TABLE_BLOCK_ENTITY.get());
     }
 
 }

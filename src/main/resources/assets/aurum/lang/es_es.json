@@ -26,6 +26,30 @@
 
 
 
-  "aurum.pipe_fluid_type" : "Tipo de fluido: %s"
+  "aurum.pipe_fluid_type" : "Tipo de fluido: %s",
+
+
+  "item.aurum.soul_expansions.tooltip.expansion1": "Expansión de alma I: %s",
+  "item.aurum.soul_expansions.tooltip.expansion2": "Expansión de alma II: %s",
+  "item.aurum.soul_expansions.tooltip.expansion3": "Expansión de alma III: %s",
+  "item.aurum.soul_expansions.tooltip.expansion4": "Expansión de alma IV: %s",
+  "item.aurum.soul_expansions.tooltip.expansion5": "Expansión de alma V: %s",
+  "item.aurum.soul_expansions.tooltip.expansion6": "Expansión de alma VI: %s",
+  "item.aurum.soul_expansions.tooltip.expansion7": "Expansión de alma VII: %s",
+  "item.aurum.soul_expansions.tooltip.expansion8": "Expansión de alma VIII: %s",
+  "tooltip.aurum.unassigned_slot": "Sin asignar",
+
+  "ability.aurum.expansion_damage_resistance" : "Resistencia al daño",
+  "ability.aurum.expansion_super_speed" : "Velocidad mejorada",
+  "ability.aurum.expansion_regeneration" : "Regeneración",
+  "ability.aurum.expansion_high_jump" : "Salto alto",
+  "ability.aurum.expansion_fire_immune" : "Inmunidad al fuego",
+  "ability.aurum.expansion_dash" : "Embestida",
+  "ability.aurum.expansion_explosion" : "Explosión",
+  "ability.aurum.expansion_lava_immune" : "Inmunidad a la lava",
+  "ability.aurum.expansion_magic_shield" : "Escudo mágico",
+
+  "ability.aurum.expansion.weight": "Peso de la expansión: %s"
+
 
 }

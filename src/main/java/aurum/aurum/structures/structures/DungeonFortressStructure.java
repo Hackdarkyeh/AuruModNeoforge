@@ -32,7 +32,7 @@ public class DungeonFortressStructure extends Structure {
     public static final int ALTURA_FIJA = 120;
     public static final int DISTANCIA_MINIMA = 500;
     public static final ResourceKey<Level> DIMENSION_OBJETIVO = Level.OVERWORLD; // Cambia si es otra dimensión
-    public static final String BIOMA_OBJETIVO = "minecraft:plains"; // Cambia por tu bioma
+    public static final String BIOMA_OBJETIVO = "aurum:dim1_biome7_void"; // Bioma vacío en tu dimensión
 
 
     // Pool inicial de piezas para la estructura
@@ -156,6 +156,7 @@ public class DungeonFortressStructure extends Structure {
                         this.liquidSettings);
 
         // Devuelve el generador de piezas para que el juego cree la estructura
+        // Los puentes se generarán mediante un evento después de que la estructura esté completa
         return structurePiecesGenerator;
     }
 

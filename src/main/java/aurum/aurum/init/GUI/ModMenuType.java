@@ -40,7 +40,7 @@ public class ModMenuType <T extends AbstractContainerMenu> implements FeatureEle
             registerMenuType("pedestal_menu", PedestalMenu::new);
 
     public static final DeferredHolder<MenuType<?>, MenuType<SoulModificationTableMenu>> SOUL_MODIFICATION_TABLE =
-            registerMenuType("soul_modification_table_menu", SoulModificationTableMenu::new);
+            MENU_TYPE_REGISTRY.register("soul_modification_table_menu",  () -> new MenuType<>(SoulModificationTableMenu::new, FeatureFlags.VANILLA_SET));
 
     public static final DeferredHolder<MenuType<?>, MenuType<DarkEnergyTableMenu>> DARK_ENERGY_TABLE =
             MENU_TYPE_REGISTRY.register("dark_energy_table_menu", () -> new MenuType<>(DarkEnergyTableMenu::new, FeatureFlags.VANILLA_SET));;

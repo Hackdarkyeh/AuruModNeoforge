@@ -1,5 +1,6 @@
 package aurum.aurum.init;
 
+import aurum.aurum.Soul.SoulData;
 import aurum.aurum.item.ArmorItem.ArmorEnergyData;
 import aurum.aurum.item.ArmorItem.ArmorExpData;
 import aurum.aurum.item.ArmorItem.ArmorTierData;
@@ -64,5 +65,11 @@ public class ModComponents {
                     () -> DataComponentType.<AureliteSword.EnergyData>builder()
                             .persistent(AureliteSword.EnergyData.CODEC)
                             .networkSynchronized(AureliteSword.EnergyData.STREAM_CODEC)
+                            .build());
+    // En tu clase de registro de Mod, utilizando el registro de componentes.
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<SoulData>> SOUL_COMPONENT =
+            REGISTRAR.register("soul_data", () ->
+                    DataComponentType.<SoulData>builder()
+                            .persistent(SoulData.CODEC) // Necesitas un Codec para la serialización
                             .build());
 }

@@ -142,6 +142,16 @@ dependencies {
         //compileOnly("mezz.jei:jei-${minecraft_version}-neoforge-api:${jei_version}")
     //}
 
+    if (jei_enabled == "true") {
+        // Línea ORIGINAL: runtimeOnly("mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}")
+        // Lo cambiamos a 'localRuntime' para que sea opcional en el runtime, como sugiere el comentario.
+        localRuntime("mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}")
+
+        // Descomentamos y usamos 'compileOnly' para poder usar las clases de la API en el código Java.
+        compileOnly("mezz.jei:jei-${minecraft_version}-common-api:${jei_version}")
+        compileOnly("mezz.jei:jei-${minecraft_version}-neoforge-api:${jei_version}")
+    }
+
     // Jade
     if (jade_enabled == "true") {
         implementation "curse.maven:jade-324717:${jade_file_id}"

@@ -10,29 +10,37 @@ import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.Containers;
-import net.minecraft.world.MenuProvider;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.items.ItemStackHandler;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class SoulModificationTableBlockEntity  extends BlockEntity implements MenuProvider{
-    public final ItemStackHandler inventory = new ItemStackHandler(1) {
+public class SoulModificationTableBlockEntity extends AbstractSoulModificationTableBlockEntity{
+    public final ItemStackHandler inventory = new ItemStackHandler(9) {
         @Override
         protected int getStackLimit(int slot, ItemStack stack) {
-            return 1;
+            return 9;
         }
 
         @Override
         protected void onContentsChanged(int slot) {
+            super.onContentsChanged(slot);
             setChanged();
-            if(!level.isClientSide()) {
+            if (level != null && !level.isClientSide) {
                 level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), 3);
+                // Si cambió el slot 0 (alma) sincronizar/limpiar pedestales inmediatamente
+                if (slot == 0) {
+                    ItemStack stack = this.getStackInSlot(0);
+                    if (stack.isEmpty()) {
+                        clearNearbyPedestals(level, worldPosition);
+                    } else {
+                        syncPedestalsFromSoul(level, worldPosition, stack);
+                    }
+                }
             }
         }
     };
@@ -44,7 +52,7 @@ public class SoulModificationTableBlockEntity  extends BlockEntity implements Me
 
     public float getRenderingRotation() {
         rotation += 0.5f;
-        if(rotation >= 360) {
+        if (rotation >= 360) {
             rotation = 0;
         }
         return rotation;
@@ -56,10 +64,9 @@ public class SoulModificationTableBlockEntity  extends BlockEntity implements Me
 
     public void drops() {
         SimpleContainer inv = new SimpleContainer(inventory.getSlots());
-        for(int i = 0; i < inventory.getSlots(); i++) {
+        for (int i = 0; i < inventory.getSlots(); i++) {
             inv.setItem(i, inventory.getStackInSlot(i));
         }
-
         Containers.dropContents(this.level, this.worldPosition, inv);
     }
 
@@ -80,12 +87,15 @@ public class SoulModificationTableBlockEntity  extends BlockEntity implements Me
         return Component.literal("Mesa");
     }
 
-    @Nullable
     @Override
-    public AbstractContainerMenu createMenu(int i, Inventory inventory, Player player) {
-        return new SoulModificationTableMenu(i, inventory, this);
+    protected Component getDefaultName() {
+        return Component.translatable("container.soul_modification_table_block");
     }
 
+    @Nullable
+    public @NotNull AbstractContainerMenu createMenu(int pId, Inventory pPlayer) {
+        return new SoulModificationTableMenu(pId, pPlayer, this, this.dataAccess);
+    }
 
     @Nullable
     @Override
@@ -97,6 +107,4 @@ public class SoulModificationTableBlockEntity  extends BlockEntity implements Me
     public CompoundTag getUpdateTag(HolderLookup.Provider pRegistries) {
         return saveWithoutMetadata(pRegistries);
     }
-
 }
-
