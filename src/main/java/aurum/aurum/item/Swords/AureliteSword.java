@@ -3,17 +3,15 @@ package aurum.aurum.item.Swords;
 
 import aurum.aurum.energy.ArmorAndWeapons.EnergyConfig;
 import aurum.aurum.energy.ArmorAndWeapons.IEnergyWeapon;
-import aurum.aurum.init.ModComponents;
+import aurum.aurum.init.ModDataComponents;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.core.component.DataComponentType;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.SwordItem;
@@ -47,19 +45,19 @@ public class AureliteSword extends SwordItem implements IEnergyWeapon {
     }
 
     public AureliteSword(Tier pTier, Properties pProperties) {
-        super(pTier, pProperties.component(ModComponents.SWORD_ENERGY_DATA.get(),
+        super(pTier, pProperties.component(ModDataComponents.SWORD_ENERGY_DATA.get(),
                 new EnergyData(0, EnergyConfig.AureliteSword.MAX_ENERGY_CAPACITY, EnergyType.NONE)));
     }
 
     // Método para obtener los datos de energía
     public static EnergyData getEnergyData(ItemStack stack) {
-        return stack.getOrDefault(ModComponents.SWORD_ENERGY_DATA.get(),
+        return stack.getOrDefault(ModDataComponents.SWORD_ENERGY_DATA.get(),
                 new EnergyData(0, EnergyConfig.AureliteSword.MAX_ENERGY_CAPACITY, EnergyType.NONE));
     }
 
     // Método para establecer los datos de energía
     public static void setEnergyData(ItemStack stack, EnergyData data) {
-        stack.set(ModComponents.SWORD_ENERGY_DATA.get(), data);
+        stack.set(ModDataComponents.SWORD_ENERGY_DATA.get(), data);
     }
 
     // --- Implementación de IEnergyWeapon ---
@@ -209,7 +207,7 @@ public class AureliteSword extends SwordItem implements IEnergyWeapon {
         String energyTypeName = switch(data.energyType()) {
             case DARK_ENERGY -> "Oscura";
             case CLEAN_ENERGY -> "Limpia";
-            default -> "Sin energía";
+            default -> "";
         };
 
         pTooltipComponents.add(Component.literal("Energía " + energyTypeName + ": " +
@@ -226,8 +224,7 @@ public class AureliteSword extends SwordItem implements IEnergyWeapon {
                 .withStyle(net.minecraft.ChatFormatting.GRAY));
 
         if (data.energyType() != EnergyType.NONE) {
-            pTooltipComponents.add(Component.literal("¡Modo activo: Mayor consumo!")
-                    .withStyle(net.minecraft.ChatFormatting.YELLOW));
+            //pTooltipComponents.add(Component.literal("¡Modo activo: Mayor consumo!").withStyle(net.minecraft.ChatFormatting.YELLOW));
         }
     }
 

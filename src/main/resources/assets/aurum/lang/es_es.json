@@ -13,6 +13,8 @@
   "aurum.aurum.channeling": "Canalizando: %s",
   "config.jade.plugin_aurum.cooper_golem": "Golem de cobre",
   "entity.aurum.cooper_golem": "Golem de cobre",
+  "aurum.aurum.aurum_blood": "Aurum en sangre: %s",
+  "config.jade.plugin_aurum.aurum_blood": "Aurum en sangre",
 
   "container.energy_generator_block": "Generador de energía",
 
@@ -24,6 +26,12 @@
   "tooltip.aurum.tier": "Tier de la pieza:%s",
 
 
+
+  "bossbar.aurum.invasion": "Invasión de Aurum",
+  "bossbar.aurum.invasion": "Invasión de Aurum",
+  "bossbar.aurum.phase_progress": "Raid Fase %s/4 | Enemigos restantes: %s",
+
+  "tooltip.aurum.purity": "Nivel de pureza: %s%%",
 
 
   "aurum.pipe_fluid_type" : "Tipo de fluido: %s",
@@ -49,7 +57,38 @@
   "ability.aurum.expansion_lava_immune" : "Inmunidad a la lava",
   "ability.aurum.expansion_magic_shield" : "Escudo mágico",
 
-  "ability.aurum.expansion.weight": "Peso de la expansión: %s"
+  "ability.aurum.expansion.weight": "Peso de la expansión: %s",
+  "key.categories.aurum": "Aurum",
+  "key.aurum.toggle_aurum_bar": "Toggle Aurum Bar",
+
+
+
+  "aurum.skill.absorption.name": "Absorción",
+  "aurum.skill.absorption.desc": "+10%% Capacidad de Escudo por nivel\nBonus actual: +%d%%",
+
+  "aurum.skill.recovery.name": "Recuperación",
+  "aurum.skill.recovery.desc": "+15%% Recarga de Escudo por nivel\nBonus actual: +%d%%",
+
+  "aurum.skill.magic_amp.name": "Magia",
+  "aurum.skill.magic_amp.desc": "+10%% base (+5%%/niv) a Encantamientos\nBonus actual: +%d%%",
+
+  "aurum.skill.resonance.name": "Resonancia",
+  "aurum.skill.resonance.desc": "-5%% Desgaste de Escudo por nivel\nBonus actual: -%d%%",
+
+  "gui.aurum.set_overview": "Vista General del Set",
+  "gui.aurum.set_points": "Pts de Set: %s / %s",
+  "gui.aurum.pieces_count": "Piezas Aurum: %s / 4",
+  "gui.aurum.requires_full_set": "Requiere Set Completo (4/4)",
+  "gui.aurum.corrosion_barrier": "Barrera de Corrosión",
+  "gui.aurum.corrosion_percent": "Corrosión: %s%%",
+  "gui.aurum.level": "Nivel %s",
+  "gui.aurum.xp_info": "XP: %s / %s (%s%%)",
+  "gui.aurum.passive.native_health": "Salud Nativa: Nivel %s",
+  "gui.aurum.passive.health_desc": "Base Nivel I. Puedes invertir los 2 Pts de Set para subir a Nivel III.",
+  "gui.aurum.passive.status": "Estado: %s",
+  "gui.aurum.passive.level_status": "Nivel %s",
+  "gui.aurum.passive.disabled": "DESACTIVADO",
+  "gui.aurum.passive.controls": "Clic Izq: Invertir punto  |  Clic Der: Recuperar punto"
 
 
 }

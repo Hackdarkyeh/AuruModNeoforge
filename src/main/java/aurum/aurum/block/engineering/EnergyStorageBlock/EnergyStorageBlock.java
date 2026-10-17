@@ -2,7 +2,9 @@ package aurum.aurum.block.engineering.EnergyStorageBlock;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -10,11 +12,62 @@ import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
+
+import java.util.Map;
 
 public class EnergyStorageBlock extends Block implements EntityBlock {
 
+    // true = hay otro EnergyStorageBlock en esa dirección (solo afecta al modelo)
+    public static final BooleanProperty NORTH = BlockStateProperties.NORTH;
+    public static final BooleanProperty EAST = BlockStateProperties.EAST;
+    public static final BooleanProperty SOUTH = BlockStateProperties.SOUTH;
+    public static final BooleanProperty WEST = BlockStateProperties.WEST;
+    public static final BooleanProperty UP = BlockStateProperties.UP;
+    public static final BooleanProperty DOWN = BlockStateProperties.DOWN;
+
+    public static final Map<Direction, BooleanProperty> PROPERTY_BY_DIRECTION = Map.of(
+            Direction.NORTH, NORTH,
+            Direction.EAST, EAST,
+            Direction.SOUTH, SOUTH,
+            Direction.WEST, WEST,
+            Direction.UP, UP,
+            Direction.DOWN, DOWN);
+
     public EnergyStorageBlock() {
         super(BlockBehaviour.Properties.of().strength(2.0f).noOcclusion().isRedstoneConductor((bs, br, bp) -> false));
+        this.registerDefaultState(this.stateDefinition.any()
+                .setValue(NORTH, false)
+                .setValue(EAST, false)
+                .setValue(SOUTH, false)
+                .setValue(WEST, false)
+                .setValue(UP, false)
+                .setValue(DOWN, false));
+    }
+
+    @Override
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(NORTH, EAST, SOUTH, WEST, UP, DOWN);
+    }
+
+    @Override
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        Level level = context.getLevel();
+        BlockPos pos = context.getClickedPos();
+
+        BlockState state = this.defaultBlockState();
+        for (Direction dir : Direction.values()) {
+            state = state.setValue(PROPERTY_BY_DIRECTION.get(dir), level.getBlockState(pos.relative(dir)).is(this));
+        }
+        return state;
+    }
+
+    @Override
+    public BlockState updateShape(BlockState state, Direction direction, BlockState neighborState,
+                                  LevelAccessor level, BlockPos pos, BlockPos neighborPos) {
+        return state.setValue(PROPERTY_BY_DIRECTION.get(direction), neighborState.is(this));
     }
 
     @Override

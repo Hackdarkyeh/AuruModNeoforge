@@ -1,9 +1,9 @@
 package aurum.aurum.client.renderer;
 
 import aurum.aurum.Aurum;
-import aurum.aurum.client.model.ModModelLayers;
+import aurum.aurum.client.model.AAModModelLayers;
 import aurum.aurum.client.model.ModelCooperGolem;
-import aurum.aurum.entity.CooperGolemEntity;
+import aurum.aurum.entity.CooperGolem.CooperGolemEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.resources.ResourceLocation;
@@ -13,7 +13,7 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 
 public class CooperGolemRenderer extends MobRenderer<CooperGolemEntity, ModelCooperGolem<CooperGolemEntity>> {
     public CooperGolemRenderer(EntityRendererProvider.Context context) {
-        super(context, new ModelCooperGolem<>(context.bakeLayer(ModModelLayers.COOPER_GOLEM_LAYER)), 0.5f);
+        super(context, new ModelCooperGolem<>(context.bakeLayer(AAModModelLayers.COOPER_GOLEM_LAYER)), 0.5f);
     }
 
     @Override

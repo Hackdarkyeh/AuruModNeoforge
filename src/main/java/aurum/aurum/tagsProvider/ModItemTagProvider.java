@@ -36,7 +36,11 @@ public class ModItemTagProvider extends ItemTagsProvider {
                 .add(ModItems.AURELITE_HELMET.get())
                 .add(ModItems.AURELITE_CHESTPLATE.get())
                 .add(ModItems.AURELITE_LEGGINGS.get())
-                .add(ModItems.AURELITE_BOOTS.get());
+                .add(ModItems.AURELITE_BOOTS.get())
+                .add(ModItems.AURELITE_HELMET_GOLD.get())
+                .add(ModItems.AURELITE_CHESTPLATE_GOLD.get())
+                .add(ModItems.AURELITE_LEGGINGS_GOLD.get())
+                .add(ModItems.AURELITE_BOOTS_GOLD.get());
 
         tag(ModTags.Items.SOUL_ITEMS)
                 .add(ModItems.EXPANSION_SOUL_TOTEM_1.get())
@@ -47,7 +51,11 @@ public class ModItemTagProvider extends ItemTagsProvider {
                 .add(ModItems.AURELITE_HELMET.get())
                 .add(ModItems.AURELITE_CHESTPLATE.get())
                 .add(ModItems.AURELITE_LEGGINGS.get())
-                .add(ModItems.AURELITE_BOOTS.get());
+                .add(ModItems.AURELITE_BOOTS.get())
+                .add(ModItems.AURELITE_HELMET_GOLD.get())
+                .add(ModItems.AURELITE_CHESTPLATE_GOLD.get())
+                .add(ModItems.AURELITE_LEGGINGS_GOLD.get())
+                .add(ModItems.AURELITE_BOOTS_GOLD.get());
 
     }
 }

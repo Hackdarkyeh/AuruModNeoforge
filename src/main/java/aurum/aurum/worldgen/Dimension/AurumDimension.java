@@ -1,6 +1,8 @@
 package aurum.aurum.worldgen.Dimension;
 
+import aurum.aurum.client.AurumDimensionEffects;
 import com.mojang.serialization.Lifecycle;
+import com.mojang.serialization.MapCodec;
 import net.minecraft.client.renderer.DimensionSpecialEffects;
 import net.minecraft.core.*;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -29,22 +31,13 @@ import java.util.Map;
 import java.util.OptionalLong;
 import java.util.function.Supplier;
 
+import static aurum.aurum.Aurum.MODID;
+
 public class AurumDimension {
     public static class Dimension1SpecialEffectsHandler {
         @SubscribeEvent
         public static void registerDimensionSpecialEffects(RegisterDimensionSpecialEffectsEvent event) {
-            DimensionSpecialEffects customEffect = new DimensionSpecialEffects(Float.NaN, true, DimensionSpecialEffects.SkyType.NONE, false, false) {
-                @Override
-                public Vec3 getBrightnessDependentFogColor(Vec3 color, float sunHeight) {
-                    return color;
-                }
-
-                @Override
-                public boolean isFoggyAt(int x, int y) {
-                    return true;
-                }
-            };
-            event.register(ResourceLocation.parse("aurum:dimension_1"), customEffect);
+            event.register(ResourceLocation.fromNamespaceAndPath("aurum", "aurum_dimension_type"), new AurumDimensionEffects());
         }
     }
     @SubscribeEvent
@@ -97,6 +90,12 @@ public class AurumDimension {
     public static final DeferredRegister<DimensionType> DIMENSION_TYPES = DeferredRegister.create(Registries.DIMENSION_TYPE, "aurum");
 
     public static final DeferredRegister<WorldPreset> WORLD_PRESETS = DeferredRegister.create(Registries.WORLD_PRESET, "aurum");
+
+    public static final DeferredRegister<MapCodec<? extends BiomeSource>> BIOME_SOURCES =
+            DeferredRegister.create(Registries.BIOME_SOURCE, MODID);
+
+    public static final Supplier<MapCodec<AurumBiomeSource>> VOLCANO_OVERRIDE =
+            BIOME_SOURCES.register("volcano_override", () -> AurumBiomeSource.CODEC);
 
     public static final Supplier<DimensionType> AURUM_DIMENSION_TYPE = DIMENSION_TYPES.register("aurum_dimension_type",
             () -> new DimensionType(

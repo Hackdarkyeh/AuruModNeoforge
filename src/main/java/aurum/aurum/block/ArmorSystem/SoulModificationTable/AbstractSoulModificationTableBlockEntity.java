@@ -35,12 +35,22 @@ import net.minecraft.world.phys.Vec3;
 import javax.annotation.Nullable;
 import java.util.*;
 
+/**
+ * Archivo: AbstractSoulModificationTableBlockEntity.java
+ * Comentarios añadidos en español para explicar cada sección y método
+ */
+
+// Clase principal para la entidad de bloque de la Mesa de Modificación de Alma
 public abstract class AbstractSoulModificationTableBlockEntity extends BaseContainerBlockEntity implements WorldlyContainer, RecipeCraftingHolder, StackedContentsCompatible {
     private static final int[] SLOTS_FOR_UP = new int[]{0};
     private static final int[] SLOTS_FOR_DOWN = new int[]{2, 1};
     private static final int[] SLOTS_FOR_SIDES = new int[]{1};
     private static final int SLOTS_COUNT = 9;
-    protected NonNullList<ItemStack> items = NonNullList.withSize(SLOTS_COUNT, ItemStack.EMPTY);
+    // Inventario vanilla para persistencia y lógica estándar
+    protected NonNullList<ItemStack> inventory = NonNullList.withSize(SLOTS_COUNT, ItemStack.EMPTY);
+    // Slots extendidos para offset
+    protected NonNullList<SoulModificationTableSlot> items = NonNullList.withSize(SLOTS_COUNT,
+            new SoulModificationTableSlot(new Vec3i(0,0,0), ItemStack.EMPTY));
     private static int SOULSLOT = 0;
 
     @Nullable
@@ -55,23 +65,41 @@ public abstract class AbstractSoulModificationTableBlockEntity extends BaseConta
     };
     private final Object2IntOpenHashMap<ResourceLocation> recipesUsed = new Object2IntOpenHashMap<>();
 
+    // Constructor de la entidad de bloque
     protected AbstractSoulModificationTableBlockEntity(
             BlockEntityType<?> pType, BlockPos pPos, BlockState pBlockState
     ) {
         super(pType, pPos, pBlockState);
     }
 
-    @Override
-    protected void loadAdditional(CompoundTag pTag, HolderLookup.Provider pRegistries) {
-        super.loadAdditional(pTag, pRegistries);
-        this.items = NonNullList.withSize(this.getContainerSize(), ItemStack.EMPTY);
-        ContainerHelper.loadAllItems(pTag, this.items, pRegistries);
+    // Sincroniza inventory con items
+    protected void syncInventoryFromItems() {
+        for (int i = 0; i < SLOTS_COUNT; i++) {
+            inventory.set(i, items.get(i).getStack());
+        }
+    }
+    // Sincroniza items con inventory
+    protected void syncItemsFromInventory() {
+        for (int i = 0; i < SLOTS_COUNT; i++) {
+            items.get(i).setItemStack(inventory.get(i));
+        }
     }
 
+    // Método para guardar datos en NBT (persistencia)
     @Override
     protected void saveAdditional(CompoundTag pTag, HolderLookup.Provider pRegistries) {
         super.saveAdditional(pTag, pRegistries);
-        ContainerHelper.saveAllItems(pTag, this.items, pRegistries);
+        syncInventoryFromItems();
+        ContainerHelper.saveAllItems(pTag, this.inventory, pRegistries);
+    }
+
+    // Método para cargar datos desde NBT
+    @Override
+    protected void loadAdditional(CompoundTag pTag, HolderLookup.Provider pRegistries) {
+        super.loadAdditional(pTag, pRegistries);
+        this.inventory = NonNullList.withSize(this.getContainerSize(), ItemStack.EMPTY);
+        ContainerHelper.loadAllItems(pTag, this.inventory, pRegistries);
+        syncItemsFromInventory();
     }
 
     private static int getFirstEmptySlot(List<SoulAbilityData> soulDataList) {
@@ -87,34 +115,55 @@ public abstract class AbstractSoulModificationTableBlockEntity extends BaseConta
         return -1;
     }
 
+    // Método de tick del servidor, se ejecuta cada ciclo
     public static void serverTick(Level pLevel, BlockPos pPos, BlockState pState, AbstractSoulModificationTableBlockEntity pBlockEntity) {
         if (!pLevel.isClientSide) {
-            // Obtener alma: si la BlockEntity concreta tiene un inventory propio, usarlo
-            ItemStack soulStack = pBlockEntity.items.get(SOULSLOT);
-
+            SoulModificationTableSlot soulSlot = pBlockEntity.items.get(SOULSLOT);
+            ItemStack soulStack = soulSlot.getStack();
+            // Validación: si no hay alma o el ítem no es del tipo correcto, no hacer nada (y limpiar pedestales al final)
+            if (soulStack.isEmpty() || !(soulStack.getItem() instanceof SoulExpansions soulItem)) {
+                pBlockEntity.items.clear();
+                return;
+            } else {
+                int index = 1;
+                for (SoulAbilityData ability : soulItem.getSoulData(soulStack)) {
+                    // Aquí puedes calcular el offset según tu lógica
+                    Vec3i offset = ability.getAbilityOffSet(); // Ejemplo: offset en X
+                    pBlockEntity.items.set(index, new SoulModificationTableSlot(offset, ability.getAbilityItemStack(soulItem)));
+                    index++;
+                }
+            }
+            // Buscar pedestales cercanos y mapearlos por su offset relativo
             Map<Vec3i, PedestalBlockEntity> nearbyPedestals = pBlockEntity.getNearbyPedestalsByOffset(pLevel, pPos);
             boolean soulWasModified = false;
 
-            if (soulStack.isEmpty() || !(soulStack.getItem() instanceof SoulExpansions soulItem)) {
-                //pBlockEntity.clearNearbyPedestals(pLevel, pPos);
-                return;
-            }
 
+            // Construir una lista mutable de los datos del alma para manipular durante la iteración
             List<SoulAbilityData> soulDataList = new ArrayList<>(soulItem.getSoulData(soulStack));
+            // Este bucle compara cada pedestal cercano con los datos del alma, buscando asignaciones o inconsistencias
             for (Map.Entry<Vec3i, PedestalBlockEntity> entry : nearbyPedestals.entrySet()) {
+                // Se obtiene el offset del pedestal relativo a la mesa
                 Vec3i pedestalOffset = entry.getKey();
+                // Obtener el ítem en el pedestal
                 PedestalBlockEntity pedestalEntity = entry.getValue();
+                // Validación de seguridad: asegurarse de que el pedestal aún es válido y está cargado
                 ItemStack itemInPedestal = pedestalEntity.inventory.getStackInSlot(0);
 
+
+                // Buscar si ya hay un dato existente en el alma para este offset
                 SoulAbilityData existingData = soulDataList.stream()
                         .filter(data -> data.offset() != null && data.offset().equals(pedestalOffset))
                         .findFirst().orElse(null);
 
+
+                // 🟢 Caso 1: Hay un ítem en el pedestal que es una expansión, y el alma tiene un dato para este offset (puede ser asignado o no)
                 if (!itemInPedestal.isEmpty() && itemInPedestal.getItem() instanceof ArmorExpansions newAbility) {
                     ResourceLocation newAbilityId = newAbility.getId();
 
                     if (existingData != null) {
-                        if (existingData.abilityId() == null || !existingData.abilityId().equals(newAbilityId)) {
+                        //
+                        if (existingData.abilityId() == null) {
+                            // Si la habilidad es diferente (o no había habilidad), intentar asignar la nueva habilidad al mismo slot
                             if(soulItem.setAbility(soulStack, existingData.index(), newAbility, pedestalOffset)){
                                 soulWasModified = true;
                             }else{
@@ -122,6 +171,7 @@ public abstract class AbstractSoulModificationTableBlockEntity extends BaseConta
                                 BlockPos pedPos = pedestalEntity.getBlockPos();
                                 Containers.dropItemStack(pLevel, pedPos.getX(), pedPos.getY() + 1, pedPos.getZ(), itemInPedestal.copy());
                                 pedestalEntity.inventory.setStackInSlot(0, ItemStack.EMPTY);
+                                soulWasModified = false; // No se modificó el alma porque no se pudo asignar, pero sí se limpió el pedestal
                                 pedestalEntity.setChanged();
                             }
                         }
@@ -212,8 +262,7 @@ public abstract class AbstractSoulModificationTableBlockEntity extends BaseConta
                 }
             }
 
-// Lógica de limpieza al final
-            pBlockEntity.clearNearbyPedestals(pLevel, pPos);
+            //pBlockEntity.clearNearbyPedestals(pLevel, pPos);
         }
     }
 
@@ -243,37 +292,30 @@ public abstract class AbstractSoulModificationTableBlockEntity extends BaseConta
 
     @Override
     protected NonNullList<ItemStack> getItems() {
-        return this.items;
+        syncInventoryFromItems();
+        return this.inventory;
     }
 
     @Override
     protected void setItems(NonNullList<ItemStack> pItems) {
-        this.items = pItems;
+        this.inventory = pItems;
+        syncItemsFromInventory();
     }
 
     @Override
     public void setItem(int pIndex, ItemStack pStack) {
-        ItemStack itemstack = this.items.get(pIndex); // Alma que se retira (puede ser vacía)
-        boolean flag = !pStack.isEmpty() && ItemStack.isSameItemSameComponents(itemstack, pStack);
-        this.items.set(pIndex, pStack);
+        inventory.set(pIndex, pStack);
+        items.get(pIndex).setItemStack(pStack);
         pStack.limitSize(this.getMaxStackSize(pStack));
-        if (pIndex == 0 && !flag) {
-            this.setChanged();
-            if (this.level != null && !this.level.isClientSide) {
-
-                if (pStack.isEmpty()) {
-                    // Alma extraída: limpiar todos los pedestales
-                    this.clearNearbyPedestals(this.level, this.worldPosition);
-
-                } else if (pStack.getItem() instanceof SoulExpansions) {
-                    // Alma insertada:
-                    // 1. Dropear expansiones conflictivas (duplicadas)
-                    // 2. Sincronizar los pedestales con el alma
-                    this.dropConflictingExpansions(this.level, this.worldPosition, pStack);
-                    this.syncPedestalsFromSoul(this.level, this.worldPosition, pStack);
-                }
+        if (pIndex == 0 && this.level != null && !this.level.isClientSide) {
+            if (pStack.isEmpty()) {
+                this.clearNearbyPedestals(this.level, this.worldPosition);
+            } else if (pStack.getItem() instanceof SoulExpansions) {
+                this.dropConflictingExpansions(this.level, this.worldPosition, pStack);
+                this.syncPedestalsFromSoul(this.level, this.worldPosition, pStack);
             }
         }
+        this.setChanged();
     }
 
     @Override
@@ -316,7 +358,8 @@ public abstract class AbstractSoulModificationTableBlockEntity extends BaseConta
 
     @Override
     public void fillStackedContents(StackedContents pHelper) {
-        for (ItemStack itemstack : this.items) {
+        syncInventoryFromItems();
+        for (ItemStack itemstack : this.inventory) {
             pHelper.accountStack(itemstack);
         }
     }
@@ -355,38 +398,7 @@ public abstract class AbstractSoulModificationTableBlockEntity extends BaseConta
     public void clearNearbyPedestals(Level pLevel, BlockPos pPos) {
         Map<Vec3i, PedestalBlockEntity> nearbyPedestals = this.getNearbyPedestalsByOffset(pLevel, pPos);
 
-        // Obtener el alma actual (si la BE concreta tiene su propio inventory úsalo)
-        ItemStack soulStack;
-        if (this instanceof SoulModificationTableBlockEntity concrete) {
-            soulStack = concrete.inventory.getStackInSlot(0);
-        } else {
-            soulStack = this.items.get(SOULSLOT);
-        }
-
-        // Si no hay alma válida, la tabla no debe hacer limpieza en los pedestales.
-        if (soulStack == null || soulStack.isEmpty() || !(soulStack.getItem() instanceof SoulExpansions soul)) {
-            return;
-        }
-
-        // --- LÓGICA DE LIMPIEZA SÓLO DE EXPANSIONES NO ASIGNADAS (ALMA PRESENTE) ---
-
-        // Construir conjunto de offsets ocupados por la alma (habilidad != null)
-        Set<Vec3i> soulOccupiedOffsets = new HashSet<>();
-        List<SoulAbilityData> soulData = soul.getSoulData(soulStack);
-
-        // Validación: asegurarse de que soulData tiene datos válidos
-        if (soulData == null || soulData.isEmpty()) {
-            return;
-        }
-
-        for (SoulAbilityData d : soulData) {
-            // Validar que el offset y abilityId NO sean null antes de añadir
-            if (d != null && d.offset() != null && d.abilityId() != null) {
-                soulOccupiedOffsets.add(d.offset());
-            }
-        }
-
-        // Dropear solo los ítems de expansión que no están asignados en el alma.
+        // Dropear solo los ítems de expansión que están asignados en el alma.
         for (Map.Entry<Vec3i, PedestalBlockEntity> entry : nearbyPedestals.entrySet()) {
             Vec3i offset = entry.getKey();
             PedestalBlockEntity pedestalEntity = entry.getValue();
@@ -394,14 +406,18 @@ public abstract class AbstractSoulModificationTableBlockEntity extends BaseConta
 
             if (!itemInPedestal.isEmpty() && itemInPedestal.getItem() instanceof ArmorExpansions) {
                 // Si la alma tiene una habilidad asignada para este offset, NO dropear
-                if (soulOccupiedOffsets.contains(offset)) {
-                    continue;
+
+                for (SoulModificationTableSlot slot : items) {
+                    if (slot.getIndex() == null) continue;
+                    if (slot.getIndex().equals(offset) && !slot.getStack().isEmpty()) {
+                        // Si no está asignado, dropear y limpiar el slot
+                        BlockPos pedPos = pedestalEntity.getBlockPos();
+                        //Containers.dropItemStack(pLevel, pedPos.getX(), pedPos.getY(), pedPos.getZ(), itemInPedestal.copy());
+                        pedestalEntity.inventory.setStackInSlot(0, ItemStack.EMPTY);
+                        pedestalEntity.setChanged();
+                    }
                 }
-                // Si no está asignado, dropear y limpiar el slot
-                BlockPos pedPos = pedestalEntity.getBlockPos();
-                Containers.dropItemStack(pLevel, pedPos.getX(), pedPos.getY(), pedPos.getZ(), itemInPedestal.copy());
-                pedestalEntity.inventory.setStackInSlot(0, ItemStack.EMPTY);
-                pedestalEntity.setChanged();
+
             }
         }
     }
@@ -452,7 +468,7 @@ public abstract class AbstractSoulModificationTableBlockEntity extends BaseConta
         }
 
         // **PASO 2: LIMPIEZA DE EXPANSIONES NO ASIGNADAS EN PEDESTALES**
-        this.clearNearbyPedestals(level, pPos);
+        //this.clearNearbyPedestals(level, pPos);
     }
 
     /**

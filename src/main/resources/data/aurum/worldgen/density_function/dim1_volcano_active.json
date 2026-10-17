@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:cache_2d",
+  "argument": {
+    "type": "minecraft:mul",
+    "argument1": "aurum:dim1_temperature_gate",
+    "argument2": "aurum:dim1_land_gate"
+  }
+}

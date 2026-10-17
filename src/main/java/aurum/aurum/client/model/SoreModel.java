@@ -3,23 +3,17 @@ package aurum.aurum.client.model;// Made with Blockbench 4.12.5
 // Paste this class into your mod and generate all required imports
 
 
-import aurum.aurum.client.animations.CooperGolemAnimationDefinitions;
 import aurum.aurum.client.animations.SoreAnimationDefinitions;
-import aurum.aurum.entity.CooperGolemEntity;
 import aurum.aurum.entity.SoreBoss.SoreBossEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.HierarchicalModel;
-import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.*;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 
-import static aurum.aurum.Aurum.MODID;
 
 public class SoreModel<T extends Entity> extends HierarchicalModel<T> {
 	private final ModelPart sore;

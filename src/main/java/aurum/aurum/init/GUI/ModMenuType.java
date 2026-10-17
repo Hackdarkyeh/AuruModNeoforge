@@ -1,6 +1,8 @@
 package aurum.aurum.init.GUI;
 
 import aurum.aurum.Aurum;
+import aurum.aurum.client.gui.Player.ArmorControlMenu;
+import aurum.aurum.client.gui.Player.SoulInventoryPlayerMenu;
 import aurum.aurum.client.gui.SoulModificationTableMenu.SoulModificationTableMenu;
 import aurum.aurum.client.gui.ArmorTable.ArmorTableMenu;
 import aurum.aurum.client.gui.DarkEnergyTable.DarkEnergyTableMenu;
@@ -43,7 +45,13 @@ public class ModMenuType <T extends AbstractContainerMenu> implements FeatureEle
             MENU_TYPE_REGISTRY.register("soul_modification_table_menu",  () -> new MenuType<>(SoulModificationTableMenu::new, FeatureFlags.VANILLA_SET));
 
     public static final DeferredHolder<MenuType<?>, MenuType<DarkEnergyTableMenu>> DARK_ENERGY_TABLE =
-            MENU_TYPE_REGISTRY.register("dark_energy_table_menu", () -> new MenuType<>(DarkEnergyTableMenu::new, FeatureFlags.VANILLA_SET));;
+            MENU_TYPE_REGISTRY.register("dark_energy_table_menu", () -> new MenuType<>(DarkEnergyTableMenu::new, FeatureFlags.VANILLA_SET));
+
+    public static final DeferredHolder<MenuType<?>, MenuType<SoulInventoryPlayerMenu>> SOUL_MODIFICATION_PLAYER_MENU =
+            MENU_TYPE_REGISTRY.register("soul_modification_player", () -> new MenuType<>(SoulInventoryPlayerMenu::new, FeatureFlags.VANILLA_SET));
+
+    public static final DeferredHolder<MenuType<?>, MenuType<ArmorControlMenu>> ARMOR_MODIFICATION_PLAYER_MENU =
+            MENU_TYPE_REGISTRY.register("armor_modification_player", () -> new MenuType<>(ArmorControlMenu::new, FeatureFlags.VANILLA_SET));
 
     private static <T extends AbstractContainerMenu>DeferredHolder<MenuType<?>, MenuType<T>> registerMenuType(String name,
                                                                                                               IContainerFactory<T> factory) {

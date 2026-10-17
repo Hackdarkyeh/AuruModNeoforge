@@ -10,7 +10,6 @@ import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
 
 public abstract class AbstractExtractorScreen<T extends AbstractExtractorMenu> extends AbstractContainerScreen<T> {
-    //public final AbstractFurnaceRecipeBookComponent recipeBookComponent;
     private boolean widthTooNarrow;
     private final ResourceLocation texture;
     private final ResourceLocation extractorProgressSprite;
@@ -19,7 +18,6 @@ public abstract class AbstractExtractorScreen<T extends AbstractExtractorMenu> e
 
     public AbstractExtractorScreen(
             T pMenu,
-            //AbstractFurnaceRecipeBookComponent pRecipeBookComponent,
             Inventory pPlayerInventory,
             Component pTitle,
             ResourceLocation pTexture,
@@ -28,7 +26,6 @@ public abstract class AbstractExtractorScreen<T extends AbstractExtractorMenu> e
             ResourceLocation darkEnergyProgressSprite
     ) {
         super(pMenu, pPlayerInventory, pTitle);
-        //this.recipeBookComponent = pRecipeBookComponent;
         this.texture = pTexture;
         this.extractorProgressSprite = pListProgressSprite;
         this.energyProgressSprite = energyProgressSprite;
@@ -39,21 +36,18 @@ public abstract class AbstractExtractorScreen<T extends AbstractExtractorMenu> e
     public void init() {
         super.init();
         this.widthTooNarrow = this.width < 379;
-        // this.recipeBookComponent.init(this.width, this.height, this.minecraft, this.widthTooNarrow, this.menu);
-        //this.leftPos = this.recipeBookComponent.updateScreenPosition(this.width, this.imageWidth);
-        /*
-        this.addRenderableWidget(new ImageButton(this.leftPos + 20, this.height / 2 - 49, 20, 18, RecipeBookComponent.RECIPE_BUTTON_SPRITES, p_313431_ -> {
-           // this.recipeBookComponent.toggleVisibility();
-           // this.leftPos = this.recipeBookComponent.updateScreenPosition(this.width, this.imageWidth);
-            p_313431_.setPosition(this.leftPos + 20, this.height / 2 - 49);
-        }));*/
         this.titleLabelX = (this.imageWidth - this.font.width(this.title)) / 2;
     }
 
     @Override
     public void containerTick() {
         super.containerTick();
-        //this.recipeBookComponent.tick();
+    }
+
+    @Override
+    public void render(GuiGraphics pGuiGraphics, int pMouseX, int pMouseY, float pPartialTick) {
+        super.render(pGuiGraphics, pMouseX, pMouseY, pPartialTick);
+        this.renderTooltip(pGuiGraphics, pMouseX, pMouseY);
     }
 
     @Override
@@ -66,105 +60,99 @@ public abstract class AbstractExtractorScreen<T extends AbstractExtractorMenu> e
             int progressBarWidth = 16;  // Ancho de la barra de progreso del extractor
             int progressBarHeight = 16; // Altura de la barra de progreso del extractor
 
-            // Calcular el progreso en píxeles (de 0 a 13, más 1 extra para alineación)
             int extractorProgress = Mth.ceil(this.menu.getExtractorProgress() * progressBarHeight);
 
-            // Dibujar la barra de progreso desde arriba hacia abajo
             pGuiGraphics.blitSprite(
-                    this.extractorProgressSprite,  // Sprite de la barra de progreso del extractor
-                    progressBarWidth, progressBarHeight, // Dimensiones visibles (ancho fijo, altura variable)
-                    0, 0 , // Coordenadas de inicio del sprite (desde arriba)
-                    i + 80, j + 30, // Posición en la GUI
-                    progressBarWidth, extractorProgress // Dimensiones visibles (ancho fijo, altura creciente hacia abajo)
+                    this.extractorProgressSprite,
+                    progressBarWidth, progressBarHeight,
+                    0, 0,
+                    i + 80, j + 30,
+                    progressBarWidth, extractorProgress
             );
         }
 
+        // Dibujar barra de energía limpia (Izquierda)
+        int energyBarHeight = 48;
+        int energyBarWidth = 48;
 
-
-        // Dibujar barra de energía en el lado izquierdo (crece de abajo hacia arriba)
-        int energyBarHeight = 48; // Altura máxima de la barra en píxeles
-        int energyBarWidth = 48;  // Ancho de la barra en píxeles
-
-        int energyProgress = Mth.ceil(this.menu.getEnergyProgress() * energyBarHeight); // Calcular progreso en píxeles
+        int energyProgress = Mth.ceil(this.menu.getEnergyProgress() * energyBarHeight);
         pGuiGraphics.blitSprite(
-                this.energyProgressSprite,          // Sprite de la barra de energía
-                energyBarWidth, energyBarHeight,    // Dimensiones completas del sprite
-                0, energyBarHeight - energyProgress, // Coordenadas para dibujar desde abajo hacia arriba
-                i + 3, j + 21 + (energyBarHeight - energyProgress), // Posición en la GUI
-                energyBarWidth, energyProgress       // Dimensiones visibles (ancho fijo, altura variable)
+                this.energyProgressSprite,
+                energyBarWidth, energyBarHeight,
+                0, energyBarHeight - energyProgress,
+                i + 3, j + 21 + (energyBarHeight - energyProgress),
+                energyBarWidth, energyProgress
         );
 
-        int darkEnergyProgress = Mth.ceil(this.menu.getDarkEnergyProgress() * energyBarHeight); // Calcular progreso en píxeles
+        // Dibujar barra de energía oscura (Derecha)
+        int darkEnergyProgress = Mth.ceil(this.menu.getDarkEnergyProgress() * energyBarHeight);
         pGuiGraphics.blitSprite(
-                this.darkEnergyProgressSprite,          // Sprite de la barra de energía
-                energyBarWidth, energyBarHeight,    // Dimensiones completas del sprite
-                0, energyBarHeight - darkEnergyProgress, // Coordenadas para dibujar desde abajo hacia arriba
-                i + 125, j + 21 + (energyBarHeight - darkEnergyProgress), // Posición en la GUI
-                energyBarWidth, darkEnergyProgress       // Dimensiones visibles (ancho fijo, altura variable)
+                this.darkEnergyProgressSprite,
+                energyBarWidth, energyBarHeight,
+                0, energyBarHeight - darkEnergyProgress,
+                i + 125, j + 21 + (energyBarHeight - darkEnergyProgress),
+                energyBarWidth, darkEnergyProgress
         );
-
     }
 
     @Override
     protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-        // Título o etiqueta de la GUI
-        //guiGraphics.drawString(this.font, Component.translatable("gui.asherah.generador.label_energy"), 8, 19, -12829636, false);
-
         // Obtener energía actual y máxima desde el menú
-        float currentEnergy = this.menu.getCurrenEnergy(); // Índice de energía actual
-        float maxEnergy = this.menu.getMaxEnergy();     // Índice de capacidad máxima
-        float currentDarkEnergy = this.menu.getCurrenDarkEnergy(); // Índice de energía actual
-        float maxDarkEnergy = this.menu.getMaxDarkEnergy();     // Índice de capacidad
+        float currentEnergy = this.menu.getCurrenEnergy();
+        float maxEnergy = this.menu.getMaxEnergy();
+        float currentDarkEnergy = this.menu.getCurrenDarkEnergy();
+        float maxDarkEnergy = this.menu.getMaxDarkEnergy();
 
-        // Mostrar [energía actual] / [capacidad máxima]
+        // Mostrar valores formateados (Ej: 2,0M / 20,0k)
         String energyText = formatEnergyValue(maxEnergy);
-        guiGraphics.drawString(this.font, energyText, 15, 18, -12829636, false); // Posición y color ajustables
+        guiGraphics.drawString(this.font, energyText, 15, 18, -12829636, false);
 
         String energyText2 = formatEnergyValue(currentEnergy);
-        guiGraphics.drawString(this.font, energyText2, 15, 65, -12829636, false); // Posición y color ajustables
+        guiGraphics.drawString(this.font, energyText2, 15, 65, -12829636, false);
 
         String darkMaxEnergyText = formatEnergyValue(maxDarkEnergy);
-        guiGraphics.drawString(this.font, darkMaxEnergyText, 136, 18, -12829636, false); // Posición y color ajustables
+        guiGraphics.drawString(this.font, darkMaxEnergyText, 136, 18, -12829636, false);
 
         String darkEnergyText = formatEnergyValue(currentDarkEnergy);
-        guiGraphics.drawString(this.font, darkEnergyText, 136, 65, -12829636, false); // Posición y color ajustables
+        guiGraphics.drawString(this.font, darkEnergyText, 136, 65, -12829636, false);
 
         if (this.menu.hasInsufficientExp()) {
             Component message = Component.translatable("aurum.aurum.insufficient_exp");
 
-            // Guardar la transformación original
             guiGraphics.pose().pushPose();
-
-            // Aplicar escala (0.75f reduce el tamaño un 25%)
             guiGraphics.pose().scale(0.75f, 0.75f, 1.0f);
-
-            // Dibujar el texto en una posición ajustada por la escala
             guiGraphics.drawString(this.font, message, (int) (2 / 0.75f), (int) (5 / 0.75f), 0xFF5555, false);
-
-            // Restaurar la transformación original
             guiGraphics.pose().popPose();
         }
+    }
 
+    @Override
+    protected void renderTooltip(GuiGraphics guiGraphics, int mouseX, int mouseY) {
+        super.renderTooltip(guiGraphics, mouseX, mouseY);
 
+        // Tooltip al pasar el ratón sobre el tanque de Energía Limpia (Izquierda)
+        if (this.isHovering(9, 21, 30, 48, mouseX, mouseY)) {
+            Component tooltipText = Component.literal((int) this.menu.getCurrenEnergy() + " / " + (int) this.menu.getMaxEnergy() + " EC");
+            guiGraphics.renderTooltip(this.font, tooltipText, mouseX, mouseY);
+        }
 
+        // Tooltip al pasar el ratón sobre el tanque de Energía Oscura (Derecha)
+        if (this.isHovering(131, 21, 30, 48, mouseX, mouseY)) {
+            Component tooltipText = Component.literal((int) this.menu.getCurrenDarkEnergy() + " / " + (int) this.menu.getMaxDarkEnergy() + " ED");
+            guiGraphics.renderTooltip(this.font, tooltipText, mouseX, mouseY);
+        }
     }
 
     private String formatEnergyValue(float value) {
         if (value >= 1_000_000) {
-            return String.format("%.1fM", value / 1_000_000.0f); // Formato con 1 decimal
+            return String.format("%.1fM", value / 1_000_000.0f);
         } else if (value >= 1_000) {
-            return String.format("%.1fk", value / 1_000.0f); // Formato con 1 decimal
+            return String.format("%.1fk", value / 1_000.0f);
         } else {
-            return String.format("%.0f", value); // Número sin decimales
+            return String.format("%.0f", value);
         }
     }
 
-
-
-
-    /**
-     * Called when the mouse is clicked over a slot or outside the gui.
-     */
     @Override
     protected void slotClicked(Slot pSlot, int pSlotId, int pMouseButton, ClickType pType) {
         super.slotClicked(pSlot, pSlotId, pMouseButton, pType);

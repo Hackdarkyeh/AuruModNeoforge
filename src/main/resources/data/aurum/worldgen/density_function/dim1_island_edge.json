@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:cache_2d",
+  "argument": {
+    "type": "minecraft:spline",
+    "spline": {
+      "coordinate": {
+        "type": "minecraft:add",
+        "argument1": {
+          "type": "minecraft:add",
+          "argument1": { "type": "minecraft:noise", "noise": "aurum:island_blob", "xz_scale": 0.008, "y_scale": 0 },
+          "argument2": { "type": "minecraft:mul", "argument1": -0.3, "argument2": { "type": "minecraft:noise", "noise": "aurum:island_size_field", "xz_scale": 0.003, "y_scale": 0 } }
+        },
+        "argument2": { "type": "minecraft:mul", "argument1": 0.15, "argument2": { "type": "minecraft:noise", "noise": "aurum:roughness_field", "xz_scale": 0.05, "y_scale": 0 } }
+      },
+      "points": [
+        { "location": -1.0, "value": 0.0, "derivative": 0 },
+        { "location": 0.15, "value": 0.0, "derivative": 0 },
+        { "location": 0.6,  "value": 1.0, "derivative": 0 },
+        { "location": 1.0,  "value": 1.0, "derivative": 0 }
+      ]
+    }
+  }
+}

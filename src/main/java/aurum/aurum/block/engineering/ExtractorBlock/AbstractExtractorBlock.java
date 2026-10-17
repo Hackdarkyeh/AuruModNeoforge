@@ -1,6 +1,5 @@
 package aurum.aurum.block.engineering.ExtractorBlock;
 
-
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -12,7 +11,6 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.*;
-import net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -24,7 +22,6 @@ import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.level.block.state.properties.NoteBlockInstrument;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.Vec3;
 
 import javax.annotation.Nullable;
 import java.util.function.ToIntFunction;
@@ -35,7 +32,7 @@ public abstract class AbstractExtractorBlock extends BaseEntityBlock {
 
     protected AbstractExtractorBlock(Properties pProperties) {
         super(pProperties);
-        this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(LIT, Boolean.valueOf(false)));
+        this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(LIT, false));
     }
 
     public AbstractExtractorBlock(BlockEntityType<ExtractorBlockEntity> energyGeneratorBlockEntityBlockEntityType, BlockPos blockPos, BlockState blockState) {
@@ -48,7 +45,7 @@ public abstract class AbstractExtractorBlock extends BaseEntityBlock {
     }
 
     private static ToIntFunction<BlockState> litBlockEmission(int pLightValue) {
-        return p_50763_ -> p_50763_.getValue(BlockStateProperties.LIT) ? pLightValue : 0;
+        return pState -> pState.getValue(BlockStateProperties.LIT) ? pLightValue : 0;
     }
 
     @Override
@@ -64,11 +61,6 @@ public abstract class AbstractExtractorBlock extends BaseEntityBlock {
         }
     }
 
-    /**
-     * Called to open this furnace's container.
-     *
-     * @see #//use
-     */
     protected abstract void openContainer(Level pLevel, BlockPos pPos, Player pPlayer);
 
     @Override
@@ -80,14 +72,16 @@ public abstract class AbstractExtractorBlock extends BaseEntityBlock {
     protected void onRemove(BlockState pState, Level pLevel, BlockPos pPos, BlockState pNewState, boolean pIsMoving) {
         if (!pState.is(pNewState.getBlock())) {
             BlockEntity blockentity = pLevel.getBlockEntity(pPos);
-            if (blockentity instanceof AbstractExtractorBlockEntity) {
+            if (blockentity instanceof AbstractExtractorBlockEntity extractor) {
                 if (pLevel instanceof ServerLevel) {
-                    Containers.dropContents(pLevel, pPos, (AbstractExtractorBlockEntity)blockentity);
-                    ((AbstractExtractorBlockEntity)blockentity).getRecipesToAwardAndPopExperience((ServerLevel)pLevel, Vec3.atCenterOf(pPos));
+                    Containers.dropContents(pLevel, pPos, extractor);
                 }
 
                 super.onRemove(pState, pLevel, pPos, pNewState, pIsMoving);
+
+                // Forzar actualización a la red de tuberías y energía
                 pLevel.updateNeighbourForOutputSignal(pPos, this);
+                pLevel.updateNeighborsAt(pPos, this); // <--- AÑADIR ESTO
             } else {
                 super.onRemove(pState, pLevel, pPos, pNewState, pIsMoving);
             }
@@ -99,10 +93,6 @@ public abstract class AbstractExtractorBlock extends BaseEntityBlock {
         return true;
     }
 
-    /**
-     * Returns the analog signal this block emits. This is the signal a comparator can read from it.
-     *
-     */
     @Override
     protected int getAnalogOutputSignal(BlockState pBlockState, Level pLevel, BlockPos pPos) {
         return AbstractContainerMenu.getRedstoneSignalFromBlockEntity(pLevel.getBlockEntity(pPos));
@@ -113,17 +103,11 @@ public abstract class AbstractExtractorBlock extends BaseEntityBlock {
         return RenderShape.MODEL;
     }
 
-    /**
-     * Returns the blockstate with the given rotation from the passed blockstate. If inapplicable, returns the passed blockstate.
-     */
     @Override
     protected BlockState rotate(BlockState pState, Rotation pRotation) {
         return pState.setValue(FACING, pRotation.rotate(pState.getValue(FACING)));
     }
 
-    /**
-     * Returns the blockstate with the given mirror of the passed blockstate. If inapplicable, returns the passed blockstate.
-     */
     @Override
     protected BlockState mirror(BlockState pState, Mirror pMirror) {
         return pState.rotate(pMirror.getRotation(pState.getValue(FACING)));
@@ -141,4 +125,3 @@ public abstract class AbstractExtractorBlock extends BaseEntityBlock {
         return pLevel.isClientSide ? null : createTickerHelper(pServerType, pClientType, AbstractExtractorBlockEntity::serverTick);
     }
 }
-

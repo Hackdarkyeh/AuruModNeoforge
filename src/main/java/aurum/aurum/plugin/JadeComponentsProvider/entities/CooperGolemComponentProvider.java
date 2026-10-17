@@ -1,6 +1,6 @@
 package aurum.aurum.plugin.JadeComponentsProvider.entities;
 
-import aurum.aurum.entity.CooperGolemEntity;
+import aurum.aurum.entity.CooperGolem.CooperGolemEntity;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import snownee.jade.api.config.IPluginConfig;

@@ -36,7 +36,7 @@ public class SoulModificationTableBlockEntity extends AbstractSoulModificationTa
                 if (slot == 0) {
                     ItemStack stack = this.getStackInSlot(0);
                     if (stack.isEmpty()) {
-                        clearNearbyPedestals(level, worldPosition);
+                        //clearNearbyPedestals(level, worldPosition);
                     } else {
                         syncPedestalsFromSoul(level, worldPosition, stack);
                     }

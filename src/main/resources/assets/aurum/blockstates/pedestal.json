@@ -1,7 +1,6 @@
 {
   "variants": {
-    "": {
-      "model": "aurum:block/pedestal"
-    }
+    "enchanted=false": { "model": "aurum:block/pedestal" },
+    "enchanted=true": { "model": "aurum:block/pedestal_enchanted" }
   }
 }

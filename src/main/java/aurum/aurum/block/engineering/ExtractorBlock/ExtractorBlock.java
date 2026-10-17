@@ -43,15 +43,18 @@ public class ExtractorBlock extends AbstractExtractorBlock {
                 .instrument(NoteBlockInstrument.BASEDRUM)
                 .requiresCorrectToolForDrops()
                 .strength(3.5F)
-                .lightLevel(litBlockEmission(13)));
+                .lightLevel(litBlockEmission(13))
+                .noOcclusion()); // <--- AÑADIR ESTO
     }
+
     public ExtractorBlock(Properties p_53627_) {
         super(Properties.of()
                 .mapColor(MapColor.STONE)
                 .instrument(NoteBlockInstrument.BASEDRUM)
                 .requiresCorrectToolForDrops()
                 .strength(3.5F)
-                .lightLevel(litBlockEmission(13)));
+                .lightLevel(litBlockEmission(13))
+                .noOcclusion()); // <--- AÑADIR ESTO
     }
 
 
@@ -73,7 +76,7 @@ public class ExtractorBlock extends AbstractExtractorBlock {
     /**
      * Called to open this furnace's container.
      *
-     * @see #//use
+     * @see #// AbstractFurnaceBlockEntity#createMenu(int, net.minecraft.world.entity.player.Inventory, net.minecraft.world.entity.player.Player)
      */
     @Override
     protected void openContainer(Level pLevel, BlockPos pPos, Player pPlayer) {
@@ -88,13 +91,15 @@ public class ExtractorBlock extends AbstractExtractorBlock {
      */
     @Override
     public void animateTick(BlockState pState, Level pLevel, BlockPos pPos, RandomSource pRandom) {
-        /*
         if (pState.getValue(LIT)) {
             double d0 = (double)pPos.getX() + 0.5;
             double d1 = (double)pPos.getY();
             double d2 = (double)pPos.getZ() + 0.5;
+
+            // Sonido de máquina trabajando (Beacon o Respawn Anchor)
+            // Sonido de máquina trabajando (Ambiente de Respawn Anchor o Beacon)
             if (pRandom.nextDouble() < 0.1) {
-                pLevel.playLocalSound(d0, d1, d2, SoundEvents.FURNACE_FIRE_CRACKLE, SoundSource.BLOCKS, 1.0F, 1.0F, false);
+                pLevel.playLocalSound(d0, d1, d2, SoundEvents.RESPAWN_ANCHOR_AMBIENT, SoundSource.BLOCKS, 0.3F, 1.2F, false);
             }
 
             Direction direction = pState.getValue(FACING);
@@ -104,10 +109,17 @@ public class ExtractorBlock extends AbstractExtractorBlock {
             double d5 = direction$axis == Direction.Axis.X ? (double)direction.getStepX() * 0.52 : d4;
             double d6 = pRandom.nextDouble() * 6.0 / 16.0;
             double d7 = direction$axis == Direction.Axis.Z ? (double)direction.getStepZ() * 0.52 : d4;
+
+            // Humo de trabajo
             pLevel.addParticle(ParticleTypes.SMOKE, d0 + d5, d1 + d6, d2 + d7, 0.0, 0.0, 0.0);
-            pLevel.addParticle(ParticleTypes.FLAME, d0 + d5, d1 + d6, d2 + d7, 0.0, 0.0, 0.0);
+
+            // Mezcla de Energía Limpia (Soul Fire) y Energía Oscura (Portal)
+            if (pRandom.nextBoolean()) {
+                pLevel.addParticle(ParticleTypes.SOUL_FIRE_FLAME, d0 + d5, d1 + d6, d2 + d7, 0.0, 0.0, 0.0);
+            } else {
+                pLevel.addParticle(ParticleTypes.PORTAL, d0 + d5, d1 + d6, d2 + d7, 0.0, 0.0, 0.0);
+            }
         }
-    */
     }
 
     @Override

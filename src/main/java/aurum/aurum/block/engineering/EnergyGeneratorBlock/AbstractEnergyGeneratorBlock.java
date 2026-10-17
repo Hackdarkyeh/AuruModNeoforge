@@ -68,7 +68,7 @@ public abstract class AbstractEnergyGeneratorBlock extends BaseEntityBlock {
     /**
      * Called to open this furnace's container.
      *
-     * @see #//use
+     * @see AbstractFurnaceBlockEntity#createMenu(int, net.minecraft.world.entity.player.Inventory, net.minecraft.world.entity.player.Player)
      */
     protected abstract void openContainer(Level pLevel, BlockPos pPos, Player pPlayer);
 
@@ -81,14 +81,17 @@ public abstract class AbstractEnergyGeneratorBlock extends BaseEntityBlock {
     protected void onRemove(BlockState pState, Level pLevel, BlockPos pPos, BlockState pNewState, boolean pIsMoving) {
         if (!pState.is(pNewState.getBlock())) {
             BlockEntity blockentity = pLevel.getBlockEntity(pPos);
-            if (blockentity instanceof AbstractEnergyGeneratorBlockEntity) {
-                if (pLevel instanceof ServerLevel) {
-                    Containers.dropContents(pLevel, pPos, (AbstractEnergyGeneratorBlockEntity)blockentity);
-                    ((AbstractEnergyGeneratorBlockEntity)blockentity).getRecipesToAwardAndPopExperience((ServerLevel)pLevel, Vec3.atCenterOf(pPos));
+            if (blockentity instanceof AbstractEnergyGeneratorBlockEntity generatorEntity) {
+                if (pLevel instanceof ServerLevel serverLevel) {
+                    Containers.dropContents(pLevel, pPos, generatorEntity);
+                    generatorEntity.getRecipesToAwardAndPopExperience(serverLevel, Vec3.atCenterOf(pPos));
                 }
 
                 super.onRemove(pState, pLevel, pPos, pNewState, pIsMoving);
+
+                // Forzar actualización a los bloques adyacentes (especialmente tuberías y almacenes)
                 pLevel.updateNeighbourForOutputSignal(pPos, this);
+                pLevel.updateNeighborsAt(pPos, this);
             } else {
                 super.onRemove(pState, pLevel, pPos, pNewState, pIsMoving);
             }

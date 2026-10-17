@@ -1,6 +1,6 @@
 package aurum.aurum.client.renderer;
 
-import aurum.aurum.client.model.ModModelLayers;
+import aurum.aurum.client.model.AAModModelLayers;
 import aurum.aurum.client.model.SoreModel;
 import aurum.aurum.entity.SoreBoss.SoreBossEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -15,7 +15,7 @@ public class SoreRenderer extends MobRenderer<SoreBossEntity, SoreModel<SoreBoss
     private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(MODID, "textures/entities/sore.png");
 
     public SoreRenderer(EntityRendererProvider.Context ctx) {
-        super(ctx, new SoreModel<>(ctx.bakeLayer(ModModelLayers.SORE_LAYER)), 0.5f);
+        super(ctx, new SoreModel<>(ctx.bakeLayer(AAModModelLayers.SORE_LAYER)), 0.5f);
     }
 
     @Override

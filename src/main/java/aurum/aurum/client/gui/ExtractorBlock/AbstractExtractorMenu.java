@@ -22,7 +22,7 @@ public abstract class AbstractExtractorMenu extends AbstractContainerMenu {
     public static final int RANGE_EXTRACTOR = 4;
     public static final int SLOT_COUNT = 5;
 
-    public static final int DATA_COUNT = 9;
+    public static final int DATA_COUNT = 11;
 
     private static final int USE_ROW_SLOT_START = 30;
     private static final int USE_ROW_SLOT_END = 39;
@@ -154,27 +154,6 @@ public abstract class AbstractExtractorMenu extends AbstractContainerMenu {
 
 
 
-    public int getCurrenEnergy() {
-        return this.data.get(4);
-    }
-
-    public int getCurrenDarkEnergy() {
-        return this.data.get(7);
-    }
-
-
-    public int getMaxEnergy() {
-        return this.data.get(5);
-    }
-
-    public int getMaxDarkEnergy() {
-        return this.data.get(8);
-    }
-
-    public boolean hasInsufficientExp(){
-        return this.data.get(6) == 0;
-    }
-
     public boolean isPipe(ItemStack pStack) {
         return pStack.is(ModBlocks.PIPE_BLOCK.get().asItem());
     }
@@ -196,18 +175,6 @@ public abstract class AbstractExtractorMenu extends AbstractContainerMenu {
                 || pStack.is(ModItems.RANGE_EXTRACTOR_UPDATER_TIER_5.get().asItem());
     }
 
-    public float getEnergyProgress() {
-        int currentEnergy = this.data.get(4);
-        int maxEnergy = this.data.get(5);
-        return Mth.clamp((float) currentEnergy / (float) maxEnergy, 0.0F, 1.0F);
-    }
-
-    public float getDarkEnergyProgress() {
-        int currentEnergy = getCurrenDarkEnergy();
-        int maxEnergy = getMaxDarkEnergy();
-        return Mth.clamp((float) currentEnergy / (float) maxEnergy, 0.0F, 1.0F);
-    }
-
     public float getExtractorProgress() {
         float currentTimeExtractorMineral = this.data.get(2);
         float totalTimeExtractorMineral = this.data.get(3);
@@ -217,5 +184,47 @@ public abstract class AbstractExtractorMenu extends AbstractContainerMenu {
 
     public boolean isLit() {
         return this.data.get(0) / (float) FLOAT_SCALING_FACTOR > 0;
+    }
+
+    // --- ENERGÍA LIMPIA (IZQUIERDA) ---
+    public int getCurrenEnergy() {
+        // Reconstruimos los 32 bits uniendo las casillas 4 (Baja) y 5 (Alta)
+        return (this.data.get(5) << 16) | (this.data.get(4) & 0xFFFF);
+    }
+
+    public int getMaxEnergy() {
+        // Reconstruimos los 32 bits uniendo las casillas 6 (Baja) y 7 (Alta)
+        return (this.data.get(7) << 16) | (this.data.get(6) & 0xFFFF);
+    }
+
+    public float getEnergyProgress() {
+        int current = getCurrenEnergy();
+        int max = getMaxEnergy();
+        return max > 0 ? (float) current / max : 0.0f;
+    }
+
+
+    // --- EXPERIENCIA ---
+    public boolean hasInsufficientExp() {
+        // La casilla 8 devuelve 1 si tiene suficiente experiencia, o 0 si no tiene suficiente
+        return this.data.get(8) == 0;
+    }
+
+
+    // --- ENERGÍA OSCURA (DERECHA) ---
+    public int getCurrenDarkEnergy() {
+        // Leemos la casilla 9
+        return this.data.get(9);
+    }
+
+    public int getMaxDarkEnergy() {
+        // Leemos la casilla 10
+        return this.data.get(10);
+    }
+
+    public float getDarkEnergyProgress() {
+        int current = getCurrenDarkEnergy();
+        int max = getMaxDarkEnergy();
+        return max > 0 ? (float) current / max : 0.0f;
     }
 }

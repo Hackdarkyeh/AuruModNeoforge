@@ -1,7 +1,6 @@
 package aurum.aurum.plugin.JadeComponentsProvider.blocks;
 
 import aurum.aurum.block.engineering.EnergyStorageBlock.EnergyStorageBlockEntity;
-import aurum.aurum.entity.CooperGolemEntity;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;

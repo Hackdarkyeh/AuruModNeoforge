@@ -1,29 +1,39 @@
 package aurum.aurum.worldgen.Dimension;
-import com.mojang.serialization.Codec;
+
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
-import net.minecraft.server.level.WorldGenRegion;
-import net.minecraft.world.level.LevelHeightAccessor;
-import net.minecraft.world.level.NoiseColumn;
-import net.minecraft.world.level.StructureManager;
-import net.minecraft.world.level.WorldGenLevel;
-import net.minecraft.world.level.biome.BiomeManager;
 import net.minecraft.world.level.biome.BiomeSource;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkGenerator;
-import net.minecraft.world.level.levelgen.GenerationStep;
-import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
 import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
-import net.minecraft.world.level.levelgen.RandomState;
-import net.minecraft.world.level.levelgen.blending.Blender;
-import net.minecraft.world.level.block.Blocks;
 
-import java.util.concurrent.CompletableFuture;
-
+/**
+ * IMPORTANTE — qué cambió respecto a la versión anterior y por qué:
+ *
+ * Antes, esta clase sobreescribía buildSurface(), fillFromNoise(), getBaseColumn()
+ * y getBaseHeight() con un Perlin noise casero (NoiseGenerator) que no tenía
+ * absolutamente ninguna relación con el biome_source (multi_noise) definido en
+ * dimension1.json. Resultado: el bioma se elegía con un sistema de ruido climático
+ * (continentalness/erosion/weirdness/temperature/humidity) y el terreno con otro
+ * completamente distinto -> desincronización total (biomas "vacíos" en zonas que
+ * deberían ser purple_plains, etc).
+ *
+ * El noise_router y el surface_rule que ya tienes en tu noise settings
+ * ("aurum:dimension1") están correctamente atados por bioma (dry_withered_grass_block
+ * para volcano_around, withered_grass_block para purple_plains, etc). El problema
+ * es que esos overrides impedían que ese sistema se ejecutara nunca.
+ *
+ * Al NO sobreescribir esos métodos, NoiseBasedChunkGenerator (la clase padre) usa
+ * directamente el RandomState/NoiseGeneratorSettings que le pasamos — es decir,
+ * tu noise_router + surface_rule + final_density — para generar el terreno,
+ * garantizando que biomas y terreno comparten exactamente la misma fuente de ruido.
+ *
+ * El seed bug (`settings.value().getRandomSource().ordinal()`) también desaparece
+ * porque ya no necesitamos un NoiseGenerator propio para el terreno base. Si en el
+ * futuro quieres usar Perlin noise propio para otra cosa (decoración, elegir
+ * variante de cráter, etc.), pásale la seed real del mundo, no el ordinal de un enum.
+ */
 public class AurumChunkGenerator extends NoiseBasedChunkGenerator {
 
     public static final MapCodec<AurumChunkGenerator> CODEC = RecordCodecBuilder.mapCodec(instance ->
@@ -37,94 +47,12 @@ public class AurumChunkGenerator extends NoiseBasedChunkGenerator {
         return CODEC;
     }
 
-    private final NoiseGenerator noiseGenerator;
-
     public AurumChunkGenerator(BiomeSource biomeSource, Holder<NoiseGeneratorSettings> settings) {
         super(biomeSource, settings);
-        this.noiseGenerator = new NoiseGenerator(settings.value().getRandomSource().ordinal()); // Corrected: Extract seed from NoiseGeneratorSettings
     }
 
-
-
-    @Override
-    public void buildSurface(WorldGenRegion region, StructureManager structureManager, RandomState randomState, ChunkAccess chunk) {
-        BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
-        for (int x = 0; x < 16; x++) {
-            for (int z = 0; z < 16; z++) {
-                int worldX = chunk.getPos().getMinBlockX() + x;
-                int worldZ = chunk.getPos().getMinBlockZ() + z;
-
-                for (int y = chunk.getMinBuildHeight(); y < chunk.getMaxBuildHeight(); y++) {
-                    mutablePos.set(x, y, z);
-                    double noiseValue = noiseGenerator.perlinNoise(worldX * 0.01, y * 0.01, worldZ * 0.01); // Adjust scale as needed
-
-                    if (noiseValue > 0.1) { // Threshold for solid block
-                        chunk.setBlockState(mutablePos, Blocks.STONE.defaultBlockState(), false);
-                    } else { // Air or void
-                        chunk.setBlockState(mutablePos, Blocks.AIR.defaultBlockState(), false);
-                    }
-                }
-            }
-        }
-    }
-
-
-    @Override
-    public CompletableFuture<ChunkAccess> fillFromNoise(Blender blender, RandomState randomState, StructureManager structureManager, ChunkAccess chunk) {
-        return CompletableFuture.supplyAsync(() -> {
-            BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
-            for (int x = 0; x < 16; x++) {
-                for (int z = 0; z < 16; z++) {
-                    int worldX = chunk.getPos().getMinBlockX() + x;
-                    int worldZ = chunk.getPos().getMinBlockZ() + z;
-
-                    for (int y = chunk.getMinBuildHeight(); y < chunk.getMaxBuildHeight(); y++) {
-                        mutablePos.set(x, y, z);
-                        double noiseValue = noiseGenerator.perlinNoise(worldX * 0.01, y * 0.01, worldZ * 0.01); // Adjust scale as needed
-
-                        if (noiseValue > 0.1) { // Threshold for solid block
-                            chunk.setBlockState(mutablePos, Blocks.STONE.defaultBlockState(), false);
-                        } else { // Air or void
-                            chunk.setBlockState(mutablePos, Blocks.AIR.defaultBlockState(), false);
-                        }
-                    }
-                }
-            }
-            return chunk;
-        });
-    }
-
-    @Override
-    public void applyCarvers(WorldGenRegion region, long seed, RandomState randomState, BiomeManager biomeManager, StructureManager structureManager, ChunkAccess chunk, GenerationStep.Carving carving) {
-        super.applyCarvers(region, seed, randomState, biomeManager, structureManager, chunk, carving);
-    }
-
-
-    @Override
-    public void applyBiomeDecoration(WorldGenLevel level, ChunkAccess chunk, StructureManager structureManager) {
-        super.applyBiomeDecoration(level, chunk, structureManager);
-    }
-
-    @Override
-    public int getBaseHeight(int x, int z, Heightmap.Types heightmapType, LevelHeightAccessor level, RandomState randomState) {
-        double noiseValue = noiseGenerator.perlinNoise(x * 0.01, 0, z * 0.01); // Only 2D noise for base height
-        return (int) (64 + noiseValue * 32); // Base height around Y=64, with variation
-    }
-
-
-
-    @Override
-    public NoiseColumn getBaseColumn(int x, int z, LevelHeightAccessor height, RandomState random) {
-        BlockState[] states = new BlockState[height.getHeight()];
-        for (int y = height.getMinBuildHeight(); y < height.getMaxBuildHeight(); y++) {
-            double noiseValue = noiseGenerator.perlinNoise(x * 0.01, y * 0.01, z * 0.01);
-            if (noiseValue > 0.1) {
-                states[y - height.getMinBuildHeight()] = Blocks.STONE.defaultBlockState();
-            } else {
-                states[y - height.getMinBuildHeight()] = Blocks.AIR.defaultBlockState();
-            }
-        }
-        return new NoiseColumn(height.getMinBuildHeight(), states);
-    }
-
+    // Sin overrides de buildSurface / fillFromNoise / getBaseColumn / getBaseHeight /
+    // applyCarvers / applyBiomeDecoration: se heredan de NoiseBasedChunkGenerator tal
+    // cual, que es exactamente lo que necesitamos para que el terreno respete tu
+    // noise_router y tu surface_rule por bioma.
 }

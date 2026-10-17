@@ -2,8 +2,8 @@ package aurum.aurum.item.ArmorItem;
 
 import aurum.aurum.energy.ArmorAndWeapons.EnergyConfig;
 import aurum.aurum.energy.ArmorAndWeapons.IEnergyArmor;
-import aurum.aurum.init.ModArmorMaterials;
-import aurum.aurum.init.ModComponents;
+import aurum.aurum.init.armors.ModArmorMaterials;
+import aurum.aurum.init.ModDataComponents;
 import com.google.common.collect.ImmutableMap;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.Holder;
@@ -32,26 +32,31 @@ public class ModArmorItem extends ArmorItem implements IEnergyArmor {
                                     new MobEffectInstance(MobEffects.HEALTH_BOOST, 200, 4, false, false)))
                     .build();
 
+    private static final Map<Holder<ArmorMaterial>, List<MobEffectInstance>> MATERIAL_TO_EFFECT_MAP_2 =
+            (new ImmutableMap.Builder<Holder<ArmorMaterial>, List<MobEffectInstance>>())
+                    .put(ModArmorMaterials.AURELITE_ARMOR_MATERIAL_GOLD
+                            , List.of(new MobEffectInstance(MobEffects.JUMP, 200, 2, false, false),
+                                    new MobEffectInstance(MobEffects.HEALTH_BOOST, 200, 6, false, false)))
+                    .build();
+
     public ModArmorItem(Holder<ArmorMaterial> material, Type type, Properties properties) {
         super(material, type, properties.stacksTo(1)
-                .component(ModComponents.ARMOR_TIER.get(), new ArmorTierData(1, true))
-                .component(ModComponents.ARMOR_ENERGY.get(), new ArmorEnergyData(0,
+                .component(ModDataComponents.ARMOR_TIER.get(), new ArmorTierData(1, true))
+                .component(ModDataComponents.ARMOR_ENERGY.get(), new ArmorEnergyData(0,
                         EnergyConfig.AureliteArmor.MAX_ENERGY_CAPACITY, EnergyType.NONE)));
     }
 
-    // --- Implementación de IEnergyArmor ---
-
     @Override
     public EnergyType getCurrentEnergyType(ItemStack stack) {
-        ArmorEnergyData data = stack.get(ModComponents.ARMOR_ENERGY.get());
+        ArmorEnergyData data = stack.get(ModDataComponents.ARMOR_ENERGY.get());
         return data != null ? data.energyType() : EnergyType.NONE;
     }
 
     @Override
     public void setEnergyType(ItemStack stack, EnergyType type) {
-        ArmorEnergyData currentData = stack.get(ModComponents.ARMOR_ENERGY.get());
+        ArmorEnergyData currentData = stack.get(ModDataComponents.ARMOR_ENERGY.get());
         if (currentData != null) {
-            stack.set(ModComponents.ARMOR_ENERGY.get(), new ArmorEnergyData(
+            stack.set(ModDataComponents.ARMOR_ENERGY.get(), new ArmorEnergyData(
                     currentData.currentEnergy(),
                     currentData.maxCapacity(),
                     type
@@ -61,22 +66,22 @@ public class ModArmorItem extends ArmorItem implements IEnergyArmor {
 
     @Override
     public int getCurrentEnergy(ItemStack stack) {
-        ArmorEnergyData data = stack.get(ModComponents.ARMOR_ENERGY.get());
+        ArmorEnergyData data = stack.get(ModDataComponents.ARMOR_ENERGY.get());
         return data != null ? data.currentEnergy() : 0;
     }
 
     @Override
     public int getMaxEnergy(ItemStack stack) {
-        ArmorEnergyData data = stack.get(ModComponents.ARMOR_ENERGY.get());
+        ArmorEnergyData data = stack.get(ModDataComponents.ARMOR_ENERGY.get());
         return data != null ? data.maxCapacity() : EnergyConfig.AureliteArmor.MAX_ENERGY_CAPACITY;
     }
 
     @Override
     public void setEnergy(ItemStack stack, int amount) {
-        ArmorEnergyData currentData = stack.get(ModComponents.ARMOR_ENERGY.get());
+        ArmorEnergyData currentData = stack.get(ModDataComponents.ARMOR_ENERGY.get());
         if (currentData != null) {
             int clampedAmount = Math.min(Math.max(0, amount), currentData.maxCapacity());
-            stack.set(ModComponents.ARMOR_ENERGY.get(), new ArmorEnergyData(
+            stack.set(ModDataComponents.ARMOR_ENERGY.get(), new ArmorEnergyData(
                     clampedAmount,
                     currentData.maxCapacity(),
                     currentData.energyType()
@@ -86,11 +91,11 @@ public class ModArmorItem extends ArmorItem implements IEnergyArmor {
 
     @Override
     public int addEnergy(ItemStack stack, int amount) {
-        ArmorEnergyData currentData = stack.get(ModComponents.ARMOR_ENERGY.get());
+        ArmorEnergyData currentData = stack.get(ModDataComponents.ARMOR_ENERGY.get());
         if (currentData != null) {
             int energyAdded = Math.min(amount, currentData.maxCapacity() - currentData.currentEnergy());
             int newEnergy = currentData.currentEnergy() + energyAdded;
-            stack.set(ModComponents.ARMOR_ENERGY.get(), new ArmorEnergyData(
+            stack.set(ModDataComponents.ARMOR_ENERGY.get(), new ArmorEnergyData(
                     newEnergy,
                     currentData.maxCapacity(),
                     currentData.energyType()
@@ -116,12 +121,10 @@ public class ModArmorItem extends ArmorItem implements IEnergyArmor {
         };
     }
 
-    // --- Métodos para cargar energía específica ---
-
     public boolean addDarkEnergy(ItemStack stack, int amount) {
         EnergyType currentType = getCurrentEnergyType(stack);
         if (currentType != EnergyType.NONE && currentType != EnergyType.DARK_ENERGY) {
-            return false; // No mezclar energías
+            return false;
         }
 
         int energyAdded = addEnergy(stack, amount);
@@ -134,7 +137,7 @@ public class ModArmorItem extends ArmorItem implements IEnergyArmor {
     public boolean addCleanEnergy(ItemStack stack, int amount) {
         EnergyType currentType = getCurrentEnergyType(stack);
         if (currentType != EnergyType.NONE && currentType != EnergyType.CLEAN_ENERGY) {
-            return false; // No mezclar energías
+            return false;
         }
 
         int energyAdded = addEnergy(stack, amount);
@@ -143,8 +146,6 @@ public class ModArmorItem extends ArmorItem implements IEnergyArmor {
         }
         return energyAdded > 0;
     }
-
-    // --- Reparación con energía limpia ---
 
     public boolean repairWithCleanEnergy(ItemStack stack, int cleanEnergyAmount) {
         if (getCurrentEnergyType(stack) != EnergyType.CLEAN_ENERGY) {
@@ -160,8 +161,6 @@ public class ModArmorItem extends ArmorItem implements IEnergyArmor {
         return false;
     }
 
-    // --- Consumo de energía en tick ---
-
     public void consumeEnergyPerTick(ItemStack stack, Player player) {
         EnergyType energyType = getCurrentEnergyType(stack);
         if (energyType == EnergyType.NONE || getCurrentEnergy(stack) <= 0) {
@@ -171,11 +170,8 @@ public class ModArmorItem extends ArmorItem implements IEnergyArmor {
         int consumption = getEnergyConsumptionPerTick(stack);
         if (getCurrentEnergy(stack) >= consumption) {
             setEnergy(stack, getCurrentEnergy(stack) - consumption);
-
-            // Aplicar efectos según el tipo de energía
             applyEnergyEffects(stack, player, energyType);
         } else {
-            // Sin energía suficiente, se apaga
             setEnergyType(stack, EnergyType.NONE);
         }
     }
@@ -183,11 +179,9 @@ public class ModArmorItem extends ArmorItem implements IEnergyArmor {
     private void applyEnergyEffects(ItemStack stack, Player player, EnergyType energyType) {
         switch(energyType) {
             case DARK_ENERGY:
-                // Bonus de velocidad con energía oscura
                 player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 40, 0, false, false));
                 break;
             case CLEAN_ENERGY:
-                // Regeneración con energía limpia
                 if (player.getHealth() < player.getMaxHealth()) {
                     player.heal(EnergyConfig.AureliteArmor.CLEAN_ENERGY_REGENERATION);
                 }
@@ -195,18 +189,15 @@ public class ModArmorItem extends ArmorItem implements IEnergyArmor {
         }
     }
 
-    // --- Método modificado inventoryTick ---
-
     @Override
     public void inventoryTick(ItemStack stack, Level level, Entity entity, int slotId, boolean isSelected) {
         if (entity instanceof Player player && !level.isClientSide()) {
-            // Consumir energía si está equipada
             if (isEquipped(player, stack)) {
                 consumeEnergyPerTick(stack, player);
             }
 
             if (hasFullSuitOfArmorOn(player)) {
-                evaluateArmorEffects(player);
+                //evaluateArmorEffects(player);
             } else {
                 Objects.requireNonNull(player.getAttribute(Attributes.MAX_HEALTH)).setBaseValue(20);
             }
@@ -222,22 +213,23 @@ public class ModArmorItem extends ArmorItem implements IEnergyArmor {
         return false;
     }
 
-    // --- Métodos de tooltip modificados ---
-
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
         super.appendHoverText(stack, context, tooltip, flag);
 
-        ArmorExpData expData = stack.getOrDefault(ModComponents.ARMOR_EXP, ArmorExpData.defaultData());
-        ArmorTierData tierData = stack.get(ModComponents.ARMOR_TIER.get());
-        ArmorEnergyData energyData = stack.get(ModComponents.ARMOR_ENERGY.get());
+        ArmorExpData expData = stack.getOrDefault(ModDataComponents.ARMOR_EXP, ArmorExpData.defaultData());
+        ArmorEnergyData energyData = stack.get(ModDataComponents.ARMOR_ENERGY.get());
 
-        assert tierData != null;
+        // 1. Calculamos el Tier dinámico según el nivel actual
+        int calculatedTier = (expData.currentLevel() / 10) + 1;
+        ArmorTierData dynamicTierData = new ArmorTierData(calculatedTier, true);
+
+        // 2. Línea de Tier
         tooltip.add(Component.literal("")
                 .append(Component.translatable("tooltip.aurum.tier").withStyle(ChatFormatting.GRAY))
-                .append(Component.literal(" ")).append(tierData.getDisplayName()));
+                .append(Component.literal(" ")).append(dynamicTierData.getDisplayName()));
 
-        // Información de energía
+        // 3. Información de energía
         if (energyData != null && energyData.currentEnergy() > 0) {
             String energyTypeName = switch(energyData.energyType()) {
                 case DARK_ENERGY -> "Oscura";
@@ -254,7 +246,7 @@ public class ModArmorItem extends ArmorItem implements IEnergyArmor {
             }
         }
 
-        // Añade la línea de nivel
+        // 4. Línea de nivel de la pieza
         tooltip.add(Component.literal("")
                 .append(Component.translatable("tooltip.armor.level").withStyle(ChatFormatting.GRAY))
                 .append(Component.literal(" " + expData.currentLevel()).withStyle(getTierColor(expData.currentLevel()))));
@@ -268,14 +260,20 @@ public class ModArmorItem extends ArmorItem implements IEnergyArmor {
         };
     }
 
-    // Métodos existentes sin cambios...
     private void evaluateArmorEffects(Player player) {
         for(Map.Entry<Holder<ArmorMaterial>, List<MobEffectInstance>> entry : MATERIAL_TO_EFFECT_MAP.entrySet()) {
             Holder<ArmorMaterial> mapArmorMaterial = entry.getKey();
-            List<MobEffectInstance> mapEffect = entry.getValue();
 
             if(hasPlayerCorrectArmorOn(mapArmorMaterial, player)) {
                 Objects.requireNonNull(player.getAttribute(Attributes.MAX_HEALTH)).setBaseValue(40);
+            }
+        }
+
+        for (Map.Entry<Holder<ArmorMaterial>, List<MobEffectInstance>> entry : MATERIAL_TO_EFFECT_MAP_2.entrySet()) {
+            Holder<ArmorMaterial> mapArmorMaterial = entry.getKey();
+
+            if(hasPlayerCorrectArmorOn(mapArmorMaterial, player)) {
+                Objects.requireNonNull(player.getAttribute(Attributes.MAX_HEALTH)).setBaseValue(60);
             }
         }
     }
@@ -306,7 +304,7 @@ public class ModArmorItem extends ArmorItem implements IEnergyArmor {
     }
 
     private ChatFormatting getTierColor(int level) {
-        return switch(level) {
+        return switch(level / 10) {
             case 0 -> ChatFormatting.GRAY;
             case 1 -> ChatFormatting.GREEN;
             case 2 -> ChatFormatting.BLUE;
@@ -314,8 +312,6 @@ public class ModArmorItem extends ArmorItem implements IEnergyArmor {
             default -> ChatFormatting.LIGHT_PURPLE;
         };
     }
-
-    // --- Métodos para UI ---
 
     @Override
     public boolean isBarVisible(ItemStack stack) {
@@ -330,9 +326,9 @@ public class ModArmorItem extends ArmorItem implements IEnergyArmor {
     @Override
     public int getBarColor(ItemStack stack) {
         return switch(getCurrentEnergyType(stack)) {
-            case DARK_ENERGY -> 0x6600CC; // Morado oscuro
-            case CLEAN_ENERGY -> 0x33FF99; // Verde claro
-            default -> 0x9933FF; // Morado por defecto
+            case DARK_ENERGY -> 0x6600CC;
+            case CLEAN_ENERGY -> 0x33FF99;
+            default -> 0x9933FF;
         };
     }
 }

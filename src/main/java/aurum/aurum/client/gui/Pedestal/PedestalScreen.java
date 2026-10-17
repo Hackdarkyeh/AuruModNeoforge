@@ -1,10 +1,8 @@
 package aurum.aurum.client.gui.Pedestal;
 
 import aurum.aurum.Aurum;
-import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
@@ -18,14 +16,19 @@ public class PedestalScreen extends AbstractContainerScreen<PedestalMenu> {
     }
 
     @Override
-    protected void renderBg(GuiGraphics guiGraphics, float pPartialTick, int pMouseX, int pMouseY) {
-        RenderSystem.setShader(GameRenderer::getPositionTexShader);
-        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-        RenderSystem.setShaderTexture(0, GUI_TEXTURE);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        // Asegura que el fondo oscuro genérico se dibuje si es necesario en esta versión
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        // Dibuja el texto flotante de los ítems (tooltip) al pasar el ratón por encima
+        this.renderTooltip(guiGraphics, mouseX, mouseY);
+    }
 
+    @Override
+    protected void renderBg(GuiGraphics guiGraphics, float pPartialTick, int pMouseX, int pMouseY) {
         int x = (width - imageWidth) / 2;
         int y = (height - imageHeight) / 2;
 
+        // GuiGraphics ya gestiona internamente los shaders, el color base y el bind de la textura.
         guiGraphics.blit(GUI_TEXTURE, x, y, 0, 0, imageWidth, imageHeight);
     }
 }

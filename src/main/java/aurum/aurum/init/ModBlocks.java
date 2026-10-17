@@ -12,6 +12,8 @@ import aurum.aurum.block.engineering.ExtractorBlock.ExtractorBlock;
 import aurum.aurum.block.engineering.PedestalBlock.PedestalBlock;
 import aurum.aurum.block.engineering.PipeSystem.DarkPipeBlock;
 import aurum.aurum.block.engineering.PipeSystem.PipeBlock;
+import aurum.aurum.block.engineering.PortalAurum.AurumPortalInside.AurumPortalBlock;
+import aurum.aurum.block.engineering.PortalAurum.InoculatedObsidianBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.player.Player;
@@ -27,10 +29,11 @@ import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.MapColor;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
-
+import net.minecraft.world.level.material.MapColor;
 import javax.annotation.Nullable;
 import java.util.function.Supplier;
 
@@ -69,7 +72,6 @@ public class ModBlocks {
     public static final DeferredBlock<Block> ANCIENT_AURUM_GRASS_BLOCK= registerBlock("ancient_aurum_grass_block",
             () -> new Block(BlockBehaviour.Properties.of()
                     .strength(4f).requiresCorrectToolForDrops().sound(SoundType.GRASS)));
-    public static final DeferredBlock<Block> PORTAl_BLOCK_AURUM = BLOCK_REGISTRY.register("aurum_portal_block", PortalBlock::new);
 
 
     /*
@@ -161,7 +163,19 @@ public class ModBlocks {
     public static final DeferredBlock<Block> DARK_ENERGY_TABLE = registerBlock("dark_energy_table",
             DarkEnergyTableBlock::new);
 
+    public static final DeferredBlock<Block> AURUM_PORTAL_BLOCK_INDESTRUCTIBLE = registerBlock("aurum_portal_block_indestructible",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .lightLevel((state) -> 15) // Brillo máximo
+                    .strength(-1.0F, 3600000.0F) // Indestructible
+                    .noLootTable()));          // No suelta ítem si se fuerza su ruptura
 
+    public static final DeferredBlock<Block> AURUM_PORTAL_BLOCK = registerBlock("aurum_portal_block",
+            () -> new AurumPortalBlock(BlockBehaviour.Properties.of()
+                    .noCollission()            // Permite que el jugador lo atraviese
+                    .lightLevel((state) -> 15) // Emite luz máxima
+                    .strength(-1.0F, 3600000.0F) // Indestructible
+                    .noLootTable())            // No suelta ítem al romperse
+    );
 
 
     private static <T extends Block> DeferredBlock<T> registerBlock(String name, Supplier<T> block) {
@@ -170,9 +184,28 @@ public class ModBlocks {
         return toReturn;
     }
 
+    private static <T extends Block> DeferredBlock<T> registerBlock(
+            String name,
+            java.util.function.Function<BlockBehaviour.Properties, T> block,
+            BlockBehaviour.Properties properties) {
+        DeferredBlock<T> toReturn = BLOCK_REGISTRY.register(name, () -> block.apply(properties));
+        registerBlockItem(name, toReturn);
+        return toReturn;
+    }
+
+    public static final DeferredBlock<Block> AURUM_VINES = registerBlock("aurum_vines",
+            props -> new AurumVinesBlock(props.mapColor(MapColor.COLOR_PURPLE).noCollission()
+                    .randomTicks().instabreak().sound(SoundType.WEEPING_VINES)),
+            BlockBehaviour.Properties.of());
+
+    public static final DeferredBlock<Block> AURUM_VINES_PLANT = registerBlock("aurum_vines_plant",
+            props -> new AurumVinesPlantBlock(props.mapColor(MapColor.COLOR_PURPLE).noCollission()
+                    .randomTicks().instabreak().sound(SoundType.WEEPING_VINES)),
+            BlockBehaviour.Properties.of());
 
 
-
+    public static final DeferredBlock<Block> INOCULATED_OBSIDIAN = registerBlock("inoculated_obsidian",
+            InoculatedObsidianBlock::new);
 
 
     /*

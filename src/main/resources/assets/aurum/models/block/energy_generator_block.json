@@ -1,0 +1,13 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "down": "aurum:block/energy_generator_block/energy_generator_block_side",
+    "up": "aurum:block/energy_generator_block/energy_generator_block_top",
+    "north": "aurum:block/energy_generator_block/energy_generator_block_side",
+    "east": "aurum:block/energy_generator_block/energy_generator_block_front",
+    "south": "aurum:block/energy_generator_block/energy_generator_block_side",
+    "west": "aurum:block/energy_generator_block/energy_generator_block_side",
+    "particle": "aurum:block/energy_generator_block/energy_generator_block_side"
+  },
+  "render_type": "solid"
+}

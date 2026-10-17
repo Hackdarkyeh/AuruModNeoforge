@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "aurum:block/aurum_portal_block_indestructible"
+  },
+  "render_type": "solid"
+}

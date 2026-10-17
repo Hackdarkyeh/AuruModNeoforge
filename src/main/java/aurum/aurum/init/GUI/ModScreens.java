@@ -1,5 +1,8 @@
 package aurum.aurum.init.GUI;
 
+import aurum.aurum.client.gui.Player.ArmorControlMenu;
+import aurum.aurum.client.gui.Player.ArmorControlScreen;
+import aurum.aurum.client.gui.Player.SoulInventoryPlayerScreen;
 import aurum.aurum.client.gui.SoulModificationTableMenu.SoulModificationTableScreen;
 import aurum.aurum.client.gui.ArmorTable.ArmorTableScreen;
 import aurum.aurum.client.gui.DarkEnergyTable.DarkEnergyTableScreen;
@@ -23,5 +26,8 @@ public class ModScreens {
         event.register(ModMenuType.PEDESTAL_MENU.get(), PedestalScreen::new);
         event.register(ModMenuType.SOUL_MODIFICATION_TABLE.get(), SoulModificationTableScreen::new);
         event.register(ModMenuType.DARK_ENERGY_TABLE.get(), DarkEnergyTableScreen::new);
+        event.register(ModMenuType.SOUL_MODIFICATION_PLAYER_MENU.get(), SoulInventoryPlayerScreen::new);
+        event.register(ModMenuType.ARMOR_MODIFICATION_PLAYER_MENU.get(), ArmorControlScreen::new);
+
     }
 }

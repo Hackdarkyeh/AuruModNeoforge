@@ -1,0 +1,13 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "down": "aurum:block/soul_modification_table_block/soul_modification_table_bottom",
+    "up": "aurum:block/soul_modification_table_block/soul_modification_table_top",
+    "north": "aurum:block/soul_modification_table_block/soul_modification_table_side",
+    "east": "aurum:block/soul_modification_table_block/soul_modification_table_side",
+    "south": "aurum:block/soul_modification_table_block/soul_modification_table_side",
+    "west": "aurum:block/soul_modification_table_block/soul_modification_table_side",
+    "particle": "aurum:block/soul_modification_table_block/soul_modification_table_top"
+  },
+  "render_type": "solid"
+}

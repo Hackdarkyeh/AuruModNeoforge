@@ -9,6 +9,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.util.Mth;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -30,6 +31,17 @@ public class EnergyStorageBlockEntity extends BlockEntity implements IEnergyStor
     private int lastNetworkSize = 1;
     private long lastUpdateTick = 0;
 
+    // ---- Nivel de llenado visual ----
+    /** Pasos de llenado por bloque (0 = vacío, FILL_STEPS = lleno). Se sincroniza con el cliente. */
+    public static final int FILL_STEPS = 64;
+    private int fillLevel = 0;
+    private int lastFillRatioKey = -1;
+    private int lastFillBlocksKey = 0;
+
+    // Solo cliente: suavizado de la animación (los usa el renderizador)
+    public float displayFill = 0f;
+    public long lastRenderMillis = 0L;
+
 
     private final Set<BlockPos> subscribedGenerators = new HashSet<>();
 
@@ -49,6 +61,14 @@ public class EnergyStorageBlockEntity extends BlockEntity implements IEnergyStor
             if (currentTick - entity.lastUpdateTick >= NETWORK_UPDATE_INTERVAL) {
                 entity.checkForAdjacentBlocks();
                 entity.lastUpdateTick = currentTick;
+            }
+
+            // Reparto del líquido visual (solo el maestro calcula y reparte)
+            if (entity.isMaster && currentTick % 2 == 0) {
+                if (currentTick % 100 == 0) {
+                    entity.lastFillRatioKey = -1; // refresco periódico por si algún bloque no estaba cargado
+                }
+                entity.updateFillDistribution();
             }
         } catch (Exception e) {
             System.err.println("Error in EnergyStorageBlockEntity tick: " + e.getMessage());
@@ -232,7 +252,9 @@ public class EnergyStorageBlockEntity extends BlockEntity implements IEnergyStor
                 .toArray();
         tag.putLongArray("MergedBlocks", mergedArray);
 
-        energyStorage.saveEnergyToTag(tag);    }
+        energyStorage.saveEnergyToTag(tag);
+        tag.putInt("FillLevel", fillLevel);
+    }
 
     @Override
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
@@ -248,6 +270,67 @@ public class EnergyStorageBlockEntity extends BlockEntity implements IEnergyStor
 
         energyStorage.loadEnergyFromTag(tag);
         lastNetworkSize = mergedBlocks.size();
+        fillLevel = tag.getInt("FillLevel");
+    }
+
+    /** Datos que recibe el cliente al cargar el chunk o al llamar a sendBlockUpdated. */
+    @Override
+    public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
+        return saveWithoutMetadata(registries);
+    }
+
+    /** Fracción de llenado (0..1) de ESTE bloque, para el renderizador. */
+    public float getFillFraction() {
+        return fillLevel / (float) FILL_STEPS;
+    }
+
+    private void setFillLevel(int steps) {
+        if (fillLevel == steps) return;
+        fillLevel = steps;
+        setChanged();
+        if (level != null && !level.isClientSide) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 2);
+        }
+    }
+
+    /**
+     * Reparte el líquido por capas, de abajo hacia arriba, según el porcentaje de energía.
+     * Todos los bloques de la misma altura (Y) tienen el mismo nivel. Se calcula por volumen,
+     * así que también funciona con formas que no son un prisma perfecto.
+     */
+    private void updateFillDistribution() {
+        if (!isMaster || level == null || level.isClientSide) return;
+
+        float capacity = getCapacity();
+        float ratio = capacity > 0 ? Mth.clamp(getEnergyStored() / capacity, 0f, 1f) : 0f;
+        int ratioKey = Math.round(ratio * 4096f);
+        int blocksKey = mergedBlocks.hashCode();
+        if (ratioKey == lastFillRatioKey && blocksKey == lastFillBlocksKey) return;
+        lastFillRatioKey = ratioKey;
+        lastFillBlocksKey = blocksKey;
+
+        TreeMap<Integer, List<BlockPos>> layers = new TreeMap<>();
+        for (BlockPos p : mergedBlocks) {
+            layers.computeIfAbsent(p.getY(), y -> new ArrayList<>()).add(p);
+        }
+
+        float remaining = ratio * mergedBlocks.size(); // "bloques" de líquido que hay que repartir
+        for (List<BlockPos> layer : layers.values()) {
+            float layerFill = Mth.clamp(remaining / layer.size(), 0f, 1f);
+            if (layerFill > 0.9999f) layerFill = 1f;
+            remaining -= layerFill * layer.size();
+
+            int steps = Math.round(layerFill * FILL_STEPS);
+            if (layerFill > 0.0001f && steps == 0) steps = 1;
+            if (layerFill < 1f && steps >= FILL_STEPS) steps = FILL_STEPS - 1;
+
+            for (BlockPos p : layer) {
+                if (!isValidPosition(p)) continue;
+                if (level.getBlockEntity(p) instanceof EnergyStorageBlockEntity storage) {
+                    storage.setFillLevel(steps);
+                }
+            }
+        }
     }
 
     public BlockPos getMasterPos() {

@@ -1,0 +1,4 @@
+{
+  "type": "minecraft:cache_2d",
+  "argument": { "type": "minecraft:noise", "noise": "aurum:volcano_field", "xz_scale": 0.15, "y_scale": 0 }
+}

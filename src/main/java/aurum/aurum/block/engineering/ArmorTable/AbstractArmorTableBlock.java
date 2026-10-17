@@ -81,7 +81,7 @@ public abstract class AbstractArmorTableBlock extends BaseEntityBlock {
             if (blockentity instanceof AbstractArmorTableBlockEntity) {
                 if (pLevel instanceof ServerLevel) {
                     Containers.dropContents(pLevel, pPos, (AbstractArmorTableBlockEntity)blockentity);
-                    //((AbstractArmorTableBlockEntity)blockentity).getRecipesToAwardAndPopExperience((ServerLevel)pLevel, Vec3.atCenterOf(pPos));
+                    //((AbstractInoculatedObsidianBlockEntity)blockentity).getRecipesToAwardAndPopExperience((ServerLevel)pLevel, Vec3.atCenterOf(pPos));
                 }
 
                 super.onRemove(pState, pLevel, pPos, pNewState, pIsMoving);

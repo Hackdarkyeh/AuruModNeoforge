@@ -1,0 +1,7 @@
+{
+  "parent": "aurum:block/pipe_arm",
+  "textures": {
+    "0": "aurum:block/dark_pipe",
+    "particle": "aurum:block/dark_pipe"
+  }
+}

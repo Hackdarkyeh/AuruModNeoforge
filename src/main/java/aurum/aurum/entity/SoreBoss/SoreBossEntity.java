@@ -1,13 +1,12 @@
 package aurum.aurum.entity.SoreBoss;
 
-import aurum.aurum.entity.ai.SoreGoals.*;
+import aurum.aurum.entity.SoreBoss.SoreGoals.*;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerBossEvent;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.BossEvent;
-import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.AnimationState;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.NeutralMob;

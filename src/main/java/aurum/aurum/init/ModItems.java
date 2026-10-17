@@ -1,5 +1,6 @@
 package aurum.aurum.init;
 
+import aurum.aurum.init.armors.ModArmorMaterials;
 import aurum.aurum.item.ArmorItem.ArmorExpansions;
 import aurum.aurum.item.SoulExpansions;
 import aurum.aurum.item.*;
@@ -59,6 +60,7 @@ public class ModItems {
 
     public static Supplier<Item> VEILPIERCER = ITEMS_REGISTRY.register("veilpiercer", Veilpiercer::new);
 
+    public static Supplier<Item> SYNTHESIZED_AURUM_BOTTLE = ITEMS_REGISTRY.register("synthesized_aurum_bottle", SynthesizedBottleAurum::new);
 
     public static Supplier<Item> AURELITE_INGOT = ITEMS_REGISTRY.register("aurelite_ingot", Aurelite_ingot::new);
 
@@ -75,6 +77,19 @@ public class ModItems {
             () -> new ModArmorItem(ModArmorMaterials.AURELITE_ARMOR_MATERIAL_BASIC, ArmorItem.Type.BOOTS,
                     new Item.Properties().durability(ArmorItem.Type.BOOTS.getDurability(35))));
 
+    public static final DeferredItem<ModArmorItem> AURELITE_HELMET_GOLD = ITEMS_REGISTRY.register("aurelite_helmet_gold",
+            () -> new ModArmorItem(ModArmorMaterials.AURELITE_ARMOR_MATERIAL_GOLD, ArmorItem.Type.HELMET,
+                    new Item.Properties().durability(ArmorItem.Type.HELMET.getDurability(35))));
+    public static final DeferredItem<ModArmorItem> AURELITE_CHESTPLATE_GOLD = ITEMS_REGISTRY.register("aurelite_chestplate_gold",
+            () -> new ModArmorItem(ModArmorMaterials.AURELITE_ARMOR_MATERIAL_GOLD, ArmorItem.Type.CHESTPLATE,
+                    new Item.Properties().durability(ArmorItem.Type.CHESTPLATE.getDurability(35))));
+    public static final DeferredItem<ModArmorItem> AURELITE_LEGGINGS_GOLD = ITEMS_REGISTRY.register("aurelite_leggings_gold",
+            () -> new ModArmorItem(ModArmorMaterials.AURELITE_ARMOR_MATERIAL_GOLD, ArmorItem.Type.LEGGINGS,
+                    new Item.Properties().durability(ArmorItem.Type.LEGGINGS.getDurability(35))));
+    public static final DeferredItem<ModArmorItem> AURELITE_BOOTS_GOLD = ITEMS_REGISTRY.register("aurelite_boots_gold",
+            () -> new ModArmorItem(ModArmorMaterials.AURELITE_ARMOR_MATERIAL_GOLD, ArmorItem.Type.BOOTS,
+                    new Item.Properties().durability(ArmorItem.Type.BOOTS.getDurability(35))));
+
 
     public static final Supplier<Item> EXPANSION_SUPER_SPEED = ITEMS_REGISTRY.register("expansion_super_speed", () -> new ArmorExpansions(25,"expansion_super_speed"));
     public static final Supplier<Item> EXPANSION_DAMAGE_RESISTANCE = ITEMS_REGISTRY.register("expansion_damage_resistance", () -> new ArmorExpansions(45, "expansion_damage_resistance"));
@@ -86,9 +101,9 @@ public class ModItems {
     public static final Supplier<Item> EXPANSION_LAVA_IMMUNE = ITEMS_REGISTRY.register("expansion_lava_immune", () -> new ArmorExpansions(30,"expansion_lava_immune"));
     public static final Supplier<Item> EXPANSION_MAGIC_SHIELD = ITEMS_REGISTRY.register("expansion_magic_shield", () -> new ArmorExpansions(60, "expansion_magic_shield"));
 
-    public static final Supplier<Item> EXPANSION_SOUL_TOTEM_1 = ITEMS_REGISTRY.register("expansion_soul_totem_1", () -> new SoulExpansions(1, 0, 100));
-    public static final Supplier<Item> EXPANSION_SOUL_TOTEM_2 = ITEMS_REGISTRY.register("expansion_soul_totem_2", () -> new SoulExpansions(2, 1000, 200));
-    public static final Supplier<Item> EXPANSION_SOUL_TOTEM_3 = ITEMS_REGISTRY.register("expansion_soul_totem_3", () -> new SoulExpansions(3, 1000000, 300));
+    public static final Supplier<Item> EXPANSION_SOUL_TOTEM_1 = ITEMS_REGISTRY.register("expansion_soul_totem_1", () -> new SoulExpansions(1, 750, 100));
+    public static final Supplier<Item> EXPANSION_SOUL_TOTEM_2 = ITEMS_REGISTRY.register("expansion_soul_totem_2", () -> new SoulExpansions(2, 1500, 200));
+    public static final Supplier<Item> EXPANSION_SOUL_TOTEM_3 = ITEMS_REGISTRY.register("expansion_soul_totem_3", () -> new SoulExpansions(3, 3000, 300));
 
     public static final Supplier<Item> AURELITE_SWORD = ITEMS_REGISTRY.register("aurelite_sword",
             () -> new AureliteSword(Tiers.DIAMOND, new Item.Properties().durability(1000))); // Ejemplo con Tier.DIAMOND y 1000 de energía máxima);

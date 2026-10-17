@@ -6,7 +6,7 @@ package aurum.aurum.client.model;
 
 
 import aurum.aurum.client.animations.CooperGolemAnimationDefinitions;
-import aurum.aurum.entity.CooperGolemEntity;
+import aurum.aurum.entity.CooperGolem.CooperGolemEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.model.HierarchicalModel;

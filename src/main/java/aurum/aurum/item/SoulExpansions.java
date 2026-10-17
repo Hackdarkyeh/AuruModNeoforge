@@ -2,23 +2,27 @@ package aurum.aurum.item;
 
 import aurum.aurum.Soul.SoulData;
 import aurum.aurum.client.gui.SoulModificationTableMenu.SoulAbilityData;
+import aurum.aurum.init.ModDataComponents;
 import aurum.aurum.item.ArmorItem.ArmorExpansions;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.Vec3i;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.Level;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import static aurum.aurum.init.ModComponents.SOUL_COMPONENT;
+import static aurum.aurum.init.ModDataComponents.SOUL_COMPONENT;
 
 public class SoulExpansions extends Item {
     private static final int MAX_SLOTS = 8;
@@ -26,19 +30,33 @@ public class SoulExpansions extends Item {
     private final int idTier;
     private final int honor;
     private final int maxWight;
+    private final int maxHonor;
     private List<SoulAbilityData> currentData;
 
-    public SoulExpansions(int idTier, int honor, int maxWight) {
+    public SoulExpansions(int idTier, int maxHonor, int maxWight) {
         super(new Properties().stacksTo(1));
         this.idTier = idTier;
-        this.honor = honor;
+        this.maxHonor = maxHonor;
+        this.honor = 0;
         this.maxWight = maxWight;
+
+    }
+
+    private void initSoulComponent(ItemStack stack) {
+        if (!stack.has(ModDataComponents.SOUL_COMPONENT.get())) {
+            stack.set(ModDataComponents.SOUL_COMPONENT.get(), SoulData.createEmpty(idTier, honor, maxWight, maxHonor));
+        }
     }
 
     // --- Métodos de Propiedad ---
-    public int getPeso() { return honor; }
     public int getMaxWight() { return maxWight; }
-    public int getId() { return idTier; }
+
+    public int getHonor() { return honor; }
+
+    public int getIdTier() { return idTier; }
+
+    public int getMaxHonor() { return maxHonor; }
+
 
     // Método mejorado para obtener habilidades del alma
     public List<SoulAbilityData> getSoulData(ItemStack soulStack) {
@@ -46,7 +64,7 @@ public class SoulExpansions extends Item {
 
         if (data == null) {
             // Inicializar con datos vacíos
-            SoulData emptyData = SoulData.createEmpty();
+            SoulData emptyData = SoulData.createEmpty(idTier, honor, maxWight, maxHonor);
             soulStack.set(SOUL_COMPONENT.get(), emptyData);
             return new ArrayList<>(emptyData.abilities());
         }
@@ -58,7 +76,7 @@ public class SoulExpansions extends Item {
     public void updateStackNBT(ItemStack soulStack, List<SoulAbilityData> currentData) {
         // Asegurarse de que tenemos exactamente 8 slots
         List<SoulAbilityData> validatedData = validateAndFixData(currentData);
-        SoulData newData = new SoulData(validatedData);
+        SoulData newData = new SoulData(this.idTier, this.honor, this.maxWight, maxHonor, validatedData);
         soulStack.set(SOUL_COMPONENT.get(), newData);
     }
 
@@ -70,10 +88,10 @@ public class SoulExpansions extends Item {
             if (i < data.size()) {
                 SoulAbilityData existing = data.get(i);
                 // Asegurar que el índice sea correcto
-                fixedData.add(new SoulAbilityData(i, existing.name(), existing.abilityId(), existing.offset()));
+                fixedData.add(new SoulAbilityData(i, existing.name(), existing.abilityId(), existing.offset(), existing.weight()));
             } else {
                 // Añadir slot vacío
-                fixedData.add(new SoulAbilityData(i,  null,null, null));
+                fixedData.add(new SoulAbilityData(i,  null,null, null, 0));
             }
         }
         return fixedData;
@@ -112,7 +130,7 @@ public class SoulExpansions extends Item {
         }
 
         // Actualizar datos
-        SoulAbilityData newData = new SoulAbilityData(index,newAbility.getName(), newAbility.getId(), offset);
+        SoulAbilityData newData = new SoulAbilityData(index,newAbility.getName(), newAbility.getId(), offset, newAbility.getWeight());
         currentData.set(index, newData);
         updateStackNBT(soulStack, currentData);
 
@@ -127,7 +145,7 @@ public class SoulExpansions extends Item {
         }
 
         currentData = getSoulData(soulStack);
-        currentData.set(index, new SoulAbilityData(index, null, null, null));
+        currentData.set(index, new SoulAbilityData(index, null, null, null, 0));
         updateStackNBT(soulStack, currentData);
 
         System.out.println("Removed ability from index: " + index);
@@ -176,7 +194,7 @@ public class SoulExpansions extends Item {
 
     // Método mejorado para verificar peso
     private boolean checkWeightLimit(List<SoulAbilityData> currentData, ArmorExpansions newAbility) {
-        int currentWeight = honor;
+        int currentWeight = 0;
 
         for (SoulAbilityData data : currentData) {
             if (data.abilityId() != null) {
@@ -249,5 +267,15 @@ public class SoulExpansions extends Item {
         }
     }
 
+    @Override
+    public void onCraftedBy(ItemStack stack, Level level, Player player) {
+        initSoulComponent(stack);
+    }
 
+    @Override
+    public ItemStack getDefaultInstance() {
+        ItemStack stack = super.getDefaultInstance();
+        initSoulComponent(stack);
+        return stack;
+    }
 }

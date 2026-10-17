@@ -1,0 +1,67 @@
+package aurum.aurum.entity.EnderDragonAltered;
+
+import javax.annotation.Nullable;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.boss.enderdragon.EndCrystal;
+import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
+import net.minecraft.world.entity.boss.enderdragon.phases.DragonPhaseInstance;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.Vec3;
+
+public abstract class AbstractDragonAlteredPhaseInstance implements DragonAlteredPhaseInstance {
+    protected final EnderDragonAltered dragon;
+
+    public AbstractDragonAlteredPhaseInstance(EnderDragonAltered dragon) {
+        this.dragon = dragon;
+    }
+
+    @Override
+    public boolean isSitting() {
+        return false;
+    }
+
+    @Override
+    public void doClientTick() {
+    }
+
+    @Override
+    public void doServerTick() {
+    }
+
+    @Override
+    public void onCrystalDestroyed(EndCrystal crystal, BlockPos pos, DamageSource dmgSrc, @Nullable Player plyr) {
+    }
+
+    @Override
+    public void begin() {
+    }
+
+    @Override
+    public void end() {
+    }
+
+    @Override
+    public float getFlySpeed() {
+        return 0.6F;
+    }
+
+    @Nullable
+    @Override
+    public Vec3 getFlyTargetLocation() {
+        return null;
+    }
+
+    @Override
+    public float onHurt(DamageSource damageSource, float amount) {
+        return amount;
+    }
+
+    @Override
+    public float getTurnSpeed() {
+        float f = (float)this.dragon.getDeltaMovement().horizontalDistance() + 1.0F;
+        float f1 = Math.min(f, 40.0F);
+        return 0.7F / f1 / f;
+    }
+}
+

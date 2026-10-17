@@ -1,13 +1,15 @@
 package aurum.aurum;
 
-import aurum.aurum.Commands.AurumBlightCommands;
+import aurum.aurum.Commands.AurumCommands;
 import aurum.aurum.Commands.GenerateBridgesCommand;
 import aurum.aurum.block.ArmorSystem.SoulModificationTable.SoulModificationTableBlockEntityRenderer;
 import aurum.aurum.block.engineering.PedestalBlock.PedestalBlockEntityRenderer;
-import aurum.aurum.client.renderer.CooperGolemRenderer;
-import aurum.aurum.client.renderer.SoreRenderer;
-import aurum.aurum.eventHandler.ArmorExpEventHandler;
+import aurum.aurum.block.engineering.PortalAurum.AurumPortalInside.AurumPortalBlockRenderer;
+import aurum.aurum.block.engineering.PortalAurum.InoculatedObsidianBER;
+import aurum.aurum.client.renderer.*;
+import aurum.aurum.eventHandler.ArmorSystemEventHandler;
 import aurum.aurum.eventHandler.AurumBlightRain;
+import aurum.aurum.eventHandler.ServerEvents;
 import aurum.aurum.init.*;
 import aurum.aurum.init.GUI.ModMenuType;
 import com.mojang.logging.LogUtils;
@@ -32,17 +34,19 @@ import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.data.event.GatherDataEvent;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import org.slf4j.Logger;
 
+import javax.swing.text.html.parser.Entity;
 import java.util.function.Supplier;
 
 import static aurum.aurum.init.ModBlockEntities.BLOCK_ENTITIES_REGISTRY;
 import static aurum.aurum.init.ModBlocks.*;
 import static aurum.aurum.init.ModEffects.EFFECTS_REGISTRY;
+import static aurum.aurum.init.ModFeatures.FEATURES;
 import static aurum.aurum.init.ModItems.*;
+import static aurum.aurum.worldgen.Dimension.AurumDimension.BIOME_SOURCES;
 
 // El valor aquí debe coincidir con una entrada en el archivo META-INF/mods.toml
 @Mod(Aurum.MODID)
@@ -67,6 +71,8 @@ public class Aurum {
         // Registra el Registro Diferido al bus de eventos del mod para que los ModItems se registren
         ITEMS_REGISTRY.register(modEventBus);
 
+        FEATURES.register(modEventBus);
+
         // Registra el Registro Diferido al bus de eventos del mod para que los ModEffects se registren
         EFFECTS_REGISTRY.register(modEventBus);
 
@@ -74,8 +80,12 @@ public class Aurum {
         // Registra el Registro Diferido al bus de eventos del mod para que las pestañas se registren
         CREATIVE_MODE_TABS.register(modEventBus);
 
+        ModAttachments.register(modEventBus);
+
+        modEventBus.register(ModNetworking.class);
 
 
+        BIOME_SOURCES.register(modEventBus);
 
         // Nos registramos para los eventos del servidor y otros eventos del juego que nos interesan
         NeoForge.EVENT_BUS.register(this);
@@ -85,9 +95,10 @@ public class Aurum {
 
         ModParticles.REGISTRY.register(modEventBus);
 
-        NeoForge.EVENT_BUS.register(AurumBlightCommands.class);
+        NeoForge.EVENT_BUS.register(AurumCommands.class);
         NeoForge.EVENT_BUS.register(GenerateBridgesCommand.class);
         NeoForge.EVENT_BUS.register(AurumBlightRain.class);
+        NeoForge.EVENT_BUS.register(ServerEvents.class);
 
         ModEntities.ENTITY_REGISTER.register(modEventBus);
 
@@ -97,9 +108,10 @@ public class Aurum {
         ModFluidTypes.REGISTRY_FLUID_TYPE.register(modEventBus);
         ModMenuType.MENU_TYPE_REGISTRY.register(modEventBus);
 
-        ModComponents.register(modEventBus); // <-- Añade esta línea
+        ModDataComponents.register(modEventBus); // <-- Añade esta línea
 
-        NeoForge.EVENT_BUS.register(ArmorExpEventHandler.class);
+        NeoForge.EVENT_BUS.register(ArmorSystemEventHandler.class);
+        ModAttributes.ATTRIBUTES.register(modEventBus);
 
         STStructures.DEFERRED_REGISTRY_STRUCTURE.register(modEventBus);
         STStructurePlacements.DEFERRED_REGISTRY_STRUCTURE_PLACEMENT_TYPE.register(modEventBus);
@@ -141,18 +153,28 @@ public class Aurum {
         public static void onClientSetup(FMLClientSetupEvent event)
         {
             // Algun código de configuración del cliente
-            LOGGER.info("HOLA DESDE LA CONFIGURACIÓN DEL CLIENTE");
             LOGGER.info("NOMBRE DE MINECRAFT >> {}", Minecraft.getInstance().getUser().getName());
             LOGGER.info("Pack de recursos activos DE MINECRAFT >> {}", Minecraft.getInstance().getDownloadedPackSource());
             EntityRenderers.register(ModEntities.COOPER_GOLEM.get(), CooperGolemRenderer::new);
             EntityRenderers.register(ModEntities.SORE_BOSS.get(), SoreRenderer::new);
+            EntityRenderers.register(ModEntities.ZOMBIE_ALTERED.get(), ZombieAlteredRender::new);
+            EntityRenderers.register(ModEntities.SPIDER_CORRUPTED.get(), SpiderAlteredRender::new);
+            EntityRenderers.register(ModEntities.SKELETON_ALTERED.get(), SkeletonAlteredRenderer::new);
+            EntityRenderers.register(ModEntities.DOLPHIN_ALTERED.get(), DolphinAlteredRenderer::new);
+            EntityRenderers.register(ModEntities.ENDER_DRAGON_ALTERED.get(), EnderDragonAlteredRenderer::new);
+            EntityRenderers.register(ModEntities.VEX_ALTERED.get(), VexAlteredRenderer::new);
             ItemBlockRenderTypes.setRenderLayer(ENERGY_STORAGE_BLOCK.get(), RenderType.translucent());
+            EntityRenderers.register(ModEntities.DIVINE_ARMOR.get(), DivineArmorRenderer::new);
+
         }
 
         @SubscribeEvent
         public static void registerBER(EntityRenderersEvent.RegisterRenderers event) {
             event.registerBlockEntityRenderer(ModBlockEntities.PEDESTAL_BE.get(), PedestalBlockEntityRenderer::new);
             event.registerBlockEntityRenderer(ModBlockEntities.SOUL_MODIFICATION_TABLE_BLOCK_ENTITY.get(), SoulModificationTableBlockEntityRenderer::new);
+            event.registerBlockEntityRenderer(ModBlockEntities.INOCULATED_OBSIDIAN_BLOCK_ENTITY.get(), InoculatedObsidianBER::new);
+            event.registerBlockEntityRenderer(ModBlockEntities.AURUM_PORTAL_BLOCK_ENTITY.get(), AurumPortalBlockRenderer::new);
+            event.registerBlockEntityRenderer(ModBlockEntities.ENERGY_STORAGE_BLOCK.get(), EnergyStorageBlockEntityRenderer::new);
         }
 
     }
@@ -196,12 +218,18 @@ public class Aurum {
                 output.accept(RANGE_EXTRACTOR_UPDATER_TIER_3.get()); // Añade el item de actualización de extractor de rango de nivel 3 a la pestaña
                 output.accept(RANGE_EXTRACTOR_UPDATER_TIER_4.get()); // Añade el item de actualización de extractor de rango de nivel 4 a la pestaña
                 output.accept(RANGE_EXTRACTOR_UPDATER_TIER_5.get()); // Añade el item de actualización de extractor de rango de nivel 5 a la pestaña
-                output.accept(AURELITE_INGOT.get()); // Añade el item de lingote de Aurum a la pestaña
+                output.accept(aurum.aurum.item.Aurelite_ingot.createWithPurity(AURELITE_INGOT.get(), 5));
+                output.accept(aurum.aurum.item.Aurelite_ingot.createWithPurity(AURELITE_INGOT.get(), 100));
                 output.accept(AURELITE_HELMET.get()); // Añade el item de casco de Aurum a la pestaña
                 output.accept(AURELITE_CHESTPLATE.get()); // Añade el item de peto de Aurum a la pestaña
                 output.accept(AURELITE_LEGGINGS.get()); // Añade el item de pantalones de Aurum a la pestaña
                 output.accept(AURELITE_BOOTS.get()); // Añade el item de botas de Aurum a la pestaña
+                output.accept(AURELITE_HELMET_GOLD.get()); // Añade el item de casco de Aurum dorado a la pestaña
+                output.accept(AURELITE_CHESTPLATE_GOLD.get()); // Añade el item de peto de Aurum dorado a la pestaña
+                output.accept(AURELITE_LEGGINGS_GOLD.get()); // Añade el item de pantalones de Aurum dorado a la pestaña
+                output.accept(AURELITE_BOOTS_GOLD.get()); // Añade el item de botas de Aurum dorado a la pestaña
                 output.accept(VEILPIERCER.get()); // Añade el item Veilpiercer a la pestaña
+                output.accept(SYNTHESIZED_AURUM_BOTTLE.get()); // Añade el item de botella sintetizada de Aurum a la pestaña
                 output.accept(EXPANSION_DASH.get()); // Añade el item de expansión Dash a la pestaña
                 output.accept(EXPANSION_EXPLOSION.get()); // Añade el item de expansión Jump a la pestaña
                 output.accept(EXPANSION_DAMAGE_RESISTANCE.get()); // Añade el item de expansión Fall a la pestaña
@@ -223,6 +251,8 @@ public class Aurum {
                 output.accept(VETALITA.get()); // Añade el bloque de tronco de vetalita a la pestaña
                 output.accept(CERULEO.get()); // Añade el bloque de planta de
                 output.accept(TOBA.get()); // Añade el bloque de planta de ámbar a la pestaña
+                output.accept(AURUM_VINES.get()); // Añade el bloque de enredaderas de Aurum a la pestaña
+                output.accept(AURUM_VINES_PLANT.get()); // Añade el bloque de enredaderas de Aurum a la pestaña
             }).build());
 
 

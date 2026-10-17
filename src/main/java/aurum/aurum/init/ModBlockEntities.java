@@ -8,6 +8,8 @@ import aurum.aurum.block.engineering.EnergyGeneratorBlock.EnergyGeneratorBlockEn
 import aurum.aurum.block.engineering.EnergyStorageBlock.EnergyStorageBlockEntity;
 import aurum.aurum.block.engineering.ExtractorBlock.ExtractorBlockEntity;
 import aurum.aurum.block.engineering.PedestalBlock.PedestalBlockEntity;
+import aurum.aurum.block.engineering.PortalAurum.AurumPortalInside.AurumPortalBlockEntity;
+import aurum.aurum.block.engineering.PortalAurum.InoculatedObsidianBlockEntity;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -50,7 +52,8 @@ public class ModBlockEntities {
             () -> BlockEntityType.Builder.of(
                     EnergyStorageBlockEntity::new,
                     ModBlocks.ENERGY_STORAGE_BLOCK.get()
-                    ).build(null));;
+            ).build(null));
+    ;
 
     public static final Supplier<BlockEntityType<PedestalBlockEntity>> PEDESTAL_BE =
             BLOCK_ENTITIES_REGISTRY.register("pedestal_be", () -> BlockEntityType.Builder.of(
@@ -81,5 +84,17 @@ public class ModBlockEntities {
             ).build(null));
 
 
+    public static final Supplier<BlockEntityType<InoculatedObsidianBlockEntity>> INOCULATED_OBSIDIAN_BLOCK_ENTITY = BLOCK_ENTITIES_REGISTRY.register(
+            "inoculated_obsidian_block_entity",
+            () -> BlockEntityType.Builder.of(
+                    InoculatedObsidianBlockEntity::new,
+                    ModBlocks.INOCULATED_OBSIDIAN.get()
+            ).build(null));
 
+    public static final Supplier<BlockEntityType<AurumPortalBlockEntity>> AURUM_PORTAL_BLOCK_ENTITY = BLOCK_ENTITIES_REGISTRY.register(
+            "aurum_portal_block_entity",
+            () -> BlockEntityType.Builder.of(
+                    AurumPortalBlockEntity::new,
+                    ModBlocks.AURUM_PORTAL_BLOCK.get()
+            ).build(null));
 }
