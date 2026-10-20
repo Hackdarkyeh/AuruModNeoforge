@@ -14,10 +14,12 @@ import aurum.aurum.item.ExtractorPeakTier.ExtractorPeakUpdaterTier2;
 import aurum.aurum.item.ExtractorPeakTier.ExtractorPeakUpdaterTier3;
 import aurum.aurum.item.RangeExtractor.*;
 import aurum.aurum.item.Swords.AureliteSword;
+import aurum.aurum.item.pickage.AurelitePickaxe;
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.Item;
 
 
+import net.minecraft.world.item.PickaxeItem;
 import net.minecraft.world.item.Tiers;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -106,9 +108,16 @@ public class ModItems {
     public static final Supplier<Item> EXPANSION_SOUL_TOTEM_3 = ITEMS_REGISTRY.register("expansion_soul_totem_3", () -> new SoulExpansions(3, 3000, 300));
 
     public static final Supplier<Item> AURELITE_SWORD = ITEMS_REGISTRY.register("aurelite_sword",
-            () -> new AureliteSword(Tiers.DIAMOND, new Item.Properties().durability(1000))); // Ejemplo con Tier.DIAMOND y 1000 de energía máxima);
+            () -> new AureliteSword(Tiers.NETHERITE, new Item.Properties().durability(1000))); // Ejemplo con Tier.DIAMOND y 1000 de energía máxima);
+
+    public static final Supplier<Item> AURELITE_PICKAGE = ITEMS_REGISTRY.register("aurelite_pickage",
+            () -> new AurelitePickaxe(Tiers.NETHERITE, new Item.Properties()
+                           .attributes(PickaxeItem.createAttributes(Tiers.NETHERITE, 1.0F, -2.8F)))); // Ejemplo con Tier.DIAMOND y 1000 de energía máxima);
 
     public static final Supplier<Item> PURIFIER = ITEMS_REGISTRY.register("purifier",
             () -> new PurifierItem(new Item.Properties().stacksTo(1)));
+
+    public static final DeferredItem<Item> AURELITE_FRAGMENT =
+            ITEMS_REGISTRY.register("aurelite_fragment", Aurelite_fragment::new);
 
 }

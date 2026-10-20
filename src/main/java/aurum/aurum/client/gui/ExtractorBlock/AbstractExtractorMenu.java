@@ -64,7 +64,7 @@ public abstract class AbstractExtractorMenu extends AbstractContainerMenu {
         //this.addSlot(new EnergyGeneratorFuelSlot(this, pContainer, FUEL_SLOT, 86, 50));
         //this.addSlot(new FurnaceResultSlot(pPlayerInventory.player, pContainer, RESULT_SLOT, 148, 50));
         //this.addSlot(new EnergyGeneratorUpdaterSlot(this, pContainer,
-          //      ENERGY_GENERATOR_UPDATER_SLOT, 152, 9));
+        //      ENERGY_GENERATOR_UPDATER_SLOT, 152, 9));
 
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 9; j++) {
@@ -175,11 +175,18 @@ public abstract class AbstractExtractorMenu extends AbstractContainerMenu {
                 || pStack.is(ModItems.RANGE_EXTRACTOR_UPDATER_TIER_5.get().asItem());
     }
 
-    public float getExtractorProgress() {
-        float currentTimeExtractorMineral = this.data.get(2);
-        float totalTimeExtractorMineral = this.data.get(3);
+    // Ticks de extracción acumulados y ticks totales (20 ticks = 1 segundo)
+    public int getExtractorTime() {
+        return this.data.get(2);
+    }
 
-        return Mth.clamp(currentTimeExtractorMineral/totalTimeExtractorMineral, 0.0F, 1.0F);
+    public int getExtractorTotalTime() {
+        return this.data.get(3);
+    }
+
+    public float getExtractorProgress() {
+        float total = getExtractorTotalTime();
+        return total > 0 ? Mth.clamp(getExtractorTime() / total, 0.0F, 1.0F) : 0.0F;
     }
 
     public boolean isLit() {
@@ -198,9 +205,15 @@ public abstract class AbstractExtractorMenu extends AbstractContainerMenu {
     }
 
     public float getEnergyProgress() {
-        int current = getCurrenEnergy();
-        int max = getMaxEnergy();
-        return max > 0 ? (float) current / max : 0.0f;
+        float current = getCurrenEnergy();
+        float max = getMaxEnergy();
+        return max > 0 ? Mth.clamp(current / max, 0.0f, 1.0f) : 0.0f;
+    }
+
+    public float getDarkEnergyProgress() {
+        float current = getCurrenDarkEnergy();
+        float max = getMaxDarkEnergy();
+        return max > 0 ? Mth.clamp(current / max, 0.0f, 1.0f) : 0.0f;
     }
 
 
@@ -220,11 +233,5 @@ public abstract class AbstractExtractorMenu extends AbstractContainerMenu {
     public int getMaxDarkEnergy() {
         // Leemos la casilla 10
         return this.data.get(10);
-    }
-
-    public float getDarkEnergyProgress() {
-        int current = getCurrenDarkEnergy();
-        int max = getMaxDarkEnergy();
-        return max > 0 ? (float) current / max : 0.0f;
     }
 }

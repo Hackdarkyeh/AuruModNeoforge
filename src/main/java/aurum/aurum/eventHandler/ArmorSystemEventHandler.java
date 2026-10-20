@@ -90,7 +90,10 @@ public class ArmorSystemEventHandler {
         ArmorExpData expData = armor.getOrDefault(ModDataComponents.ARMOR_EXP.get(),
                 new ArmorExpData(0, 0, EXP_REQUIREMENTS[Math.max(0, tierData.tierLevel() - 1)]));
 
-        ArmorExpData newData = expData.addExp(damageReceived, tierData);
+        // La armadura básica gana más EXP por golpe; la dorada usa 1.0 (igual que antes)
+        double gainMultiplier = ((ModArmorItem) armor.getItem()).getExpGainMultiplier();
+
+        ArmorExpData newData = expData.addExp(damageReceived, tierData, gainMultiplier);
         armor.set(ModDataComponents.ARMOR_EXP.get(), newData);
 
         if (newData.currentLevel() > expData.currentLevel()) {

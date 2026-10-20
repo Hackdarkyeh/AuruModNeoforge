@@ -57,8 +57,8 @@ public abstract class AbstractExtractorScreen<T extends AbstractExtractorMenu> e
         pGuiGraphics.blit(this.texture, i, j, 0, 0, this.imageWidth, this.imageHeight);
 
         if (this.menu.isLit()) {
-            int progressBarWidth = 16;  // Ancho de la barra de progreso del extractor
-            int progressBarHeight = 16; // Altura de la barra de progreso del extractor
+            int progressBarWidth = 16;
+            int progressBarHeight = 16;
 
             int extractorProgress = Mth.ceil(this.menu.getExtractorProgress() * progressBarHeight);
 
@@ -71,29 +71,48 @@ public abstract class AbstractExtractorScreen<T extends AbstractExtractorMenu> e
             );
         }
 
-        // Dibujar barra de energía limpia (Izquierda)
+        // --- BARRA DE ENERGÍA LIMPIA (Izquierda) ---
         int energyBarHeight = 48;
-        int energyBarWidth = 48;
+        int energyBarWidth = 48; // Ancho habitual de la barra en la textura (ajusta si es distinto, ej: 16 o 48)
 
         int energyProgress = Mth.ceil(this.menu.getEnergyProgress() * energyBarHeight);
         pGuiGraphics.blitSprite(
                 this.energyProgressSprite,
                 energyBarWidth, energyBarHeight,
                 0, energyBarHeight - energyProgress,
-                i + 3, j + 21 + (energyBarHeight - energyProgress),
+                i + 3, j + 21 + (energyBarHeight - energyProgress), // Coordenada X del tanque izquierdo (ej: i + 9)
                 energyBarWidth, energyProgress
         );
 
-        // Dibujar barra de energía oscura (Derecha)
-        int darkEnergyProgress = Mth.ceil(this.menu.getDarkEnergyProgress() * energyBarHeight);
+        // --- BARRA DE ENERGÍA OSCURA (Derecha) ---
+        int darkEnergyBarHeight = 48;
+        int darkEnergyBarWidth = 48; // Ancho habitual de la barra (ej: 16)
+
+
+
+        float currentDarkEnergy = this.menu.getCurrenDarkEnergy();
+        float maxDarkEnergy = this.menu.getMaxDarkEnergy();
+        float darkRatio = maxDarkEnergy > 0 ? Math.min(currentDarkEnergy / maxDarkEnergy, 1.0f) : 0.0f;
+
+        int darkEnergyProgress = Mth.ceil(darkRatio * darkEnergyBarHeight);
         pGuiGraphics.blitSprite(
                 this.darkEnergyProgressSprite,
-                energyBarWidth, energyBarHeight,
-                0, energyBarHeight - darkEnergyProgress,
-                i + 125, j + 21 + (energyBarHeight - darkEnergyProgress),
-                energyBarWidth, darkEnergyProgress
+                darkEnergyBarWidth, darkEnergyBarHeight,
+                0, darkEnergyBarHeight - darkEnergyProgress,
+                i + 125, j + 21 + (darkEnergyBarHeight - darkEnergyProgress), // Coordenada X exacta del tanque derecho (coincide con el isHovering de la derecha: 131)
+                darkEnergyBarWidth, darkEnergyProgress
         );
+        /*
+        pGuiGraphics.blit(
+                this.darkEnergyProgressSprite,
+                i + 131, j + 21 + (darkEnergyBarHeight - darkEnergyProgress), // Coordenada X e Y ajustada al marco derecho
+                0, darkEnergyBarHeight - darkEnergyProgress,                 // Recorte desde abajo hacia arriba
+                darkEnergyBarWidth, darkEnergyProgress,                      // Ancho y alto actual
+                darkEnergyBarWidth, darkEnergyBarHeight                      // Tamaño total de la textura
+        )*/
     }
+
+
 
     @Override
     protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
@@ -139,6 +158,17 @@ public abstract class AbstractExtractorScreen<T extends AbstractExtractorMenu> e
         // Tooltip al pasar el ratón sobre el tanque de Energía Oscura (Derecha)
         if (this.isHovering(131, 21, 30, 48, mouseX, mouseY)) {
             Component tooltipText = Component.literal((int) this.menu.getCurrenDarkEnergy() + " / " + (int) this.menu.getMaxDarkEnergy() + " ED");
+            guiGraphics.renderTooltip(this.font, tooltipText, mouseX, mouseY);
+        }
+
+        // Tooltip al pasar el ratón sobre el triángulo de progreso del extractor
+        // (misma zona donde se dibuja extractorProgressSprite: x 80, y 30, 16x16)
+        if (this.isHovering(80, 30, 16, 16, mouseX, mouseY)) {
+            // El progreso va en ticks (20 = 1 s): lo mostramos en segundos, con el total y el porcentaje
+            int seconds = this.menu.getExtractorTime() / 20;
+            int totalSeconds = this.menu.getExtractorTotalTime() / 20;
+            int percent = Mth.floor(this.menu.getExtractorProgress() * 100.0F);
+            Component tooltipText = Component.translatable("aurum.aurum.extractor_progress", seconds, totalSeconds, percent);
             guiGraphics.renderTooltip(this.font, tooltipText, mouseX, mouseY);
         }
     }

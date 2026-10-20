@@ -19,7 +19,7 @@ public class ModAurumConfiguredFeatures {
         context.register(AURUM_VINES,
                 new ConfiguredFeature<>(ModFeatures.AURUM_VINES_FEATURE.get(), NoneFeatureConfiguration.INSTANCE));
         context.register(VOLCANO_CRATER, new ConfiguredFeature<>(ModFeatures.VOLCANO_CRATER.get(),
-                new VolcanoCraterFeature.Config(250)));
+                new VolcanoCraterFeature.Config(250, 110)));
     }
 
     private static ResourceKey<ConfiguredFeature<?, ?>> registerKey(String name) {

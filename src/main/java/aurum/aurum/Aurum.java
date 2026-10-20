@@ -12,6 +12,7 @@ import aurum.aurum.eventHandler.AurumBlightRain;
 import aurum.aurum.eventHandler.ServerEvents;
 import aurum.aurum.init.*;
 import aurum.aurum.init.GUI.ModMenuType;
+import aurum.aurum.item.pickage.AurelitePickaxeHighlight;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
@@ -115,6 +116,9 @@ public class Aurum {
 
         STStructures.DEFERRED_REGISTRY_STRUCTURE.register(modEventBus);
         STStructurePlacements.DEFERRED_REGISTRY_STRUCTURE_PLACEMENT_TYPE.register(modEventBus);
+
+
+        NeoForge.EVENT_BUS.register(AurelitePickaxeHighlight.class);
 
         // Registrar características configuradas
 
@@ -220,6 +224,7 @@ public class Aurum {
                 output.accept(RANGE_EXTRACTOR_UPDATER_TIER_5.get()); // Añade el item de actualización de extractor de rango de nivel 5 a la pestaña
                 output.accept(aurum.aurum.item.Aurelite_ingot.createWithPurity(AURELITE_INGOT.get(), 5));
                 output.accept(aurum.aurum.item.Aurelite_ingot.createWithPurity(AURELITE_INGOT.get(), 100));
+                output.accept(AURELITE_FRAGMENT.get()); // Añade el item de fragmento de Aurum a la pestaña
                 output.accept(AURELITE_HELMET.get()); // Añade el item de casco de Aurum a la pestaña
                 output.accept(AURELITE_CHESTPLATE.get()); // Añade el item de peto de Aurum a la pestaña
                 output.accept(AURELITE_LEGGINGS.get()); // Añade el item de pantalones de Aurum a la pestaña
@@ -228,7 +233,6 @@ public class Aurum {
                 output.accept(AURELITE_CHESTPLATE_GOLD.get()); // Añade el item de peto de Aurum dorado a la pestaña
                 output.accept(AURELITE_LEGGINGS_GOLD.get()); // Añade el item de pantalones de Aurum dorado a la pestaña
                 output.accept(AURELITE_BOOTS_GOLD.get()); // Añade el item de botas de Aurum dorado a la pestaña
-                output.accept(VEILPIERCER.get()); // Añade el item Veilpiercer a la pestaña
                 output.accept(SYNTHESIZED_AURUM_BOTTLE.get()); // Añade el item de botella sintetizada de Aurum a la pestaña
                 output.accept(EXPANSION_DASH.get()); // Añade el item de expansión Dash a la pestaña
                 output.accept(EXPANSION_EXPLOSION.get()); // Añade el item de expansión Jump a la pestaña
@@ -243,12 +247,15 @@ public class Aurum {
                 output.accept(EXPANSION_SOUL_TOTEM_2.get());
                 output.accept(EXPANSION_SOUL_TOTEM_3.get());
                 output.accept(SOUL_MODIFICATION_TABLE_BLOCK.get()); // Añade el bloque de la mesa de modificación de almas a la pestaña
+                output.accept(ARMOR_TABLE_BLOCK.get()); // Añade el bloque de la mesa de armaduras a la pestaña
                 output.accept(PEDESTAL.get()); // Añade el bloque de pedestal a la pestaña
                 output.accept(AURELITE_SWORD.get()); // Añade el item de espada de Aurum a la pestaña
+                output.accept(AURELITE_PICKAGE.get()); // Añade el item de pico de Aurum a la pestaña
                 output.accept(ANTI_ELYTRA_BLOCK.get()); // Añade el bloque anti-elytra a la pestaña
                 output.accept(AMBAR_LEAVES.get()); // Añade el bloque de hojas de ámbar a la pestaña
                 output.accept(AMBAR_LOG_DRY.get()); // Añade el bloque de tronco seco de ámbar a la pestaña
                 output.accept(VETALITA.get()); // Añade el bloque de tronco de vetalita a la pestaña
+                output.accept(VEILPIERCER.get()); // Añade el item Veilpiercer a la pestaña
                 output.accept(CERULEO.get()); // Añade el bloque de planta de
                 output.accept(TOBA.get()); // Añade el bloque de planta de ámbar a la pestaña
                 output.accept(AURUM_VINES.get()); // Añade el bloque de enredaderas de Aurum a la pestaña

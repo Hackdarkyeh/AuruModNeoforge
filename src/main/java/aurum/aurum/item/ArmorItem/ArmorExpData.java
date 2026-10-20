@@ -33,13 +33,17 @@ public record ArmorExpData(
         return new ArmorExpData(0, 0, 100); // 100 EXP para primer nivel
     }
 
-
-
-    // Añadir EXP y calcular si sube de nivel
+    // Comportamiento original (multiplicador 1.0): lo usa la armadura dorada
     public ArmorExpData addExp(int amount, ArmorTierData tierData) {
+        return addExp(amount, tierData, 1.0);
+    }
+
+    // Añadir EXP y calcular si sube de nivel.
+    // gainMultiplier > 1.0 hace que la pieza suba más rápido (p. ej. la armadura básica).
+    public ArmorExpData addExp(int amount, ArmorTierData tierData, double gainMultiplier) {
         // Ajustar EXP según tier (tiers más altos requieren más EXP)
         double tierFactor = 1.0 + tierData.tierLevel() * 0.5; // +50% más por tier
-        int adjustedAmount = (int)(amount / tierFactor);
+        int adjustedAmount = (int) (amount * gainMultiplier / tierFactor);
 
         int newExp = currentExp + adjustedAmount;
         int newLevel = currentLevel;
@@ -48,7 +52,7 @@ public record ArmorExpData(
         while (newExp >= newExpToNext) {
             newExp -= newExpToNext;
             newLevel++;
-            newExpToNext = (int)(newExpToNext * (1.5 + tierData.tierLevel() * 0.1)); // +10% más por tier
+            newExpToNext = (int) (newExpToNext * (1.5 + tierData.tierLevel() * 0.1)); // +10% más por tier
         }
 
         return new ArmorExpData(newExp, newLevel, newExpToNext);

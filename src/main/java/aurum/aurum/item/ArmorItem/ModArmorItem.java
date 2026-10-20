@@ -25,6 +25,13 @@ import java.util.Objects;
 
 public class ModArmorItem extends ArmorItem implements IEnergyArmor {
 
+    /**
+     * Multiplicador de ganancia de EXP de la armadura básica.
+     * 1.0 = sin cambios, 1.5 = sube con ~66% del coste, 2.0 = con la mitad.
+     * La armadura dorada siempre usa 1.0.
+     */
+    public static final double BASIC_EXP_GAIN_MULTIPLIER = 1.5;
+
     private static final Map<Holder<ArmorMaterial>, List<MobEffectInstance>> MATERIAL_TO_EFFECT_MAP =
             (new ImmutableMap.Builder<Holder<ArmorMaterial>, List<MobEffectInstance>>())
                     .put(ModArmorMaterials.AURELITE_ARMOR_MATERIAL_BASIC,
@@ -44,6 +51,15 @@ public class ModArmorItem extends ArmorItem implements IEnergyArmor {
                 .component(ModDataComponents.ARMOR_TIER.get(), new ArmorTierData(1, true))
                 .component(ModDataComponents.ARMOR_ENERGY.get(), new ArmorEnergyData(0,
                         EnergyConfig.AureliteArmor.MAX_ENERGY_CAPACITY, EnergyType.NONE)));
+    }
+
+    /**
+     * Multiplicador con el que esta pieza gana EXP: la básica sube más rápido, el resto (dorada) igual que antes.
+     */
+    public double getExpGainMultiplier() {
+        return getMaterial() == ModArmorMaterials.AURELITE_ARMOR_MATERIAL_BASIC
+                ? BASIC_EXP_GAIN_MULTIPLIER
+                : 1.0;
     }
 
     @Override

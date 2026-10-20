@@ -48,8 +48,7 @@ public abstract class AbstractArmorTableMenu extends AbstractContainerMenu {
         this.addSlot(new AureliteInputSlot(pContainer, AURELITE_IN, 14, 52));
 
         // Slot de previsualización del holograma
-        this.addSlot(new ArmorUpgradeOutPutSlot(pPlayerInventory.player, this, pContainer, ARMOR_OUT, 75, 35));
-
+        this.addSlot(new ArmorUpgradeOutPutSlot(pPlayerInventory.player, this, pContainer, ARMOR_OUT, 42, 33));
         this.addSlot(new ArmorUpgradeSlot(this, pContainer, PROTECTOR, 42, 33));
         this.addSlot(new ArmorTableUpgradeSlot(this, pContainer, RANGE_EXTRACTOR, 109, 63));
 

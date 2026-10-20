@@ -59,7 +59,7 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
 
     private int cleanNetworkTicks = 0;
     private int darkNetworkTicks = 0;
-    private static final int MAX_ENERGY_PULL_PER_TICK = 1000; // Limita cuánto roba por tick para no secar la red de golpe
+    private static final int MAX_ENERGY_PULL_PER_TICK = 1000;
 
     public int EXTRACTING_COST_AURELITE_ORE_TIME = 4000;
     private final RecipeType<? extends AbstractCookingRecipe> recipeType;
@@ -92,13 +92,22 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
                 case 1: return (int) Math.min(AbstractExtractorBlockEntity.this.litDuration, Short.MAX_VALUE);
                 case 2: return AbstractExtractorBlockEntity.this.extractingProgress;
                 case 3: return AbstractExtractorBlockEntity.this.extractingTotalTime;
+
+                // Índices 4 y 5: Energía limpia actual (Bajos y Altos)
                 case 4: return ((int) AbstractExtractorBlockEntity.this.energyStorage.getEnergyStored()) & 0xFFFF;
                 case 5: return (((int) AbstractExtractorBlockEntity.this.energyStorage.getEnergyStored()) >> 16) & 0xFFFF;
+
+                // Índices 6 y 7: Capacidad máxima limpia (Bajos y Altos)
                 case 6: return ((int) AbstractExtractorBlockEntity.this.energyStorage.getCapacity()) & 0xFFFF;
                 case 7: return (((int) AbstractExtractorBlockEntity.this.energyStorage.getCapacity()) >> 16) & 0xFFFF;
+
+                // Índice 8: Experiencia
                 case 8: return AbstractExtractorBlockEntity.this.hasEnoughExperience ? 1 : 0;
+
+                // Índices 9 y 10: Energía oscura almacenada y su capacidad
                 case 9: return (int) AbstractExtractorBlockEntity.this.darkEnergyStorage.getEnergyStored();
                 case 10: return (int) AbstractExtractorBlockEntity.this.darkEnergyStorage.getCapacity();
+
                 default: return 0;
             }
         }
@@ -110,15 +119,20 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
                 case 1: AbstractExtractorBlockEntity.this.litDuration = value; break;
                 case 2: AbstractExtractorBlockEntity.this.extractingProgress = value; break;
                 case 3: AbstractExtractorBlockEntity.this.extractingTotalTime = value; break;
-                case 4:
-                    int curL = (int) AbstractExtractorBlockEntity.this.energyStorage.getEnergyStored();
-                    AbstractExtractorBlockEntity.this.energyStorage.setStoredEnergy((curL & 0xFFFF0000) | (value & 0xFFFF));
+
+                // ✅ CORREGIDO: Índices 4 y 5 exactos para la energía limpia (coinciden con el get)
+                case 4: {
+                    int cur = (int) AbstractExtractorBlockEntity.this.energyStorage.getEnergyStored();
+                    AbstractExtractorBlockEntity.this.energyStorage.setStoredEnergy((cur & 0xFFFF0000) | (value & 0xFFFF));
                     break;
-                case 5:
-                    int curH = (int) AbstractExtractorBlockEntity.this.energyStorage.getEnergyStored();
-                    AbstractExtractorBlockEntity.this.energyStorage.setStoredEnergy((value << 16) | (curH & 0xFFFF));
+                }
+                case 5: {
+                    int cur = (int) AbstractExtractorBlockEntity.this.energyStorage.getEnergyStored();
+                    AbstractExtractorBlockEntity.this.energyStorage.setStoredEnergy((value << 16) | (cur & 0xFFFF));
                     break;
-                case 8: AbstractExtractorBlockEntity.this.hasEnoughExperience = (value == 1); break;
+                }
+
+                case 7: AbstractExtractorBlockEntity.this.hasEnoughExperience = (value == 1); break;
             }
         }
 
@@ -178,18 +192,15 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
 
         boolean hasEnergy = pBlockEntity.energyStorage.getEnergyStored() >= pBlockEntity.getExtractingDuration();
 
-        // 5. GESTIÓN DE EXTRACCIÓN Y CONSUMO CONDICIONAL
-        // Solo consume energía y trabaja si tiene suficiente energía Y además está conectado a una mena válida
+        // 5. GESTIÓN DE EXTRACCIÓN Y CONSUMO CONDICIONAL (No consume si está desconectado)
         if (hasEnergy && pBlockEntity.manageAureliteConnection(pipeStack) && pBlockEntity.canExtractAurelite()) {
             pBlockEntity.litTime = pBlockEntity.getExtractingDuration();
             pBlockEntity.litDuration = pBlockEntity.litTime;
 
-            // Repartir energía oscura solo cuando está trabajando de verdad
             if (pBlockEntity.darkEnergyStorage.getEnergyStored() > 0) {
                 pBlockEntity.processDarkEnergy();
             }
 
-            // Consumos reales por estar extrayendo
             pBlockEntity.energyStorage.consumeEnergy(1, false);
             pBlockEntity.energyStorage.consumeEnergy(600, false);
             pBlockEntity.darkEnergyStorage.addEnergy(1, false);
@@ -212,16 +223,13 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
                     pBlockEntity.extractingProgress = 0;
                     stateChanged = true;
                 } else {
-                    // Pausado por ranura llena
                     pBlockEntity.extractingProgress = pBlockEntity.extractingTotalTime;
                 }
             }
         } else {
-            // Si no está conectado o no tiene energía, el progreso retrocede suavemente y NO SE CONSUME ENERGÍA
             pBlockEntity.extractingProgress = 0;
         }
 
-        // Reducir barra de encendido visual si no hay energía
         if (!pBlockEntity.isLit() && pBlockEntity.litTime > 0) {
             pBlockEntity.litTime = Mth.clamp(pBlockEntity.litTime - 2, 0, pBlockEntity.litDuration);
             stateChanged = true;
@@ -238,7 +246,6 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
         }
     }
 
-    // --- NUEVA BÚSQUEDA DE BATERÍAS (Se ejecuta 1 vez por segundo) ---
     private void detectCleanEnergyNetwork() {
         Queue<BlockPos> queue = new LinkedList<>();
         Set<BlockPos> visited = new HashSet<>();
@@ -275,11 +282,9 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
                 }
             }
         }
-        // Elimina de la caché las baterías que ya no están conectadas
         detectedMasterStorages.keySet().retainAll(currentMasters);
     }
 
-    // --- BÚSQUEDA DE RED OSCURA CACHEADA ---
     private void detectDarkEnergyNetwork() {
         if (level == null) return;
         Map<BlockPos, PipeNetworkUtils.IEnergyDevice> devices = PipeNetworkUtils.findConnectedDevices(level, worldPosition, PipeNetworkUtils.IEnergyDevice.class, DarkPipeBlock.class);
@@ -287,14 +292,55 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
         this.connectedDarkEnergyDevices.putAll(devices);
     }
 
-    // --- CONSUMO ULTRA RÁPIDO DESDE CACHÉ (Se ejecuta cada tick) ---
     private boolean pullCleanEnergyFromNetwork(float amountNeeded) {
-        if (detectedMasterStorages.isEmpty()) return false;
         boolean pulledAny = false;
 
-        for (Map.Entry<BlockPos, EnergyStorageBlockEntity> entry : detectedMasterStorages.entrySet()) {
+        // 1. COMPROBACIÓN DIRECTA: Buscar primero en los bloques adyacentes inmediatos (sin caché de red)
+        for (Direction direction : Direction.values()) {
+            BlockPos adjacentPos = worldPosition.relative(direction);
+            if (level == null || !level.isLoaded(adjacentPos)) continue;
+
+            BlockState adjacentState = level.getBlockState(adjacentPos);
+            if (adjacentState.getBlock() instanceof EnergyStorageBlock) {
+                BlockEntity be = level.getBlockEntity(adjacentPos);
+                if (be instanceof EnergyStorageBlockEntity storage && !storage.isRemoved()) {
+                    // Encontramos un almacenamiento adyacente directo físico
+                    float available = storage.getEnergyStored();
+                    if (available > 0) {
+                        float toPull = Math.min(amountNeeded, available);
+                        float actuallyPulled = storage.consumeEnergy(toPull, false);
+
+                        if (actuallyPulled > 0) {
+                            this.energyStorage.addEnergy(actuallyPulled, false);
+                            amountNeeded -= actuallyPulled;
+                            pulledAny = true;
+                            if (amountNeeded <= 0) return true;
+                        }
+                    }
+                }
+            }
+        }
+
+        // 2. COMPROBACIÓN POR RED DE TUBERÍAS (Si no hay suficiente en los adyacentes, usa la caché de tuberías)
+        if (detectedMasterStorages.isEmpty()) return pulledAny;
+
+        Iterator<Map.Entry<BlockPos, EnergyStorageBlockEntity>> iterator = detectedMasterStorages.entrySet().iterator();
+
+        while (iterator.hasNext()) {
+            Map.Entry<BlockPos, EnergyStorageBlockEntity> entry = iterator.next();
+            BlockPos masterPos = entry.getKey();
             EnergyStorageBlockEntity storage = entry.getValue();
-            if (storage.isRemoved()) continue;
+
+            if (storage.isRemoved() || level == null || !level.isLoaded(masterPos)) {
+                iterator.remove();
+                continue;
+            }
+
+            // Validar que el camino por tuberías sigue existiendo
+            if (!isPathStillValid(worldPosition, masterPos)) {
+                iterator.remove();
+                continue;
+            }
 
             float available = storage.getEnergyStored();
             if (available > 0) {
@@ -305,14 +351,74 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
                     this.energyStorage.addEnergy(actuallyPulled, false);
                     amountNeeded -= actuallyPulled;
                     pulledAny = true;
-                    if (amountNeeded <= 0) break; // Ya robó toda la energía que necesitaba este tick
+                    if (amountNeeded <= 0) break;
                 }
             }
         }
         return pulledAny;
     }
 
-    // --- RED DE ENERGÍA OSCURA (EMPUJE USANDO CACHÉ) ---
+    private boolean isPathStillValid(BlockPos startPos, BlockPos targetMasterPos) {
+        if (level == null) return false;
+
+        // 1. COMPROBACIÓN DIRECTA: Si el almacenamiento maestro (o sus adyacentes) está al lado del extractor sin tuberías
+        for (Direction direction : Direction.values()) {
+            BlockPos adjacentPos = startPos.relative(direction);
+            BlockState adjacentState = level.getBlockState(adjacentPos);
+
+            if (adjacentState.getBlock() instanceof EnergyStorageBlock) {
+                BlockEntity be = level.getBlockEntity(adjacentPos);
+                if (be instanceof EnergyStorageBlockEntity storage) {
+                    BlockPos masterPos = storage.isMaster() ? adjacentPos : storage.getMasterPos();
+                    if (masterPos.equals(targetMasterPos)) {
+                        return true; // Siguen pegados directamente, la conexión es válida
+                    }
+                }
+            }
+        }
+
+        // 2. COMPROBACIÓN POR RED DE TUBERÍAS (Si no están pegados, busca el camino por tubos)
+        Queue<BlockPos> queue = new LinkedList<>();
+        Set<BlockPos> visited = new HashSet<>();
+
+        queue.add(startPos);
+        visited.add(startPos);
+
+        int maxSteps = 150;
+        int steps = 0;
+
+        while (!queue.isEmpty() && steps < maxSteps) {
+            BlockPos currentPos = queue.poll();
+            steps++;
+
+            for (Direction direction : Direction.values()) {
+                BlockPos adjacentPos = currentPos.relative(direction);
+
+                if (adjacentPos.equals(targetMasterPos)) {
+                    return true;
+                }
+
+                if (visited.contains(adjacentPos) || !level.isLoaded(adjacentPos)) continue;
+
+                BlockState adjacentState = level.getBlockState(adjacentPos);
+                visited.add(adjacentPos);
+
+                if (adjacentState.getBlock() instanceof PipeBlock && !(adjacentState.getBlock() instanceof DarkPipeBlock)) {
+                    queue.add(adjacentPos);
+                } else if (adjacentState.getBlock() instanceof EnergyStorageBlock) {
+                    BlockEntity be = level.getBlockEntity(adjacentPos);
+                    if (be instanceof EnergyStorageBlockEntity storage) {
+                        BlockPos masterPos = storage.isMaster() ? adjacentPos : storage.getMasterPos();
+                        if (masterPos.equals(targetMasterPos)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     public void processDarkEnergy() {
         float availableEnergy = this.darkEnergyStorage.getEnergyStored();
         if (availableEnergy <= 0 || connectedDarkEnergyDevices.isEmpty()) return;
@@ -338,8 +444,7 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
             float energyLossPercentage = PipeNetworkUtils.calculateEnergyLoss(level, worldPosition, devicePos, DarkPipeBlock.class);
             float energyToSend = Math.min(energyPerTick, availableEnergy);
 
-            // CORRECCIONES MATEMÁTICAS (Faltaban signos)
-            float energyAfterLoss = energyToSend * (1 - energyLossPercentage);
+            float energyAfterLoss = energyToSend * (1.0f - energyLossPercentage);
             float energyNeeded = device.getDarkEnergyCapacity() - device.getDarkEnergyStored();
 
             float actualEnergy = Math.min(energyAfterLoss, energyNeeded);
@@ -352,7 +457,6 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
         this.darkEnergyStorage.setStoredEnergy(availableEnergy);
     }
 
-    // --- GESTIÓN DE TUBERÍAS Y AURELITA ---
     private boolean manageAureliteConnection(ItemStack pipeStack) {
         BlockPos currentPos = worldPosition;
         boolean isFullyConnected = true;
@@ -369,7 +473,8 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
             if (!(checkState.getBlock() instanceof PipeBlock)) {
                 isFullyConnected = false;
                 if (!pipeStack.isEmpty() && checkState.canBeReplaced()) {
-                    BlockState pipeState = ModBlocks.PIPE_BLOCK.get().defaultBlockState().setValue(BlockStateProperties.FACING, Direction.DOWN);
+                    // Colocación segura sin FACING para evitar crasheos en aurum:pipe
+                    BlockState pipeState = ModBlocks.PIPE_BLOCK.get().defaultBlockState();
                     level.setBlockAndUpdate(checkPos, pipeState);
                     pipeStack.shrink(1);
                     return false;
@@ -411,7 +516,6 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
         return toExtract;
     }
 
-    // --- CARGA Y GUARDADO ---
     @Override
     protected void loadAdditional(CompoundTag pTag, HolderLookup.Provider pRegistries) {
         super.loadAdditional(pTag, pRegistries);
@@ -436,7 +540,6 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
         ContainerHelper.saveAllItems(pTag, this.items, pRegistries);
     }
 
-    // --- MÉTODOS DE INVENTARIO ---
     @Override public int[] getSlotsForFace(Direction pSide) { return pSide == Direction.DOWN ? SLOTS_FOR_DOWN : (pSide == Direction.UP ? SLOTS_FOR_UP : SLOTS_FOR_SIDES); }
     @Override public boolean canPlaceItemThroughFace(int pIndex, ItemStack pItemStack, @Nullable Direction pDirection) { return this.canPlaceItem(pIndex, pItemStack); }
     @Override public boolean canTakeItemThroughFace(int pIndex, ItemStack pStack, Direction pDirection) { return pDirection == Direction.DOWN && pIndex == 1 ? pStack.is(Items.WATER_BUCKET) || pStack.is(Items.BUCKET) : true; }
@@ -462,13 +565,10 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
     @Override public void awardUsedRecipes(Player pPlayer, List<ItemStack> pItems) {}
     @Override public void fillStackedContents(StackedContents pHelper) { for (ItemStack itemstack : this.items) pHelper.accountStack(itemstack); }
 
-    // --- IENERGY CONSUMER (Normal) ---
     @Override public float getEnergyStored() { return this.energyStorage.getEnergyStored(); }
     @Override public float getEnergyCapacity() { return this.energyStorage.getCapacity(); }
     @Override public void receiveEnergy(float amount) { this.energyStorage.addEnergy(amount, false); setChanged(); }
     @Override public boolean canReceiveEnergy() { return true; }
     @Override public boolean isActive() { return true; }
-
-    // CORRECCIÓN MATEMÁTICA AQUÍ
     @Override public float getEnergyDemand() { return this.energyCapacity - this.energyStorage.getEnergyStored(); }
 }

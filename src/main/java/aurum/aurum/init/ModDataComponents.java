@@ -72,6 +72,7 @@ public class ModDataComponents {
                             .persistent(AureliteSword.EnergyData.CODEC)
                             .networkSynchronized(AureliteSword.EnergyData.STREAM_CODEC)
                             .build());
+
     // En tu clase de registro de Mod, utilizando el registro de componentes.
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<SoulData>> SOUL_COMPONENT =
             REGISTRAR.register("soul_data", () ->

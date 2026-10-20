@@ -8,73 +8,67 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
 
 public abstract class AbstractArmorTableScreen<T extends AbstractArmorTableMenu> extends AbstractContainerScreen<T> {
+    private static final int SPRITE_SIZE = 48;
+    private static final int CONTENT_Y = 6;   // primera fila opaca del sprite
+    private static final int CONTENT_H = 36;  // alto útil del sprite
+
     private final ResourceLocation texture;
-    private final ResourceLocation energyProgressSprite;
+    private final ResourceLocation energySprite;
+    private final ResourceLocation darkEnergySprite;
 
-    public AbstractArmorTableScreen(
-            T pMenu, Inventory pPlayerInventory, Component pTitle,
-            ResourceLocation pTexture, ResourceLocation pListProgressSprite,
-            ResourceLocation energyProgressSprite, ResourceLocation durabilityProgressSprite
-    ) {
-        super(pMenu, pPlayerInventory, pTitle);
-        this.texture = pTexture;
-        this.energyProgressSprite = energyProgressSprite;
+    public AbstractArmorTableScreen(T pMenu, Inventory pInv, Component pTitle,
+                                    ResourceLocation texture,
+                                    ResourceLocation energySprite,
+                                    ResourceLocation darkEnergySprite) {
+        super(pMenu, pInv, pTitle);
+        this.texture = texture;
+        this.energySprite = energySprite;
+        this.darkEnergySprite = darkEnergySprite;
     }
 
     @Override
-    public void init() {
-        super.init();
-        this.titleLabelX = (this.imageWidth - this.font.width(this.title)) / 2;
+    public void render(GuiGraphics g, int mx, int my, float pt) {
+        super.render(g, mx, my, pt);      // ya llama a renderBackground
+        this.renderTooltip(g, mx, my);
     }
 
     @Override
-    public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
-        this.renderBackground(g, mouseX, mouseY, partialTick);
-        super.render(g, mouseX, mouseY, partialTick);
-        this.renderTooltip(g, mouseX, mouseY);
+    protected void renderBg(GuiGraphics g, float pt, int mx, int my) {
+        int i = this.leftPos, j = this.topPos;
+        g.blit(this.texture, i, j, 0, 0, this.imageWidth, this.imageHeight);
+
+        drawBar(g, energySprite,     i + 124, j + 38, menu.getEnergyProgress());      // marco derecho
+        drawBar(g, darkEnergySprite, i + 62,  j + 38, menu.getDarkEnergyProgress());  // marco izquierdo
+    }
+
+    private void drawBar(GuiGraphics g, ResourceLocation sprite, int x, int y, float progress) {
+        int filled = Mth.ceil(Mth.clamp(progress, 0f, 1f) * CONTENT_H);
+        if (filled <= 0) return;
+        int v = CONTENT_Y + (CONTENT_H - filled);
+        g.blitSprite(sprite, SPRITE_SIZE, SPRITE_SIZE, 0, v, x, y + v, SPRITE_SIZE, filled);
     }
 
     @Override
-    protected void renderBg(GuiGraphics pGuiGraphics, float pPartialTick, int pMouseX, int pMouseY) {
-        int i = this.leftPos;
-        int j = this.topPos;
-
-        // Fondo
-        pGuiGraphics.blit(this.texture, i, j, 0, 0, this.imageWidth, this.imageHeight);
-
-        // Barra de energía
-        int energyBarHeight = 48;
-        int energyBarWidth = 48;
-        int energyProgress = Mth.ceil(this.menu.getEnergyProgress() * energyBarHeight);
-        pGuiGraphics.blitSprite(
-                this.energyProgressSprite,
-                energyBarWidth, energyBarHeight,
-                0, energyBarHeight - energyProgress,
-                i + 124, j + 38 + (energyBarHeight - energyProgress),
-                energyBarWidth, energyProgress
-        );
-    }
-
-    @Override
-    protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-        float currentEnergy = this.menu.getCurrenEnergy();
-        float maxEnergy = this.menu.getMaxEnergy();
-
-        guiGraphics.drawString(this.font, formatEnergyValue(maxEnergy, "ED"), 15, 18, -12829636, false);
-        guiGraphics.drawString(this.font, formatEnergyValue(currentEnergy, "ED"), 17, 65, -12829636, false);
-
-        if (this.menu.hasInsufficientExp()) {
-            Component message = Component.translatable("aurum.aurum.insufficient_exp");
-            guiGraphics.pose().pushPose();
-            guiGraphics.pose().scale(0.75f, 0.75f, 1.0f);
-            guiGraphics.drawString(this.font, message, (int) (2 / 0.75f), (int) (5 / 0.75f), 0xFF5555, false);
-            guiGraphics.pose().popPose();
+    protected void renderTooltip(GuiGraphics g, int mx, int my) {
+        super.renderTooltip(g, mx, my);
+        if (isHovering(136 - 0, 44, 24, 36, mx, my)) {
+            g.renderTooltip(this.font, Component.literal(
+                    fmt(menu.getCurrenEnergy()) + " / " + fmt(menu.getMaxEnergy()) + " EC"), mx, my);
+        } else if (isHovering(74, 44, 24, 36, mx, my)) {
+            g.renderTooltip(this.font, Component.literal(
+                    fmt(menu.getCurrenDarkEnergy()) + " / " + fmt(menu.getMaxDarkEnergy()) + " ED"), mx, my);
         }
     }
 
-    private String formatEnergyValue(float value, String suffix) {
-        if (value >= 1_000_000) return String.format("%.1fM %s", value / 1_000_000.0f, suffix);
-        else if (value >= 1_000) return String.format("%.1fk %s", value / 1_000.0f, suffix);
-        else return String.format("%.0f %s", value, suffix);
+    @Override
+    protected void renderLabels(GuiGraphics g, int mx, int my) {
+        super.renderLabels(g, mx, my); // título e "Inventario"
+        if (menu.hasInsufficientExp()) { /* tu mensaje actual */ }
+    }
+
+    private static String fmt(float v) {
+        if (v >= 1_000_000) return String.format("%.1fM", v / 1_000_000);
+        if (v >= 1_000) return String.format("%.1fk", v / 1_000);
+        return String.format("%.0f", v);
     }
 }

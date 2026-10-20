@@ -1,0 +1,13 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "down": "aurum:block/armor_table_block/armor_table_block_bottom",
+    "up": "aurum:block/armor_table_block/armor_table_block_top",
+    "north": "aurum:block/armor_table_block/armor_table_block_front",
+    "east": "aurum:block/armor_table_block/armor_table_block_right",
+    "south": "aurum:block/armor_table_block/armor_table_block_back",
+    "west": "aurum:block/armor_table_block/armor_table_block_left",
+    "particle": "aurum:block/armor_table_block/armor_table_block_bottom"
+  },
+  "render_type": "solid"
+}

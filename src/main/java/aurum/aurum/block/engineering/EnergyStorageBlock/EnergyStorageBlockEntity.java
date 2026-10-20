@@ -32,25 +32,21 @@ public class EnergyStorageBlockEntity extends BlockEntity implements IEnergyStor
     private long lastUpdateTick = 0;
 
     // ---- Nivel de llenado visual ----
-    /** Pasos de llenado por bloque (0 = vacío, FILL_STEPS = lleno). Se sincroniza con el cliente. */
     public static final int FILL_STEPS = 64;
     private int fillLevel = 0;
     private int lastFillRatioKey = -1;
     private int lastFillBlocksKey = 0;
 
-    // Solo cliente: suavizado de la animación (los usa el renderizador)
     public float displayFill = 0f;
     public long lastRenderMillis = 0L;
 
-
     private final Set<BlockPos> subscribedGenerators = new HashSet<>();
-
 
     public EnergyStorageBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.ENERGY_STORAGE_BLOCK.get(), pos, state);
         this.energyStorage = new EnergyStorage(BASE_CAPACITY, TRANSFER_RATE, TRANSFER_RATE, TRANSFER_RATE);
-        this.masterPos = pos; // Initialize as its own master
-        this.mergedBlocks.add(pos); // Start with self in network
+        this.masterPos = pos;
+        this.mergedBlocks.add(pos);
     }
 
     public static void tick(Level level, BlockPos pos, BlockState state, EnergyStorageBlockEntity entity) {
@@ -58,15 +54,23 @@ public class EnergyStorageBlockEntity extends BlockEntity implements IEnergyStor
 
         try {
             long currentTick = level.getGameTime();
+
+            // ✅ VALIDACIÓN INSTANTÁNEA: Si es esclavo, comprobar cada pocos ticks si su maestro sigue existiendo físicamente o conectado
+            if (!entity.isMaster && currentTick % 10 == 0) {
+                if (!entity.isConnectedToMaster()) {
+                    entity.becomeMaster();
+                    return;
+                }
+            }
+
             if (currentTick - entity.lastUpdateTick >= NETWORK_UPDATE_INTERVAL) {
                 entity.checkForAdjacentBlocks();
                 entity.lastUpdateTick = currentTick;
             }
 
-            // Reparto del líquido visual (solo el maestro calcula y reparte)
             if (entity.isMaster && currentTick % 2 == 0) {
                 if (currentTick % 100 == 0) {
-                    entity.lastFillRatioKey = -1; // refresco periódico por si algún bloque no estaba cargado
+                    entity.lastFillRatioKey = -1;
                 }
                 entity.updateFillDistribution();
             }
@@ -75,13 +79,9 @@ public class EnergyStorageBlockEntity extends BlockEntity implements IEnergyStor
         }
     }
 
-
-
     private boolean isValidPosition(@Nullable BlockPos pos) {
         return pos != null && level.isLoaded(pos);
     }
-
-
 
     private void promoteNewMaster() {
         BlockPos newMasterPos = mergedBlocks.stream()
@@ -92,11 +92,9 @@ public class EnergyStorageBlockEntity extends BlockEntity implements IEnergyStor
         if (newMasterPos != null) {
             BlockEntity be = level.getBlockEntity(newMasterPos);
             if (be instanceof EnergyStorageBlockEntity newMaster) {
-                // Distribute energy proportionally
                 float energyPerBlock = this.energyStorage.getEnergyStored() / mergedBlocks.size();
                 float newEnergy = energyPerBlock * (mergedBlocks.size() - 1);
 
-                // Configure new master
                 newMaster.isMaster = true;
                 newMaster.masterPos = newMasterPos;
                 newMaster.mergedBlocks = new HashSet<>(this.mergedBlocks);
@@ -114,7 +112,6 @@ public class EnergyStorageBlockEntity extends BlockEntity implements IEnergyStor
             if (be instanceof EnergyStorageBlockEntity master) {
                 master.mergedBlocks.remove(this.worldPosition);
 
-                // Reduce energy proportionally
                 float currentEnergy = master.getEnergyStored();
                 float newEnergy = currentEnergy * (master.mergedBlocks.size()) / (master.mergedBlocks.size() + 1);
                 master.energyStorage.setStoredEnergy(newEnergy);
@@ -128,56 +125,50 @@ public class EnergyStorageBlockEntity extends BlockEntity implements IEnergyStor
     void updateNetwork() {
         if (!isMaster || level == null || level.isClientSide) return;
 
-        // Asegurar que siempre haya al menos 1 bloque (este mismo)
         int newSize = Math.max(1, mergedBlocks.size());
-
         if (newSize == lastNetworkSize) return;
 
-        // Calcular nueva capacidad
         int totalCapacity = BASE_CAPACITY * newSize;
         float currentEnergy = this.energyStorage.getEnergyStored();
 
-        // Ajustar energía si excede la nueva capacidad
         if (currentEnergy > totalCapacity) {
             currentEnergy = totalCapacity;
         }
 
-        // Actualizar valores
         this.energyStorage.setMaxEnergyStored(totalCapacity);
         this.energyStorage.setStoredEnergy(currentEnergy);
         this.lastNetworkSize = newSize;
 
-        // Actualizar todos los esclavos
         for (BlockPos pos : mergedBlocks) {
             if (!pos.equals(this.worldPosition) && isValidPosition(pos)) {
                 BlockEntity be = level.getBlockEntity(pos);
                 if (be instanceof EnergyStorageBlockEntity slave) {
                     slave.isMaster = false;
                     slave.masterPos = this.worldPosition;
-                    slave.mergedBlocks.clear(); // Los esclavos no mantienen su propia lista
+                    slave.mergedBlocks.clear();
                     slave.setChanged();
-
-                    // Sincronizar con cliente
                     level.sendBlockUpdated(pos, slave.getBlockState(), slave.getBlockState(), 3);
                 }
             }
         }
 
-        // Forzar sincronización del maestro
         setChanged();
         level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
-
         notifyConnectedGenerators();
-
     }
 
-    // IEnergyStorage implementation
+    // IEnergyStorage implementation con validación de seguridad integrada
     @Override
     public float getEnergyStored() {
-        if (!isMaster && isValidPosition(masterPos)) {
-            BlockEntity be = level.getBlockEntity(masterPos);
-            if (be instanceof EnergyStorageBlockEntity master) {
-                return master.getEnergyStored();
+        if (!isMaster) {
+            if (isValidPosition(masterPos) && isConnectedToMaster()) {
+                BlockEntity be = level.getBlockEntity(masterPos);
+                if (be instanceof EnergyStorageBlockEntity master) {
+                    return master.getEnergyStored();
+                }
+            } else {
+                // Si perdió la conexión, actúa como entidad independiente aislada
+                return energyStorage.getEnergyStored();
             }
         }
         return energyStorage.getEnergyStored();
@@ -185,10 +176,12 @@ public class EnergyStorageBlockEntity extends BlockEntity implements IEnergyStor
 
     @Override
     public float getCapacity() {
-        if (!isMaster && isValidPosition(masterPos)) {
-            BlockEntity be = level.getBlockEntity(masterPos);
-            if (be instanceof EnergyStorageBlockEntity master) {
-                return master.getCapacity();
+        if (!isMaster) {
+            if (isValidPosition(masterPos) && isConnectedToMaster()) {
+                BlockEntity be = level.getBlockEntity(masterPos);
+                if (be instanceof EnergyStorageBlockEntity master) {
+                    return master.getCapacity();
+                }
             }
         }
         return energyStorage.getCapacity();
@@ -197,7 +190,7 @@ public class EnergyStorageBlockEntity extends BlockEntity implements IEnergyStor
     @Override
     public float addEnergy(float amount, boolean simulate) {
         if (!isMaster) {
-            if (isValidPosition(masterPos)) {
+            if (isValidPosition(masterPos) && isConnectedToMaster()) {
                 BlockEntity be = level.getBlockEntity(masterPos);
                 if (be instanceof EnergyStorageBlockEntity master) {
                     return master.addEnergy(amount, simulate);
@@ -213,13 +206,13 @@ public class EnergyStorageBlockEntity extends BlockEntity implements IEnergyStor
     @Override
     public float consumeEnergy(float amount, boolean simulate) {
         if (!isMaster) {
-            if (isValidPosition(masterPos)) {
+            if (isValidPosition(masterPos) && isConnectedToMaster()) {
                 BlockEntity be = level.getBlockEntity(masterPos);
                 if (be instanceof EnergyStorageBlockEntity master) {
                     return master.consumeEnergy(amount, simulate);
                 }
             }
-            return 0;
+            return 0; // 🛑 Si está desconectado, no permite robar energía del maestro fantasma
         }
         float result = energyStorage.consumeEnergy(amount, simulate);
         if (result > 0 && !simulate) setChanged();
@@ -229,7 +222,7 @@ public class EnergyStorageBlockEntity extends BlockEntity implements IEnergyStor
     @Override
     public void setStoredEnergy(float amount) {
         if (!isMaster) {
-            if (isValidPosition(masterPos)) {
+            if (isValidPosition(masterPos) && isConnectedToMaster()) {
                 BlockEntity be = level.getBlockEntity(masterPos);
                 if (be instanceof EnergyStorageBlockEntity master) {
                     master.setStoredEnergy(amount);
@@ -273,13 +266,15 @@ public class EnergyStorageBlockEntity extends BlockEntity implements IEnergyStor
         fillLevel = tag.getInt("FillLevel");
     }
 
-    /** Datos que recibe el cliente al cargar el chunk o al llamar a sendBlockUpdated. */
     @Override
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
         return saveWithoutMetadata(registries);
     }
 
-    /** Fracción de llenado (0..1) de ESTE bloque, para el renderizador. */
+    public boolean isDarkEnergy() {
+        return false;
+    }
+
     public float getFillFraction() {
         return fillLevel / (float) FILL_STEPS;
     }
@@ -293,11 +288,6 @@ public class EnergyStorageBlockEntity extends BlockEntity implements IEnergyStor
         }
     }
 
-    /**
-     * Reparte el líquido por capas, de abajo hacia arriba, según el porcentaje de energía.
-     * Todos los bloques de la misma altura (Y) tienen el mismo nivel. Se calcula por volumen,
-     * así que también funciona con formas que no son un prisma perfecto.
-     */
     private void updateFillDistribution() {
         if (!isMaster || level == null || level.isClientSide) return;
 
@@ -314,7 +304,7 @@ public class EnergyStorageBlockEntity extends BlockEntity implements IEnergyStor
             layers.computeIfAbsent(p.getY(), y -> new ArrayList<>()).add(p);
         }
 
-        float remaining = ratio * mergedBlocks.size(); // "bloques" de líquido que hay que repartir
+        float remaining = ratio * mergedBlocks.size();
         for (List<BlockPos> layer : layers.values()) {
             float layerFill = Mth.clamp(remaining / layer.size(), 0f, 1f);
             if (layerFill > 0.9999f) layerFill = 1f;
@@ -343,7 +333,6 @@ public class EnergyStorageBlockEntity extends BlockEntity implements IEnergyStor
         return ClientboundBlockEntityDataPacket.create(this);
     }
 
-    // IEnergyStorage remaining methods
     @Override
     public boolean canReceive() {
         return energyStorage.canReceive();
@@ -364,9 +353,7 @@ public class EnergyStorageBlockEntity extends BlockEntity implements IEnergyStor
     }
 
     @Override
-    public void loadEnergyFromTag(CompoundTag tag) {
-
-    }
+    public void loadEnergyFromTag(CompoundTag tag) {}
 
     @Override
     public float receiveEnergy(float maxReceive, boolean simulate) {
@@ -378,16 +365,13 @@ public class EnergyStorageBlockEntity extends BlockEntity implements IEnergyStor
         return getCapacity() - getEnergyStored();
     }
 
-
     private void notifyConnectedGenerators() {
         if (level == null || level.isClientSide || !isMaster) return;
 
-        // Buscar generadores conectados por tuberías
         Set<BlockPos> connectedGenerators = findConnectedGenerators();
         for (BlockPos generatorPos : connectedGenerators) {
             BlockEntity be = level.getBlockEntity(generatorPos);
             if (be instanceof AbstractEnergyGeneratorBlockEntity generator) {
-                // ✅ Notificar con los datos ACTUALES del maestro
                 generator.onStorageNetworkUpdated(
                         this.getEnergyStored(),
                         this.getCapacity(),
@@ -397,7 +381,6 @@ public class EnergyStorageBlockEntity extends BlockEntity implements IEnergyStor
             }
         }
 
-        // También notificar a generadores suscritos
         Iterator<BlockPos> iterator = subscribedGenerators.iterator();
         while (iterator.hasNext()) {
             BlockPos generatorPos = iterator.next();
@@ -439,10 +422,8 @@ public class EnergyStorageBlockEntity extends BlockEntity implements IEnergyStor
                 BlockState neighborState = level.getBlockState(neighbor);
 
                 if (neighborState.getBlock() instanceof PipeBlock) {
-                    // Es una tubería, seguir explorando
                     queue.add(neighbor);
                 } else {
-                    // Verificar si es un generador
                     BlockEntity be = level.getBlockEntity(neighbor);
                     if (be instanceof AbstractEnergyGeneratorBlockEntity) {
                         generators.add(neighbor);
@@ -450,32 +431,20 @@ public class EnergyStorageBlockEntity extends BlockEntity implements IEnergyStor
                 }
             }
         }
-
         return generators;
     }
 
     public void syncWithGenerator(AbstractEnergyGeneratorBlockEntity generator) {
         if (level != null && !level.isClientSide && isMaster) {
             subscribedGenerators.add(generator.getBlockPos());
-            // ✅ ENVIAR DATOS ACTUALIZADOS INMEDIATAMENTE
             generator.onStorageNetworkUpdated(this.getEnergyStored(), this.getCapacity(), this.mergedBlocks.size(), this.worldPosition);
         }
     }
 
-
-
-
-
-
-
-
-
-
-
-
     private void checkForAdjacentBlocks() {
         if (!isMaster) return;
 
+        Set<BlockPos> oldMergedBlocks = new HashSet<>(this.mergedBlocks);
         Set<BlockPos> newMergedBlocks = new HashSet<>();
         Set<BlockPos> toCheck = new HashSet<>();
         toCheck.add(this.worldPosition);
@@ -499,83 +468,140 @@ public class EnergyStorageBlockEntity extends BlockEntity implements IEnergyStor
             }
         }
 
-        // ✅ DETECTAR SI LA RED SE DIVIDIÓ (pérdida de bloques)
-        boolean networkSplit = !newMergedBlocks.containsAll(mergedBlocks) ||
-                newMergedBlocks.size() < mergedBlocks.size();
-
-        if (!newMergedBlocks.equals(mergedBlocks)) {
-            // ✅ GUARDAR ENERGÍA ANTES DEL CAMBIO
+        // Si la red cambió (se separaron bloques)
+        if (!newMergedBlocks.equals(oldMergedBlocks)) {
             float oldEnergy = this.getEnergyStored();
             float oldCapacity = this.getCapacity();
+            int oldSize = oldMergedBlocks.size();
 
-            mergedBlocks = newMergedBlocks;
+            // Detectar qué bloques se han separado del maestro principal
+            Set<BlockPos> lostBlocks = new HashSet<>(oldMergedBlocks);
+            lostBlocks.removeAll(newMergedBlocks);
 
-            // ✅ SI LA RED SE DIVIDIÓ, REDISTRIBUIR ENERGÍA
-            if (networkSplit && oldEnergy > 0) {
-                redistributeEnergyAfterSplit(oldEnergy, oldCapacity);
-            } else {
-                updateNetwork();
-            }
+            // Actualizar la red principal con los bloques que se quedan
+            this.mergedBlocks = newMergedBlocks;
+            int newSize = Math.max(1, newMergedBlocks.size());
+            int newCapacity = BASE_CAPACITY * newSize;
 
+            float energyPerBlock = oldSize > 0 ? (oldEnergy / oldSize) : 0f;
+            float mainNewEnergy = energyPerBlock * newSize;
+
+            this.energyStorage.setMaxEnergyStored(newCapacity);
+            this.energyStorage.setStoredEnergy(mainNewEnergy);
+            this.lastNetworkSize = newSize;
+
+            updateSlaves();
+            notifyConnectedGenerators();
             setChanged();
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+
+            // ✅ DISTRIBUIR ENERGÍA PROPORCIONALMENTE A LOS BLOQUES QUE SE SEPARARON
+            if (!lostBlocks.isEmpty() && energyPerBlock > 0) {
+                processLostBlocks(lostBlocks, energyPerBlock);
+            }
         }
     }
 
-    // ✅ NUEVO MÉTODO: Redistribuir energía cuando la red se divide
+    private void processLostBlocks(Set<BlockPos> lostBlocks, float energyPerBlock) {
+        Set<BlockPos> remainingLost = new HashSet<>(lostBlocks);
+
+        while (!remainingLost.isEmpty()) {
+            BlockPos seed = remainingLost.iterator().next();
+            Set<BlockPos> subNetwork = findPlayerSubNetwork(seed, remainingLost);
+            remainingLost.removeAll(subNetwork);
+
+            if (subNetwork.isEmpty()) continue;
+
+            // Elegir el primer bloque de este grupo como el nuevo maestro
+            BlockPos newMasterPos = subNetwork.iterator().next();
+            BlockEntity be = level.getBlockEntity(newMasterPos);
+            if (be instanceof EnergyStorageBlockEntity newMaster) {
+                newMaster.isMaster = true;
+                newMaster.masterPos = newMasterPos;
+                newMaster.mergedBlocks = new HashSet<>(subNetwork);
+
+                int subCapacity = BASE_CAPACITY * subNetwork.size();
+                float subEnergy = energyPerBlock * subNetwork.size(); // ✅ Heredan exactamente su energía proporcional
+
+                newMaster.energyStorage.setMaxEnergyStored(subCapacity);
+                newMaster.energyStorage.setStoredEnergy(subEnergy);
+                newMaster.lastNetworkSize = subNetwork.size();
+
+                // Configurar a los esclavos de este subgrupo
+                for (BlockPos pos : subNetwork) {
+                    if (!pos.equals(newMasterPos) && isValidPosition(pos)) {
+                        BlockEntity slaveBe = level.getBlockEntity(pos);
+                        if (slaveBe instanceof EnergyStorageBlockEntity slave) {
+                            slave.isMaster = false;
+                            slave.masterPos = newMasterPos;
+                            slave.mergedBlocks.clear();
+                            slave.setChanged();
+                            level.sendBlockUpdated(pos, slave.getBlockState(), slave.getBlockState(), 3);
+                        }
+                    }
+                }
+
+                newMaster.setChanged();
+                level.sendBlockUpdated(newMasterPos, newMaster.getBlockState(), newMaster.getBlockState(), 3);
+                newMaster.notifyConnectedGenerators();
+            }
+        }
+    }
+
+    private Set<BlockPos> findPlayerSubNetwork(BlockPos seed, Set<BlockPos> availableBlocks) {
+        Set<BlockPos> network = new HashSet<>();
+        Queue<BlockPos> queue = new LinkedList<>();
+        queue.add(seed);
+        network.add(seed);
+
+        while (!queue.isEmpty()) {
+            BlockPos current = queue.poll();
+            for (Direction dir : Direction.values()) {
+                BlockPos neighbor = current.relative(dir);
+                if (availableBlocks.contains(neighbor) && !network.contains(neighbor)) {
+                    network.add(neighbor);
+                    queue.add(neighbor);
+                }
+            }
+        }
+        return network;
+    }
+
     private void redistributeEnergyAfterSplit(float oldEnergy, float oldCapacity) {
         if (level == null || level.isClientSide) return;
 
-        // Calcular nueva capacidad
         int newSize = Math.max(1, mergedBlocks.size());
         int newCapacity = BASE_CAPACITY * newSize;
 
-        // ✅ DISTRIBUIR ENERGÍA PROPORCIONALMENTE
-        // Si teníamos 10,000 de capacidad con 5,000 de energía (50%)
-        // Y ahora tenemos 5,000 de capacidad, debemos tener 2,500 de energía (50%)
-        float energyRatio = oldEnergy / oldCapacity;
+        // Mantener la proporción exacta de llenado (porcentaje) que tenía el bloque maestro antes de dividirse
+        float energyRatio = oldCapacity > 0 ? Mth.clamp(oldEnergy / oldCapacity, 0f, 1f) : 0f;
         float newEnergy = newCapacity * energyRatio;
-
 
         this.energyStorage.setMaxEnergyStored(newCapacity);
         this.energyStorage.setStoredEnergy(newEnergy);
         this.lastNetworkSize = newSize;
 
-        // ✅ BUSCAR Y CONFIGURAR NUEVOS MAESTROS PARA LOS FRAGMENTOS DESCONECTADOS
-        findAndSetupNewMasters();
-
-        // Actualizar esclavos
+        findAndSetupNewMasters(); // ✅ Sin argumentos, como espera el método original
         updateSlaves();
-
-        // ✅ NOTIFICAR INMEDIATAMENTE A LOS GENERADORES
         notifyConnectedGenerators();
 
         setChanged();
         level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
     }
 
-    // ✅ NUEVO MÉTODO: Encontrar y configurar nuevos maestros para fragmentos desconectados
     private void findAndSetupNewMasters() {
         if (level == null || level.isClientSide) return;
 
-        // Encontrar todos los bloques que ya no están en nuestra red pero estaban antes
-        Set<BlockPos> lostBlocks = new HashSet<>(this.mergedBlocks);
-        lostBlocks.removeAll(mergedBlocks); // Esto no funcionará bien, necesitamos un enfoque diferente
-
-        // Mejor enfoque: cada bloque que no es maestro debería verificar su conexión
         for (BlockPos pos : mergedBlocks) {
             if (!pos.equals(this.worldPosition)) {
                 BlockEntity be = level.getBlockEntity(pos);
                 if (be instanceof EnergyStorageBlockEntity storage && !storage.isMaster) {
-                    // Forzar a que verifique si sigue conectado a su maestro
                     storage.verifyMasterConnection();
                 }
             }
         }
     }
 
-
-
-    // ✅ NUEVO MÉTODO: Actualizar todos los esclavos
     private void updateSlaves() {
         for (BlockPos pos : mergedBlocks) {
             if (!pos.equals(this.worldPosition) && isValidPosition(pos)) {
@@ -583,27 +609,22 @@ public class EnergyStorageBlockEntity extends BlockEntity implements IEnergyStor
                 if (be instanceof EnergyStorageBlockEntity slave) {
                     slave.isMaster = false;
                     slave.masterPos = this.worldPosition;
-                    slave.mergedBlocks.clear(); // Los esclavos no mantienen su propia lista
+                    slave.mergedBlocks.clear();
                     slave.setChanged();
-
-                    // Sincronizar con cliente
                     level.sendBlockUpdated(pos, slave.getBlockState(), slave.getBlockState(), 3);
                 }
             }
         }
     }
 
-    // ✅ NUEVO MÉTODO: Verificar conexión con el maestro
     public void verifyMasterConnection() {
         if (isMaster || level == null || level.isClientSide) return;
 
-        // Verificar si todavía está conectado al maestro
         if (!isConnectedToMaster()) {
-            becomeMaster(); // Convertirse en maestro de un nuevo grupo
+            becomeMaster();
         }
     }
 
-    // ✅ NUEVO MÉTODO: Verificar conexión física con el maestro
     private boolean isConnectedToMaster() {
         if (isMaster || !isValidPosition(masterPos)) return false;
 
@@ -622,46 +643,43 @@ public class EnergyStorageBlockEntity extends BlockEntity implements IEnergyStor
                 if (visited.contains(neighbor)) continue;
                 visited.add(neighbor);
 
-                // Si encontramos el maestro, estamos conectados
                 if (neighbor.equals(masterPos)) {
                     return true;
                 }
 
-                // Si es un storage o tubería, seguir buscando
                 BlockEntity be = level.getBlockEntity(neighbor);
-                if (be instanceof EnergyStorageBlockEntity ||
-                        level.getBlockState(neighbor).getBlock() instanceof PipeBlock) {
+                if (be instanceof EnergyStorageBlockEntity) {
                     queue.add(neighbor);
                 }
             }
         }
-
         return false;
     }
 
-    // ✅ NUEVO MÉTODO: Convertirse en maestro de un nuevo grupo
     private void becomeMaster() {
         if (level == null || level.isClientSide) return;
 
+        // Guardamos la energía que tenía antes de dejar de ser esclavo
+        float inheritedEnergy = this.energyStorage.getEnergyStored();
 
         this.isMaster = true;
         this.masterPos = this.worldPosition;
 
-        // Encontrar todos los bloques conectados a este nuevo maestro
         rediscoverConnectedBlocks();
 
-        // Configurar capacidad inicial (puede ajustarse según necesidad)
-        this.energyStorage.setMaxEnergyStored(BASE_CAPACITY);
-        this.energyStorage.setStoredEnergy(0); // O calcular proporción si es necesario
+        int newCapacity = BASE_CAPACITY * mergedBlocks.size();
+        this.energyStorage.setMaxEnergyStored(newCapacity);
+
+        // Si el bloque suelto tenía energía propia retenida, la respeta; si no, parte de la heredada
+        if (this.energyStorage.getEnergyStored() <= 0 && inheritedEnergy > 0) {
+            this.energyStorage.setStoredEnergy(Math.min(inheritedEnergy, newCapacity));
+        }
 
         updateNetwork();
         setChanged();
-
-        // Notificar a generadores del nuevo maestro
         notifyConnectedGenerators();
     }
 
-    // ✅ NUEVO MÉTODO: Redescubrir bloques conectados
     private void rediscoverConnectedBlocks() {
         mergedBlocks.clear();
         Set<BlockPos> toCheck = new HashSet<>();
@@ -687,13 +705,11 @@ public class EnergyStorageBlockEntity extends BlockEntity implements IEnergyStor
         }
     }
 
-    // ✅ MODIFICAR onBlockRemoved para mejor manejo
     public void onBlockRemoved() {
         if (level == null || level.isClientSide) return;
 
         try {
             if (isMaster) {
-                // ✅ NOTIFICAR PRIMERO a generadores antes de promover
                 notifyConnectedGeneratorsAboutRemoval();
                 promoteNewMaster();
             } else {
@@ -704,7 +720,6 @@ public class EnergyStorageBlockEntity extends BlockEntity implements IEnergyStor
         }
     }
 
-    // ✅ NUEVO MÉTODO: Notificar a generadores sobre remoción
     private void notifyConnectedGeneratorsAboutRemoval() {
         if (level == null || level.isClientSide) return;
 
@@ -712,10 +727,8 @@ public class EnergyStorageBlockEntity extends BlockEntity implements IEnergyStor
         for (BlockPos generatorPos : generators) {
             BlockEntity be = level.getBlockEntity(generatorPos);
             if (be instanceof AbstractEnergyGeneratorBlockEntity generator) {
-                // Notificar que este maestro será removido
                 generator.onStorageNetworkUpdated(0, 0, 0, this.worldPosition);
             }
         }
     }
-
 }

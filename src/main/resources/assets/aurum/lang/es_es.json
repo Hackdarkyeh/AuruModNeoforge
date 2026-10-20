@@ -26,7 +26,7 @@
   "tooltip.aurum.tier": "Tier de la pieza:%s",
 
 
-
+  "container.armor_table_block": "Mesa de armaduras",
   "bossbar.aurum.invasion": "Invasión de Aurum",
   "bossbar.aurum.invasion": "Invasión de Aurum",
   "bossbar.aurum.phase_progress": "Raid Fase %s/4 | Enemigos restantes: %s",
@@ -88,7 +88,8 @@
   "gui.aurum.passive.status": "Estado: %s",
   "gui.aurum.passive.level_status": "Nivel %s",
   "gui.aurum.passive.disabled": "DESACTIVADO",
-  "gui.aurum.passive.controls": "Clic Izq: Invertir punto  |  Clic Der: Recuperar punto"
+  "gui.aurum.passive.controls": "Clic Izq: Invertir punto  |  Clic Der: Recuperar punto",
 
+  "aurum.aurum.extractor_progress": "Progreso: %s s / %s s (%s%%)"
 
 }

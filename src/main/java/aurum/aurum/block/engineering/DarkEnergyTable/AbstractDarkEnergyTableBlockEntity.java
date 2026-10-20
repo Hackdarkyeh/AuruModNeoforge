@@ -8,6 +8,7 @@ import aurum.aurum.energy.engineering.IEnergyConsumer;
 import aurum.aurum.init.ModItems;
 import aurum.aurum.item.ArmorItem.ModArmorItem;
 import aurum.aurum.item.Swords.AureliteSword;
+import aurum.aurum.item.pickage.AurelitePickaxe;
 import com.google.common.collect.Lists;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
@@ -191,6 +192,24 @@ public abstract class AbstractDarkEnergyTableBlockEntity extends BaseContainerBl
                 // Reparar con energía limpia
                 if (blockEntity.cleanEnergyStorage.getEnergyStored() >= EnergyConfig.AureliteSword.ENERGY_REPAIR_AMOUNT) {
                     if (sword.addCleanEnergy(weaponStack, EnergyConfig.General.ENERGY_TRANSFER_RATE)) {
+                        blockEntity.cleanEnergyStorage.consumeEnergy(EnergyConfig.AureliteSword.ENERGY_REPAIR_AMOUNT, false);
+                        blockEntity.setChanged();
+                    }
+                }
+            }
+
+            // Recargar pico con energía oscura
+            if (weaponStack.getItem() instanceof AurelitePickaxe pickaxe) {
+                if (blockEntity.darkEnergyStorage.getEnergyStored() >= EnergyConfig.General.ENERGY_TRANSFER_RATE) {
+                    if (pickaxe.addDarkEnergy(weaponStack, EnergyConfig.General.ENERGY_TRANSFER_RATE)) {
+                        blockEntity.darkEnergyStorage.consumeEnergy(EnergyConfig.General.ENERGY_TRANSFER_RATE, false);
+                        blockEntity.setChanged();
+                    }
+                }
+
+                // Cargar energía limpia (mismos valores que la espada)
+                if (blockEntity.cleanEnergyStorage.getEnergyStored() >= EnergyConfig.AureliteSword.ENERGY_REPAIR_AMOUNT) {
+                    if (pickaxe.addCleanEnergy(weaponStack, EnergyConfig.General.ENERGY_TRANSFER_RATE)) {
                         blockEntity.cleanEnergyStorage.consumeEnergy(EnergyConfig.AureliteSword.ENERGY_REPAIR_AMOUNT, false);
                         blockEntity.setChanged();
                     }
@@ -426,5 +445,5 @@ public abstract class AbstractDarkEnergyTableBlockEntity extends BaseContainerBl
         ExperienceOrb.award(pLevel, pPopVec, i);
     }
 
-}
 
+}
