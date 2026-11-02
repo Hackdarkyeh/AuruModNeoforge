@@ -7,6 +7,11 @@ import net.minecraft.world.level.block.state.BlockState;
 
 public class AurumPortalBlockEntity extends TheEndPortalBlockEntity {
 
+    // --- Caché del centro del portal (solo la usa el renderer, en el cliente) ---
+    public double cachedCenterX;
+    public double cachedCenterZ;
+    public long cachedCenterTime = Long.MIN_VALUE;
+
     public AurumPortalBlockEntity(BlockPos pos, BlockState state) {
         // Asegúrate de registrar AURUM_PORTAL_BLOCK_ENTITY en tu ModBlockEntities
         super(ModBlockEntities.AURUM_PORTAL_BLOCK_ENTITY.get(), pos, state);

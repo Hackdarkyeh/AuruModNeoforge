@@ -1,0 +1,56 @@
+{
+  "type": "minecraft:interpolated",
+  "argument": {
+    "type": "minecraft:max",
+    "argument1": {
+      "type": "minecraft:add",
+      "argument1": {
+        "type": "minecraft:add",
+        "argument1": -80,
+        "argument2": { "type": "minecraft:mul", "argument1": -1, "argument2": "minecraft:y" }
+      },
+      "argument2": {
+        "type": "minecraft:mul",
+        "argument1": {
+          "type": "minecraft:clamp",
+          "input": {
+            "type": "minecraft:mul",
+            "argument1": {
+              "type": "minecraft:add",
+              "argument1": {
+                "type": "minecraft:add",
+                "argument1": "aurum:dim1_land_support",
+                "argument2": -0.01
+              },
+              "argument2": {
+                "type": "minecraft:mul",
+                "argument1": -0.65,
+                "argument2": {
+                  "type": "minecraft:y_clamped_gradient",
+                  "from_y": 35, "from_value": 0, "to_y": -25, "to_value": 1
+                }
+              }
+            },
+            "argument2": 7
+          },
+          "min": 0,
+          "max": 1
+        },
+        "argument2": {
+          "type": "minecraft:add",
+          "argument1": "aurum:dim1_terrain_shape",
+          "argument2": {
+            "type": "minecraft:mul",
+            "argument1": -1,
+            "argument2": {
+              "type": "minecraft:add",
+              "argument1": -80,
+              "argument2": { "type": "minecraft:mul", "argument1": -1, "argument2": "minecraft:y" }
+            }
+          }
+        }
+      }
+    },
+    "argument2": "aurum:dim1_island_mask_cleared"
+  }
+}

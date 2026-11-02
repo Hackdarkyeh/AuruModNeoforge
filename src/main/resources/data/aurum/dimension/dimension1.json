@@ -1,7 +1,7 @@
 {
   "type": "aurum:aurum_dimension",
   "generator": {
-    "type": "minecraft:noise",
+    "type": "aurum:aurum_noise",
     "settings": "aurum:dimension1",
     "biome_source": {
       "type": "aurum:volcano_override",

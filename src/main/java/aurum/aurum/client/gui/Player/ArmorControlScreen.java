@@ -1,10 +1,13 @@
 package aurum.aurum.client.gui.Player;
 
 import aurum.aurum.Aurum;
+import aurum.aurum.eventHandler.ArmorEvents.ArmorBlightShield;
 import aurum.aurum.init.ModDataComponents;
 import aurum.aurum.item.ArmorItem.ArmorExpData;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
@@ -15,8 +18,8 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffects;
-import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -29,9 +32,6 @@ public class ArmorControlScreen extends AbstractContainerScreen<ArmorControlMenu
 
     private static final ResourceLocation GUI_TEXTURE =
             ResourceLocation.fromNamespaceAndPath(Aurum.MODID, "textures/gui/inventory_screen/armor_control_inventory.png");
-
-    private static final ResourceLocation HEALTH_MODIFIER_ID =
-            ResourceLocation.fromNamespaceAndPath(Aurum.MODID, "set_passive_health");
 
     private static final String SPRITE_DIR = "hud";
     private static final ResourceLocation XP_BG =
@@ -71,9 +71,9 @@ public class ArmorControlScreen extends AbstractContainerScreen<ArmorControlMenu
     private static final int COLOR_PASSIVE_OFF_BG = 0xFF140B21;
 
     private static final List<Holder<MobEffect>> PASSIVE_EFFECTS = List.of(
-            MobEffects.HEALTH_BOOST, MobEffects.JUMP, MobEffects.NIGHT_VISION, MobEffects.MOVEMENT_SPEED);
+            MobEffects.HEALTH_BOOST, MobEffects.JUMP, MobEffects.GLOWING, MobEffects.MOVEMENT_SPEED);
     private static final String[] PASSIVE_NAMES =
-            {"Aumento de Salud", "Impulso de Salto", "Visión Nocturna", "Velocidad"};
+            {"Aumento de Salud", "Impulso de Salto", "Luminiscencia", "Velocidad"};
 
     // 2 Puntos extra asignables
     private static final int EXTRA_SET_POINTS = 2;
@@ -81,11 +81,11 @@ public class ArmorControlScreen extends AbstractContainerScreen<ArmorControlMenu
     // Niveles:
     // Index 0: Salud (Min 1, Max 3)
     // Index 1: Salto (Min 0, Max 2)
-    // Index 2: Visión Nocturna (Min 0, Max 1)
+    // Index 2: Luminiscencia (Min 0, Max 2)
     // Index 3: Velocidad (Min 0, Max 2)
     private final int[] passiveLevels = {1, 0, 0, 0};
     private final int[] passiveMinLevels = {1, 0, 0, 0};
-    private final int[] passiveMaxLevels = {3, 2, 1, 2};
+    private final int[] passiveMaxLevels = {3, 2, 2, 2};
 
     private int selectedArmorIndex = -1;
 
@@ -95,35 +95,13 @@ public class ArmorControlScreen extends AbstractContainerScreen<ArmorControlMenu
         this.inventoryLabelY = 1000;
         this.titleLabelY     = 1000;
 
-        // Cargar los niveles de pasivas leyendo los atributos y efectos del jugador en el cliente
+        // Los niveles elegidos viven en el attachment del jugador (el servidor los sincroniza)
         if (this.minecraft != null && this.minecraft.player != null) {
-            var player = this.minecraft.player;
-
-            // 0. Salud: Leer el valor del AttributeModifier (+4.0 = Nivel I, +8.0 = Nivel II, +12.0 = Nivel III)
-            var healthAttr = player.getAttribute(Attributes.MAX_HEALTH);
-            if (healthAttr != null && healthAttr.hasModifier(HEALTH_MODIFIER_ID)) {
-                var modifier = healthAttr.getModifier(HEALTH_MODIFIER_ID);
-                if (modifier != null) {
-                    // Dividimos entre 20.0D para obtener el nivel (20 = Lv 1, 40 = Lv 2, 60 = Lv 3)
-                    this.passiveLevels[0] = Math.min(3, Math.max(1, (int) (modifier.amount() / 20.0D)));
-                } else {
-                    this.passiveLevels[0] = 1;
-                }
-            } else {
-                this.passiveLevels[0] = 1;
-            }
-
-            // 1. Salto (Amplifier 0 = Lv I, 1 = Lv II)
-            var jump = player.getEffect(MobEffects.JUMP);
-            this.passiveLevels[1] = (jump != null) ? Math.min(2, jump.getAmplifier() + 1) : 0;
-
-            // 2. Visión Nocturna (Efecto binario: activo = Lv I)
-            var nv = player.getEffect(MobEffects.NIGHT_VISION);
-            this.passiveLevels[2] = (nv != null) ? 1 : 0;
-
-            // 3. Velocidad (Amplifier 0 = Lv I, 1 = Lv II)
-            var speed = player.getEffect(MobEffects.MOVEMENT_SPEED);
-            this.passiveLevels[3] = (speed != null) ? Math.min(2, speed.getAmplifier() + 1) : 0;
+            SetPassivesData data = this.minecraft.player.getData(ModDataComponents.SET_PASSIVES);
+            this.passiveLevels[0] = data.health();
+            this.passiveLevels[1] = data.jump();
+            this.passiveLevels[2] = data.luminescence();
+            this.passiveLevels[3] = data.speed();
         }
     }
 
@@ -219,19 +197,28 @@ public class ArmorControlScreen extends AbstractContainerScreen<ArmorControlMenu
         int barY = detailY + 30;
         int barW = detailW - 12;
 
-        int corrosionPercent = 100; // Reemplazar con el cálculo/atributo de corrosión real
+        int corrosionPercent = ArmorBlightShield.getBarrierPercent(this.minecraft.player);
         int filledW = Math.round(barW * (corrosionPercent / 100.0f));
 
         drawXpBar(g, barX, barY, barW, filledW);
+
+        // Parte de la barrera perdida por la exposición a Aurum: se pinta de morado en el extremo derecho
+        float corrosionLoss = ArmorBlightShield.barrierLoss(this.minecraft.player);
+        if (corrosionLoss > 0F) {
+            int lostW = Math.round(barW * corrosionLoss);
+            g.fill(barX + barW - lostW, barY, barX + barW, barY + XP_TEX_H, 0xFFA040E0);
+        }
 
         if (equippedAurumCount == 4) {
             int startX = passiveStartX();
             int iconY = detailY + PASSIVE_Y;
 
+            boolean passivesOn = ArmorBlightShield.hasBarrier(this.minecraft.player);
             for (int i = 0; i < 4; i++) {
                 renderPassiveEffectBox(g, startX + i * (PASSIVE_BOX + PASSIVE_GAP), iconY,
-                        PASSIVE_BOX, PASSIVE_EFFECTS.get(i), passiveLevels[i]);
+                        PASSIVE_BOX, PASSIVE_EFFECTS.get(i), passiveLevels[i], passivesOn);
             }
+
         } else {
             float s = 0.7f;
             g.pose().pushPose();
@@ -244,6 +231,24 @@ public class ArmorControlScreen extends AbstractContainerScreen<ArmorControlMenu
     private void renderXpTooltips(GuiGraphics g, int mouseX, int mouseY) {
         int x = this.leftPos;
         int y = this.topPos;
+
+        // Tooltip normal de cada pieza (el mismo que en el inventario) + Barrera, que solo existe en esta pantalla
+        for (int i = 0; i < 4; i++) {
+            Slot slot = menu.slots.get(i);
+            if (isHovering(slot.x, slot.y, 16, 16, mouseX, mouseY)) {
+                ItemStack piece = slot.getItem();
+                if (!piece.isEmpty()) {
+                    List<Component> lines = new ArrayList<>(Screen.getTooltipFromItem(this.minecraft, piece));
+                    float capacity = ArmorBlightShield.getCapacity(piece, this.minecraft.player);
+                    if (capacity > 0F) {
+                        lines.add(Component.translatable("tooltip.aurum.barrier",
+                                        Math.round(ArmorBlightShield.getBarrier(piece, this.minecraft.player)), Math.round(capacity))
+                                .withStyle(ChatFormatting.LIGHT_PURPLE));
+                    }
+                    g.renderTooltip(this.font, lines, piece.getTooltipImage(), mouseX, mouseY);
+                }
+            }
+        }
 
         List<Component> tooltipLines = new ArrayList<>();
 
@@ -276,10 +281,15 @@ public class ArmorControlScreen extends AbstractContainerScreen<ArmorControlMenu
             int barW = DETAIL_W - 12;
 
             if (mouseX >= barX && mouseX <= barX + barW && mouseY >= barY - 1 && mouseY <= barY + 6) {
-                int corrosionPercent = 100; // Reemplazar con el porcentaje real
+                int corrosionPercent = ArmorBlightShield.getBarrierPercent(this.minecraft.player);
 
                 tooltipLines.add(Component.translatable("gui.aurum.corrosion_barrier").withStyle(s -> s.withColor(COLOR_GOLD)));
                 tooltipLines.add(Component.translatable("gui.aurum.corrosion_percent", corrosionPercent).withStyle(s -> s.withColor(COLOR_WHITE)));
+                float corrosionLossTip = ArmorBlightShield.barrierLoss(this.minecraft.player);
+                if (corrosionLossTip > 0F) {
+                    tooltipLines.add(Component.translatable("gui.aurum.corrosion_loss", Math.round(corrosionLossTip * 100))
+                            .withStyle(s -> s.withColor(0xAA55FF)));
+                }
             }
 
             // Tooltip sobre los iconos de Pasivas de Set
@@ -295,7 +305,10 @@ public class ArmorControlScreen extends AbstractContainerScreen<ArmorControlMenu
                     };
 
                     tooltipLines.add(Component.literal(PASSIVE_NAMES[idx]).withStyle(s -> s.withColor(COLOR_GOLD)));
-
+                    String reason = ArmorBlightShield.getInactiveReasonKey(this.minecraft.player);
+                    if (reason != null) {
+                        tooltipLines.add(Component.translatable(reason).withStyle(s -> s.withColor(COLOR_RED)));
+                    }
                     if (idx == 0) {
                         tooltipLines.add(Component.translatable("gui.aurum.passive.native_health", lvlRoman)
                                 .withStyle(s -> s.withColor(COLOR_GREEN)));
@@ -308,6 +321,12 @@ public class ArmorControlScreen extends AbstractContainerScreen<ArmorControlMenu
 
                         tooltipLines.add(Component.translatable("gui.aurum.passive.status", statusComp)
                                 .withStyle(s -> s.withColor(lvl > 0 ? COLOR_GREEN : COLOR_RED)));
+                        if (idx == 2) {
+                            tooltipLines.add(Component.translatable("gui.aurum.passive.luminescence_desc")
+                                    .withStyle(s -> s.withColor(COLOR_GRAY)));
+                            tooltipLines.add(Component.translatable("gui.aurum.passive.luminescence_radius", lvl >= 2 ? 30 : 20)
+                                    .withStyle(s -> s.withColor(COLOR_GRAY)));
+                        }
                         tooltipLines.add(Component.translatable("gui.aurum.passive.controls")
                                 .withStyle(s -> s.withColor(COLOR_GRAY)));
                     }
@@ -359,8 +378,8 @@ public class ArmorControlScreen extends AbstractContainerScreen<ArmorControlMenu
         }
     }
 
-    private void renderPassiveEffectBox(GuiGraphics g, int x, int y, int size, Holder<MobEffect> effect, int level) {
-        boolean isActive = level > 0;
+    private void renderPassiveEffectBox(GuiGraphics g, int x, int y, int size, Holder<MobEffect> effect, int level, boolean powered) {
+        boolean isActive = level > 0 && powered;
         int bg = isActive ? COLOR_PASSIVE_ON_BG : COLOR_PASSIVE_OFF_BG;
         int border = isActive ? COLOR_GOLD : COLOR_BORDER;
 
@@ -389,7 +408,7 @@ public class ArmorControlScreen extends AbstractContainerScreen<ArmorControlMenu
             };
             g.pose().pushPose();
             g.pose().scale(0.6f, 0.6f, 1.0f);
-            g.drawString(this.font, lvlTag, (int)((x + 11) / 0.6f), (int)((y + 12) / 0.6f), COLOR_GOLD, true);
+            g.drawString(this.font, lvlTag, (int)((x + 11) / 0.6f), (int)((y + 12) / 0.6f), powered ? COLOR_GOLD : COLOR_GRAY, true);
             g.pose().popPose();
         }
     }
@@ -436,7 +455,7 @@ public class ArmorControlScreen extends AbstractContainerScreen<ArmorControlMenu
         ArmorSkillsData skillsData = selectedPiece.getOrDefault(ModDataComponents.ARMOR_SKILLS.get(), ArmorSkillsData.defaultData());
 
         int tier = expData.currentLevel() / 10;
-        int availablePoints = tier - skillsData.getSpentPoints();
+        int availablePoints = skillsData.getAvailablePoints(tier);
 
         g.pose().pushPose();
         g.pose().scale(0.8f, 0.8f, 1.0f);
@@ -481,7 +500,7 @@ public class ArmorControlScreen extends AbstractContainerScreen<ArmorControlMenu
             g.drawString(this.font, countStr, (int)(countX / countScale), (int)((rowY + 2) / countScale), COLOR_GRAY, false);
             g.pose().popPose();
 
-            boolean showButton = (availablePoints > 0 && filled < maxPips);
+            boolean showButton = (availablePoints > 0 && currentVal < maxPips);
             if (showButton) {
                 int btnX = detailX + 114;
                 int btnY = rowY + 1;
@@ -528,6 +547,11 @@ public class ArmorControlScreen extends AbstractContainerScreen<ArmorControlMenu
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         super.render(g, mouseX, mouseY, partialTick);
         renderXpTooltips(g, mouseX, mouseY);
+    }
+
+    /** Vacío a propósito: los tooltips de las piezas los dibuja renderXpTooltips (así no salen duplicados). */
+    @Override
+    protected void renderTooltip(GuiGraphics g, int mouseX, int mouseY) {
     }
 
     @Override
@@ -585,7 +609,7 @@ public class ArmorControlScreen extends AbstractContainerScreen<ArmorControlMenu
                 ArmorSkillsData skillsData = selectedPiece.getOrDefault(ModDataComponents.ARMOR_SKILLS.get(), ArmorSkillsData.defaultData());
 
                 int tier = expData.currentLevel() / 10;
-                int availablePoints = tier - skillsData.getSpentPoints();
+                int availablePoints = skillsData.getAvailablePoints(tier);
 
                 if (availablePoints > 0) {
                     int[] pilarValues = {skillsData.absorption(), skillsData.recovery(), skillsData.magicAmp(), skillsData.resonance()};

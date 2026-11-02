@@ -1,20 +1,20 @@
 package aurum.aurum.block.engineering.PortalAurum.AurumPortalInside;
 
 import aurum.aurum.init.ModBlocks;
-import aurum.aurum.worldgen.Dimension.AurumDimension;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.BaseEntityBlock;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.portal.DimensionTransition;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 
-public class AurumPortalBlock extends BaseEntityBlock {
+public class AurumPortalBlock extends BaseEntityBlock implements LiquidBlockContainer {
     public static final MapCodec<AurumPortalBlock> CODEC = simpleCodec(AurumPortalBlock::new);
 
     // Forma visual del portal (12 píxeles de alto)
@@ -46,6 +46,23 @@ public class AurumPortalBlock extends BaseEntityBlock {
             new BlockPos(-1, -2, 3), new BlockPos(0, -2, 3), new BlockPos(1, -2, 3),
             new BlockPos(0, -1, 0), new BlockPos(0, -1, 0)
     };
+
+
+    @Override
+    public boolean canPlaceLiquid(@Nullable Player player, BlockGetter level, BlockPos pos,
+                                  BlockState state, Fluid fluid) {
+        return false;   // ningún fluido puede entrar
+    }
+
+    @Override
+    public boolean placeLiquid(LevelAccessor level, BlockPos pos, BlockState state, FluidState fluid) {
+        return false;
+    }
+
+    @Override
+    protected boolean canBeReplaced(BlockState state, Fluid fluid) {
+        return false;   // tampoco con cubos
+    }
 
     public AurumPortalBlock(Properties properties) {
         super(properties);

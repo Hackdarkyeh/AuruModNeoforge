@@ -9,6 +9,8 @@
     "EndPortalAutoSpawnMixin"
   ],
   "client": [
+    "MinecraftGlowMixin",
+    "EntityTeamColorMixin"
   ],
   "injectors": {
     "defaultRequire": 1

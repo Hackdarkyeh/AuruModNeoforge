@@ -2,6 +2,8 @@ package aurum.aurum.init;
 
 import aurum.aurum.init.armors.ModArmorMaterials;
 import aurum.aurum.item.ArmorItem.ArmorExpansions;
+import aurum.aurum.item.ArmorItem.ArmorUpgradePointItem;
+import aurum.aurum.item.Battery.BatteryItem;
 import aurum.aurum.item.SoulExpansions;
 import aurum.aurum.item.*;
 import aurum.aurum.item.ArmorItem.ModArmorItem;
@@ -15,6 +17,7 @@ import aurum.aurum.item.ExtractorPeakTier.ExtractorPeakUpdaterTier3;
 import aurum.aurum.item.RangeExtractor.*;
 import aurum.aurum.item.Swords.AureliteSword;
 import aurum.aurum.item.pickage.AurelitePickaxe;
+import aurum.aurum.item.projectile.AurumArrowItem;
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.Item;
 
@@ -53,12 +56,6 @@ public class ModItems {
 
     public static Supplier<Item> EXTRACTOR_PROTECTOR = ITEMS_REGISTRY.register("extractor_protector", ExtractorProtector::new);
 
-    public static Supplier<Item> RANGE_EXTRACTOR_UPDATER_TIER_1 = ITEMS_REGISTRY.register("range_extractor_updater_tier1", RangeExtractorUpdaterTier1::new);
-    public static Supplier<Item> RANGE_EXTRACTOR_UPDATER_TIER_2 = ITEMS_REGISTRY.register("range_extractor_updater_tier2", RangeExtractorUpdaterTier2::new);
-    public static Supplier<Item> RANGE_EXTRACTOR_UPDATER_TIER_3 = ITEMS_REGISTRY.register("range_extractor_updater_tier3", RangeExtractorUpdaterTier3::new);
-    public static Supplier<Item> RANGE_EXTRACTOR_UPDATER_TIER_4 = ITEMS_REGISTRY.register("range_extractor_updater_tier4", RangeExtractorUpdaterTier4::new);
-    public static Supplier<Item> RANGE_EXTRACTOR_UPDATER_TIER_5 = ITEMS_REGISTRY.register("range_extractor_updater_tier5", RangeExtractorUpdaterTier5::new);
-
 
     public static Supplier<Item> VEILPIERCER = ITEMS_REGISTRY.register("veilpiercer", Veilpiercer::new);
 
@@ -68,29 +65,29 @@ public class ModItems {
 
     public static final DeferredItem<ModArmorItem> AURELITE_HELMET = ITEMS_REGISTRY.register("aurelite_helmet",
             () -> new ModArmorItem(ModArmorMaterials.AURELITE_ARMOR_MATERIAL_BASIC, ArmorItem.Type.HELMET,
-                    new Item.Properties().durability(ArmorItem.Type.HELMET.getDurability(35))));
+                    new Item.Properties()));
     public static final DeferredItem<ModArmorItem> AURELITE_CHESTPLATE = ITEMS_REGISTRY.register("aurelite_chestplate",
             () -> new ModArmorItem(ModArmorMaterials.AURELITE_ARMOR_MATERIAL_BASIC, ArmorItem.Type.CHESTPLATE,
-                    new Item.Properties().durability(ArmorItem.Type.CHESTPLATE.getDurability(35))));
+                    new Item.Properties()));
     public static final DeferredItem<ModArmorItem> AURELITE_LEGGINGS = ITEMS_REGISTRY.register("aurelite_leggings",
             () -> new ModArmorItem(ModArmorMaterials.AURELITE_ARMOR_MATERIAL_BASIC, ArmorItem.Type.LEGGINGS,
-                    new Item.Properties().durability(ArmorItem.Type.LEGGINGS.getDurability(35))));
+                    new Item.Properties()));
     public static final DeferredItem<ModArmorItem> AURELITE_BOOTS = ITEMS_REGISTRY.register("aurelite_boots",
             () -> new ModArmorItem(ModArmorMaterials.AURELITE_ARMOR_MATERIAL_BASIC, ArmorItem.Type.BOOTS,
-                    new Item.Properties().durability(ArmorItem.Type.BOOTS.getDurability(35))));
+                    new Item.Properties()));
 
     public static final DeferredItem<ModArmorItem> AURELITE_HELMET_GOLD = ITEMS_REGISTRY.register("aurelite_helmet_gold",
             () -> new ModArmorItem(ModArmorMaterials.AURELITE_ARMOR_MATERIAL_GOLD, ArmorItem.Type.HELMET,
-                    new Item.Properties().durability(ArmorItem.Type.HELMET.getDurability(35))));
+                    new Item.Properties()));
     public static final DeferredItem<ModArmorItem> AURELITE_CHESTPLATE_GOLD = ITEMS_REGISTRY.register("aurelite_chestplate_gold",
             () -> new ModArmorItem(ModArmorMaterials.AURELITE_ARMOR_MATERIAL_GOLD, ArmorItem.Type.CHESTPLATE,
-                    new Item.Properties().durability(ArmorItem.Type.CHESTPLATE.getDurability(35))));
+                    new Item.Properties()));
     public static final DeferredItem<ModArmorItem> AURELITE_LEGGINGS_GOLD = ITEMS_REGISTRY.register("aurelite_leggings_gold",
             () -> new ModArmorItem(ModArmorMaterials.AURELITE_ARMOR_MATERIAL_GOLD, ArmorItem.Type.LEGGINGS,
-                    new Item.Properties().durability(ArmorItem.Type.LEGGINGS.getDurability(35))));
+                    new Item.Properties()));
     public static final DeferredItem<ModArmorItem> AURELITE_BOOTS_GOLD = ITEMS_REGISTRY.register("aurelite_boots_gold",
             () -> new ModArmorItem(ModArmorMaterials.AURELITE_ARMOR_MATERIAL_GOLD, ArmorItem.Type.BOOTS,
-                    new Item.Properties().durability(ArmorItem.Type.BOOTS.getDurability(35))));
+                    new Item.Properties()));
 
 
     public static final Supplier<Item> EXPANSION_SUPER_SPEED = ITEMS_REGISTRY.register("expansion_super_speed", () -> new ArmorExpansions(25,"expansion_super_speed"));
@@ -120,4 +117,20 @@ public class ModItems {
     public static final DeferredItem<Item> AURELITE_FRAGMENT =
             ITEMS_REGISTRY.register("aurelite_fragment", Aurelite_fragment::new);
 
+
+    public static final DeferredItem<Item> CORRUPTED_FIRE_CHARGE =
+            ITEMS_REGISTRY.registerSimpleItem("corrupted_fire_charge");
+
+    public static final DeferredItem<Item> ARMOR_UPGRADE_POINT =
+            ITEMS_REGISTRY.register("armor_upgrade_point", ArmorUpgradePointItem::new);
+
+    public static final DeferredItem<Item> AURUM_ARROW =
+            ITEMS_REGISTRY.registerItem("aurum_arrow", AurumArrowItem::new, new Item.Properties());
+
+    public static final Supplier<Item> GEIGER_COUNTER =
+            ITEMS_REGISTRY.register("geiger_counter", GeigerCounterItem::new);
+
+    /** Moneda provisional del mod. El nombre "yanyito" y la proporción son provisionales. */
+    public static final DeferredItem<Item> YANYITO =
+            ITEMS_REGISTRY.registerSimpleItem("yanyito");
 }

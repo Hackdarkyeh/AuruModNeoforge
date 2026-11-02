@@ -22,15 +22,15 @@ import net.neoforged.neoforge.fluids.FluidType;
 @EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD)
 public class PlagaAurumFluidType extends FluidType {
     public PlagaAurumFluidType() {
-        super(FluidType.Properties.create().canSwim(false).canDrown(false).pathType(PathType.LAVA).adjacentPathType(null).motionScale(0.007D).rarity(Rarity.RARE).sound(SoundActions.BUCKET_FILL, SoundEvents.BUCKET_FILL)
+        super(FluidType.Properties.create().lightLevel(10).canSwim(false).canDrown(false).pathType(PathType.LAVA).adjacentPathType(null).motionScale(0.007D).rarity(Rarity.RARE).sound(SoundActions.BUCKET_FILL, SoundEvents.BUCKET_FILL)
                 .sound(SoundActions.BUCKET_EMPTY, SoundEvents.BUCKET_EMPTY).sound(SoundActions.FLUID_VAPORIZE, SoundEvents.FIRE_EXTINGUISH));
     }
 
     @SubscribeEvent
     public static void registerFluidTypeExtensions(RegisterClientExtensionsEvent event) {
         event.registerFluidType(new IClientFluidTypeExtensions() {
-            private static final ResourceLocation STILL_TEXTURE = ResourceLocation.parse("aurum:block/plague_aurum_fluid_overlay"),
-                    FLOWING_TEXTURE = ResourceLocation.parse("aurum:block/plague_aurum_fluid_flow");
+            private static final ResourceLocation STILL_TEXTURE = ResourceLocation.parse("aurum:block/plague_aurum/plague_aurum_fluid_still"),
+                    FLOWING_TEXTURE = ResourceLocation.parse("aurum:block/plague_aurum/plague_aurum_fluid_flow");
 
             @Override
             public ResourceLocation getStillTexture() {

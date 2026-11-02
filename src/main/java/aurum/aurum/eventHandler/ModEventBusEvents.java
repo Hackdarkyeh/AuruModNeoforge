@@ -1,7 +1,9 @@
 package aurum.aurum.eventHandler;
 
 import aurum.aurum.Aurum;
+import aurum.aurum.entity.AurumVillager.AurumVillagerEntity;
 import aurum.aurum.entity.CooperGolem.CooperGolemEntity;
+import aurum.aurum.entity.EvokeAltered.EvokerAlteredEntity;
 import aurum.aurum.entity.SoreBoss.SoreBossEntity;
 import aurum.aurum.entity.SpiderCorrupted.SpiderCorruptedEntity;
 import aurum.aurum.entity.ZombieAltered.ZombieAlteredEntity;
@@ -24,6 +26,8 @@ public class ModEventBusEvents {
         event.put(ModEntities.ENDER_DRAGON_ALTERED.get(), aurum.aurum.entity.EnderDragonAltered.EnderDragonAltered.createAttributes().build());
         event.put(ModEntities.VEX_ALTERED.get(), aurum.aurum.entity.VexAltered.VexAlteredEntity.createAttributes().build());
         event.put(ModEntities.DIVINE_ARMOR.get(), aurum.aurum.entity.EnchantedArmor.DivineArmorEntity.createAttributes().build());
-
+        event.put(ModEntities.BLAZE_CORRUPTED.get(), aurum.aurum.entity.BlazeCorrupted.BlazeCorruptedEntity.createAttributes().build());
+        event.put(ModEntities.AURUM_VILLAGER.get(), AurumVillagerEntity.createAttributes().build());
+        event.put(ModEntities.EVOKER_ALTERED.get(), EvokerAlteredEntity.createAttributes().build());
     }
 }

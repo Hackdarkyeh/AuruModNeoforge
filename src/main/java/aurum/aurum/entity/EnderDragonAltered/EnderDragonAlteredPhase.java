@@ -19,6 +19,8 @@ public class EnderDragonAlteredPhase<T extends DragonAlteredPhaseInstance> {
     public static final EnderDragonAlteredPhase<DragonAlteredChargePlayerPhase> CHARGING_PLAYER = create(DragonAlteredChargePlayerPhase.class, "ChargingPlayer");
     public static final EnderDragonAlteredPhase<DragonAlteredDeathPhase> DYING = create(DragonAlteredDeathPhase.class, "Dying");
     public static final EnderDragonAlteredPhase<DragonAlteredHoverPhase> HOVERING = create(DragonAlteredHoverPhase.class, "Hover");
+    // IMPORTANTE: las fases nuevas van SIEMPRE al final (el id se guarda en el NBT y se sincroniza)
+    public static final EnderDragonAlteredPhase<DragonAlteredCrystalHealPhase> CRYSTAL_HEAL = create(DragonAlteredCrystalHealPhase.class, "CrystalHeal");
     private final Class<? extends DragonAlteredPhaseInstance> instanceClass;
     private final int id;
     private final String name;

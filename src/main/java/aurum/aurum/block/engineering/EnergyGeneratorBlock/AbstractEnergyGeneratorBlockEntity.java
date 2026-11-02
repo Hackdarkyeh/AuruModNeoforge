@@ -145,7 +145,7 @@ public abstract class AbstractEnergyGeneratorBlockEntity extends BaseContainerBl
 
     @org.jetbrains.annotations.ApiStatus.Internal
     public static void buildFuels(java.util.function.ObjIntConsumer<com.mojang.datafixers.util.Either<Item, TagKey<Item>>> map1) {
-        add(map1, Items.LAVA_BUCKET, 10000);
+        add(map1, Items.LAVA_BUCKET, 9000);
         add(map1, Blocks.COAL_BLOCK, 8000);
         add(map1, Items.BLAZE_ROD, 1200);
         add(map1, Items.COAL, 800);

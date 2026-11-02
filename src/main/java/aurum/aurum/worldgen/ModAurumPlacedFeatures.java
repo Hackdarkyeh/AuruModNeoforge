@@ -16,19 +16,9 @@ import static aurum.aurum.Aurum.MODID;
 
 public class ModAurumPlacedFeatures {
 
-    public static final ResourceKey<PlacedFeature> AURUM_VINES_PLACED = registerKey("aurum_vines_placed");
 
     public static void bootstrap(BootstrapContext<PlacedFeature> context) {
         HolderGetter<ConfiguredFeature<?, ?>> configuredFeatures = context.lookup(Registries.CONFIGURED_FEATURE);
-
-        context.register(AURUM_VINES_PLACED,
-                new PlacedFeature(
-                        configuredFeatures.getOrThrow(ModAurumConfiguredFeatures.AURUM_VINES),
-                        List.of(
-                                //RarityFilter.onAverageOnceEvery(3),
-                                //InSquarePlacement.spread()
-                        )
-                ));
     }
 
     private static ResourceKey<PlacedFeature> registerKey(String name) {

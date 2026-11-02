@@ -1,9 +1,11 @@
 package aurum.aurum.client.gui.ArmorTable;
 
 import aurum.aurum.block.engineering.ArmorTable.AbstractArmorTableBlockEntity;
+import aurum.aurum.block.engineering.ArmorTable.EnergyItemCharger;
 import aurum.aurum.block.engineering.ArmorTable.Slots.*;
 import aurum.aurum.init.ModItems;
-import aurum.aurum.tagsProvider.ModTags;
+import aurum.aurum.item.ArmorItem.AurumArmor;
+import aurum.aurum.init.ModTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
@@ -21,7 +23,8 @@ public abstract class AbstractArmorTableMenu extends AbstractContainerMenu {
     public static final int ARMOR_OUT = 2; // Slot de previsualización / salida
     public static final int PROTECTOR = 3;
     public static final int RANGE_EXTRACTOR = 4;
-    public static final int SLOT_COUNT = 5;
+    public static final int PURIFIER_IN = 5;
+    public static final int SLOT_COUNT = 6;
 
     public static final int DATA_COUNT = 10; // Actualizado a 10 para soportar EC y ED
 
@@ -51,6 +54,7 @@ public abstract class AbstractArmorTableMenu extends AbstractContainerMenu {
         this.addSlot(new ArmorUpgradeOutPutSlot(pPlayerInventory.player, this, pContainer, ARMOR_OUT, 42, 33));
         this.addSlot(new ArmorUpgradeSlot(this, pContainer, PROTECTOR, 42, 33));
         this.addSlot(new ArmorTableUpgradeSlot(this, pContainer, RANGE_EXTRACTOR, 109, 63));
+        this.addSlot(new PurifierInputSlot(pContainer, PURIFIER_IN, 109, 41));
 
         // Inventario del jugador
         for (int i = 0; i < 3; i++) {
@@ -88,14 +92,16 @@ public abstract class AbstractArmorTableMenu extends AbstractContainerMenu {
                 }
             } else {
                 // Mover del inventario a la máquina
-                if (this.isArmor(itemstack1)) {
+                if (this.isPurifier(itemstack1)) {
+                    if (!this.moveItemStackTo(itemstack1, PURIFIER_IN, PURIFIER_IN + 1, false)) return ItemStack.EMPTY;
+                } else if (this.isChargeable(itemstack1)) {
                     if (!this.moveItemStackTo(itemstack1, ARMOR_IN, ARMOR_IN + 1, false)) return ItemStack.EMPTY;
                 } else if (itemstack1.is(ModItems.AURELITE_INGOT.get())) {
                     if (!this.moveItemStackTo(itemstack1, AURELITE_IN, AURELITE_IN + 1, false)) return ItemStack.EMPTY;
                 } else if (this.isProtector(itemstack1)) {
                     if (!this.moveItemStackTo(itemstack1, PROTECTOR, PROTECTOR + 1, false)) return ItemStack.EMPTY;
-                } else if (this.isRangeExtractor(itemstack1)) {
-                    if (!this.moveItemStackTo(itemstack1, RANGE_EXTRACTOR, RANGE_EXTRACTOR + 1, false)) return ItemStack.EMPTY;
+                    //} else if (this.isRangeExtractor(itemstack1)) {
+                    //   if (!this.moveItemStackTo(itemstack1, RANGE_EXTRACTOR, RANGE_EXTRACTOR + 1, false)) return ItemStack.EMPTY;
                 } else if (pIndex >= inventoryStart && pIndex < inventoryStart + 27) {
                     if (!this.moveItemStackTo(itemstack1, inventoryStart + 27, inventoryEnd, false)) return ItemStack.EMPTY;
                 } else if (pIndex >= inventoryStart + 27 && pIndex < inventoryEnd && !this.moveItemStackTo(itemstack1, inventoryStart, inventoryStart + 27, false)) {
@@ -153,15 +159,13 @@ public abstract class AbstractArmorTableMenu extends AbstractContainerMenu {
     }
 
     // --- VALIDACIONES DE ÍTEMS ---
-    public boolean isArmor(ItemStack pStack) { return pStack.is(ModTags.Items.COMPATIBLE_ARMOR); }
+    /** Acepta las armaduras compatibles por tag (Aurelite) y cualquier armadura ya autorizada con el Purifier. */
+    public boolean isArmor(ItemStack pStack) { return pStack.is(ModTags.Items.COMPATIBLE_ARMOR) || AurumArmor.is(pStack); }
+    /** Slot de carga: acepta cualquier ítem que lleve energía (armaduras, armas, herramientas...). */
+    public boolean isChargeable(ItemStack pStack) { return this.isArmor(pStack) || EnergyItemCharger.isEnergyItem(pStack); }
+    public boolean isPurifier(ItemStack pStack) { return pStack.is(ModItems.PURIFIER.get()); }
     public boolean isProtector(ItemStack pStack) { return pStack.is(ModItems.EXTRACTOR_PROTECTOR.get().asItem()); }
-    public boolean isRangeExtractor(ItemStack pStack) {
-        return pStack.is(ModItems.RANGE_EXTRACTOR_UPDATER_TIER_1.get().asItem()) ||
-                pStack.is(ModItems.RANGE_EXTRACTOR_UPDATER_TIER_2.get().asItem()) ||
-                pStack.is(ModItems.RANGE_EXTRACTOR_UPDATER_TIER_3.get().asItem()) ||
-                pStack.is(ModItems.RANGE_EXTRACTOR_UPDATER_TIER_4.get().asItem()) ||
-                pStack.is(ModItems.RANGE_EXTRACTOR_UPDATER_TIER_5.get().asItem());
-    }
+
 
     public float getExtractorProgress() {
         return Mth.clamp(this.data.get(2) / (float) this.data.get(3), 0.0F, 1.0F);

@@ -38,4 +38,8 @@ public class AAModModelLayers {
             ResourceLocation.fromNamespaceAndPath(Aurum.MODID, "vex_altered_layer"),
             "main"
     );
+    public static final ModelLayerLocation BLAZE_CORRUPTED_LAYER = new ModelLayerLocation(
+            ResourceLocation.fromNamespaceAndPath(Aurum.MODID, "blaze_corrupted_layer"),
+            "main"
+    );
 }

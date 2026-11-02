@@ -23,12 +23,12 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockSetType;
+import net.minecraft.world.level.block.state.properties.WoodType;
 import net.minecraft.world.level.material.MapColor;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -83,7 +83,6 @@ public class ModBlocks {
     private static <T extends Block> void registerBlockItem(String name, DeferredBlock<T> block) {
         ModItems.ITEMS_REGISTRY.register(name, () -> new BlockItem(block.get(), new Item.Properties()));
     }
-    public static final DeferredBlock<Block> PLAGUE_AURUM_BLOCK = BLOCK_REGISTRY.register("plague_aurum_block", PlagueAurumBlock::new);
     public static final DeferredBlock<Block> SOUL_FLUID_BLOCK = BLOCK_REGISTRY.register("soul_fluid_block", SoulFluidBlock::new);
 
 
@@ -143,10 +142,12 @@ public class ModBlocks {
                     .strength(0.2f).sound(SoundType.GRASS).noOcclusion().isSuffocating((state, world, pos) -> false)
                     .isViewBlocking((state, world, pos) -> false).lightLevel((state) -> 1)));
 
-    public static final DeferredBlock<Block> AMBAR_LOG_DRY = registerBlock("ambar_log_dry",
+    public static final DeferredBlock<Block> AMBAR_LOG = registerBlock("ambar_log",
             () -> new Block(BlockBehaviour.Properties.of()
                     .strength(2f).sound(SoundType.WOOD).requiresCorrectToolForDrops()));
 
+    public static final DeferredBlock<Block> AMBAR_PLANKS = registerBlock("ambar_planks",
+            AmbarPlanks::new);
 
     public static final DeferredBlock<Block> VETALITA = registerBlock("vetalita_stone",
             () -> new Block(BlockBehaviour.Properties.of()
@@ -171,7 +172,9 @@ public class ModBlocks {
 
     public static final DeferredBlock<Block> AURUM_PORTAL_BLOCK = registerBlock("aurum_portal_block",
             () -> new AurumPortalBlock(BlockBehaviour.Properties.of()
+                    .strength(-1.0F, 3600000.0F)
                     .noCollission()            // Permite que el jugador lo atraviese
+                    .noOcclusion()             // No bloquea la vista
                     .lightLevel((state) -> 15) // Emite luz máxima
                     .strength(-1.0F, 3600000.0F) // Indestructible
                     .noLootTable())            // No suelta ítem al romperse
@@ -246,4 +249,44 @@ public class ModBlocks {
 
     // Crea un nuevo BlockItem con el id "aurum:example_block", combinando el espacio de nombres y la ruta
     //public static final RegistryObject<Item> WITHERED_GRASS_BLOCK_ITEM = ITEMS.register("withered_grass_block", () -> new BlockItem(WITHERED_GRASS_BLOCK.get(), new Item.Properties()));
+    public static final DeferredBlock<Block> PLAGUE_AURUM_BLOCK =
+            BLOCK_REGISTRY.register("plague_aurum_block", PlagaAurumLiquidBlock::new);
+
+
+
+    public static final DeferredBlock<StairBlock> AURUM_STAIRS = registerBlock("ambar_stairs",
+            () -> new StairBlock(ModBlocks.AMBAR_PLANKS.get().defaultBlockState(),
+                    BlockBehaviour.Properties.ofFullCopy(ModBlocks.AMBAR_PLANKS.get())));
+
+    public static final DeferredBlock<SlabBlock> AURUM_SLAB = registerBlock("ambar_slab",
+            () -> new SlabBlock(BlockBehaviour.Properties.ofFullCopy(ModBlocks.AMBAR_PLANKS.get())));
+
+    // Madera: usa OAK, no IRON (con IRON la puerta/placa/botón se comportan como de hierro)
+    public static final DeferredBlock<PressurePlateBlock> AURUM_PRESSURE_PLATE = registerBlock("ambar_pressure_plate",
+            () -> new PressurePlateBlock(BlockSetType.OAK,
+                    BlockBehaviour.Properties.ofFullCopy(ModBlocks.AMBAR_PLANKS.get())));
+
+    public static final DeferredBlock<ButtonBlock> AURUM_BUTTON = registerBlock("ambar_button",
+            () -> new ButtonBlock(BlockSetType.OAK, 30,
+                    BlockBehaviour.Properties.ofFullCopy(ModBlocks.AMBAR_PLANKS.get()).noCollission()));
+
+    public static final DeferredBlock<FenceBlock> AURUM_FENCE = registerBlock("ambar_fence",
+            () -> new FenceBlock(BlockBehaviour.Properties.ofFullCopy(ModBlocks.AMBAR_PLANKS.get())));
+
+    public static final DeferredBlock<FenceGateBlock> AURUM_FENCE_GATE = registerBlock("ambar_fence_gate",
+            () -> new FenceGateBlock(WoodType.OAK,
+                    BlockBehaviour.Properties.ofFullCopy(ModBlocks.AMBAR_PLANKS.get())));
+
+    public static final DeferredBlock<WallBlock> AURUM_WALL = registerBlock("ambar_wall",
+            () -> new WallBlock(BlockBehaviour.Properties.ofFullCopy(ModBlocks.AMBAR_PLANKS.get())));
+
+    public static final DeferredBlock<DoorBlock> AURUM_DOOR = registerBlock("ambar_door",
+            () -> new DoorBlock(BlockSetType.OAK,
+                    BlockBehaviour.Properties.ofFullCopy(ModBlocks.AMBAR_PLANKS.get()).noOcclusion()));
+
+
+
+
+
+
 }

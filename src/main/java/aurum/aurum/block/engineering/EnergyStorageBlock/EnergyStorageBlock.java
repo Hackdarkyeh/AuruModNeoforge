@@ -130,7 +130,8 @@ public class EnergyStorageBlock extends Block implements EntityBlock {
     }
 
     private void joinExistingNetwork(EnergyStorageBlockEntity newBlock, EnergyStorageBlockEntity master, BlockPos newPos) {
-        // Configurar el nuevo bloque como esclavo
+        newBlock.adoptTypeOf(master);
+
         newBlock.isMaster = false;
         newBlock.masterPos = master.getBlockPos();
         newBlock.mergedBlocks.clear();

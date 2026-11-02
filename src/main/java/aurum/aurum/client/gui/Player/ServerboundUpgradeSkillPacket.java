@@ -2,6 +2,7 @@ package aurum.aurum.client.gui.Player;
 
 import aurum.aurum.Aurum;
 import aurum.aurum.init.ModDataComponents;
+import aurum.aurum.item.ArmorItem.ArmorExpData;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -40,6 +41,9 @@ public record ServerboundUpgradeSkillPacket(int slotIndex, int skillType) implem
                 if (!armorStack.isEmpty() && armorStack.getItem() instanceof ArmorItem) {
                     ArmorSkillsData oldSkills = armorStack.getOrDefault(
                             ModDataComponents.ARMOR_SKILLS.get(), ArmorSkillsData.defaultData());
+
+                    ArmorExpData exp = armorStack.getOrDefault(ModDataComponents.ARMOR_EXP.get(), ArmorExpData.defaultData());
+                    if (oldSkills.getAvailablePoints(exp.currentLevel() / 10) <= 0) return;
 
                     ArmorSkillsData newSkills = switch (skillType) {
                         case 1 -> oldSkills.withAbsorption(oldSkills.absorption() + 1);

@@ -1,6 +1,6 @@
-// En AureliteSword.java - versión simplificada
 package aurum.aurum.item.Swords;
 
+import aurum.aurum.energy.ArmorAndWeapons.EnergyBar;
 import aurum.aurum.energy.ArmorAndWeapons.EnergyConfig;
 import aurum.aurum.energy.ArmorAndWeapons.IEnergyWeapon;
 import aurum.aurum.init.ModDataComponents;
@@ -156,43 +156,51 @@ public class AureliteSword extends SwordItem implements IEnergyWeapon {
     }
 
     // --- Consumo de energía en uso ---
+
+    /** Energía que cuesta un uso según el tipo cargado. */
+    private static int getAttackConsumption(EnergyType type) {
+        return switch (type) {
+            case DARK_ENERGY -> (int) (EnergyConfig.AureliteSword.DARK_ENERGY_CONSUMPTION_PER_HIT *
+                    EnergyConfig.AureliteSword.DARK_ENERGY_DRAIN_MULTIPLIER);
+            case CLEAN_ENERGY -> (int) (EnergyConfig.AureliteSword.CLEAN_ENERGY_CONSUMPTION_PER_HIT *
+                    EnergyConfig.AureliteSword.CLEAN_ENERGY_DRAIN_MULTIPLIER);
+            default -> 0;
+        };
+    }
+
     public boolean consumeEnergyForAttack(ItemStack stack) {
         EnergyData data = getEnergyData(stack);
         if (data.energyType() == EnergyType.NONE || data.currentEnergy() <= 0) {
             return true; // Puede atacar sin energía
         }
 
-        int consumption = switch(data.energyType()) {
-            case DARK_ENERGY -> (int)(EnergyConfig.AureliteSword.DARK_ENERGY_CONSUMPTION_PER_HIT *
-                    EnergyConfig.AureliteSword.DARK_ENERGY_DRAIN_MULTIPLIER);
-            case CLEAN_ENERGY -> (int)(EnergyConfig.AureliteSword.CLEAN_ENERGY_CONSUMPTION_PER_HIT *
-                    EnergyConfig.AureliteSword.CLEAN_ENERGY_DRAIN_MULTIPLIER);
-            default -> 0;
-        };
-
-        if (data.currentEnergy() >= consumption) {
-            setEnergy(stack, data.currentEnergy() - consumption);
-            return true;
-        } else {
-            setEnergyType(stack, EnergyType.NONE);
-            return false;
+        int consumption = getAttackConsumption(data.energyType());
+        if (data.currentEnergy() < consumption) {
+            return false; // No alcanza: no se toca nada (antes se borraba el tipo y la energía quedaba atrapada)
         }
+
+        int remaining = data.currentEnergy() - consumption;
+        setEnergy(stack, remaining);
+        if (remaining <= 0) {
+            setEnergyType(stack, EnergyType.NONE); // vacía: puede cargarse con otra energía
+        }
+        return true;
     }
 
-    // --- Métodos sobreescritos para UI ---
+    // --- Barra de energía: solo visible cuando falta energía ---
     @Override
     public boolean isBarVisible(ItemStack pStack) {
-        return getCurrentEnergy(pStack) > 0;
+        return EnergyBar.isVisible(getCurrentEnergy(pStack), getMaxEnergy(pStack));
     }
 
     @Override
     public int getBarWidth(ItemStack pStack) {
-        return Math.round(13.0F * getCurrentEnergy(pStack) / (float) getMaxEnergy(pStack));
+        return EnergyBar.width(getCurrentEnergy(pStack), getMaxEnergy(pStack));
     }
 
     @Override
     public int getBarColor(ItemStack pStack) {
-        return switch(getCurrentEnergyType(pStack)) {
+        return switch (getCurrentEnergyType(pStack)) {
             case DARK_ENERGY -> 0x6600CC;
             case CLEAN_ENERGY -> 0x33FF99;
             default -> 0x9933FF;
@@ -204,7 +212,7 @@ public class AureliteSword extends SwordItem implements IEnergyWeapon {
         super.appendHoverText(pStack, pContext, pTooltipComponents, pIsAdvanced);
 
         EnergyData data = getEnergyData(pStack);
-        String energyTypeName = switch(data.energyType()) {
+        String energyTypeName = switch (data.energyType()) {
             case DARK_ENERGY -> "Oscura";
             case CLEAN_ENERGY -> "Limpia";
             default -> "";
@@ -214,7 +222,7 @@ public class AureliteSword extends SwordItem implements IEnergyWeapon {
                 data.currentEnergy() + " / " + data.maxCapacity()));
 
         // Mostrar daño actual
-        float currentDamage = switch(data.energyType()) {
+        float currentDamage = switch (data.energyType()) {
             case DARK_ENERGY -> EnergyConfig.AureliteSword.DARK_ENERGY_DAMAGE;
             case CLEAN_ENERGY -> EnergyConfig.AureliteSword.CLEAN_ENERGY_DAMAGE;
             default -> EnergyConfig.AureliteSword.BASE_DAMAGE;
@@ -222,10 +230,6 @@ public class AureliteSword extends SwordItem implements IEnergyWeapon {
 
         pTooltipComponents.add(Component.literal("Daño: " + currentDamage)
                 .withStyle(net.minecraft.ChatFormatting.GRAY));
-
-        if (data.energyType() != EnergyType.NONE) {
-            //pTooltipComponents.add(Component.literal("¡Modo activo: Mayor consumo!").withStyle(net.minecraft.ChatFormatting.YELLOW));
-        }
     }
 
     @Override
@@ -233,7 +237,9 @@ public class AureliteSword extends SwordItem implements IEnergyWeapon {
         ItemStack stack = pPlayer.getItemInHand(pUsedHand);
         EnergyData data = getEnergyData(stack);
 
-        if (pPlayer.isCrouching() && data.currentEnergy() >= 50 && data.energyType() != EnergyType.NONE) {
+        // Ahora exige la energía que realmente cuesta (antes pedía 50 y el coste real era 75)
+        if (pPlayer.isCrouching() && data.energyType() != EnergyType.NONE
+                && data.currentEnergy() >= getAttackConsumption(data.energyType())) {
             if (consumeEnergyForAttack(stack)) {
                 if (!pLevel.isClientSide) {
                     pLevel.explode(null, pPlayer.getX(), pPlayer.getY(), pPlayer.getZ(),

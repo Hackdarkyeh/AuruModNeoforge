@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:cache_2d",
+  "argument": {
+    "type": "minecraft:add",
+    "argument1": "minecraft:overworld/continents",
+    "argument2": {
+      "type": "minecraft:mul",
+      "argument1": 0.70,
+      "argument2": {
+        "type": "minecraft:mul",
+        "argument1": "aurum:dim1_volcano_active",
+        "argument2": {
+          "type": "minecraft:clamp",
+          "input": {
+            "type": "minecraft:mul",
+            "argument1": 10.0,
+            "argument2": { "type": "minecraft:add", "argument1": -0.55, "argument2": "aurum:dim1_volcano_noise" }
+          },
+          "min": 0.0,
+          "max": 1.0
+        }
+      }
+    }
+  }
+}

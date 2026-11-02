@@ -2,9 +2,11 @@ package aurum.aurum.init;
 
 import aurum.aurum.Soul.SoulData;
 import aurum.aurum.client.gui.Player.ArmorSkillsData;
+import aurum.aurum.client.gui.Player.SetPassivesData;
 import aurum.aurum.item.ArmorItem.ArmorEnergyData;
 import aurum.aurum.item.ArmorItem.ArmorExpData;
 import aurum.aurum.item.ArmorItem.ArmorTierData;
+import aurum.aurum.item.Battery.BatteryData;
 import aurum.aurum.item.Swords.AureliteSword;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -49,6 +51,8 @@ public class ModDataComponents {
 
     public static void register(IEventBus bus) {
         REGISTRAR.register(bus);
+        ATTACHMENT_TYPES.register(bus); // sin esto ni SET_PASSIVES ni ABILITY_SOCKET existen
+
     }
 
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<ArmorExpData>> ARMOR_EXP =
@@ -101,9 +105,27 @@ public class ModDataComponents {
                     .networkSynchronized(ByteBufCodecs.BOOL)
             );
 
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Float>> ARMOR_BARRIER =
+            REGISTRAR.registerComponentType("armor_barrier", builder -> builder
+                    .persistent(Codec.FLOAT)
+                    .networkSynchronized(ByteBufCodecs.FLOAT)
+            );
+
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<SetPassivesData>> SET_PASSIVES =
+            ATTACHMENT_TYPES.register("set_passives", () -> AttachmentType.builder(() -> SetPassivesData.DEFAULT)
+                    .serialize(SetPassivesData.CODEC)
+                    .copyOnDeath()
+                    .build());
+
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<ArmorSkillsData>> ARMOR_SKILLS =
             REGISTRAR.registerComponentType("armor_skills", builder -> builder
                     .persistent(ArmorSkillsData.CODEC)
                     .networkSynchronized(ArmorSkillsData.STREAM_CODEC)
             );
+
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<BatteryData>> BATTERY_DATA =
+            REGISTRAR.register("battery_data", () -> DataComponentType.<BatteryData>builder()
+                    .persistent(BatteryData.CODEC)
+                    .networkSynchronized(BatteryData.STREAM_CODEC)
+                    .build());
 }

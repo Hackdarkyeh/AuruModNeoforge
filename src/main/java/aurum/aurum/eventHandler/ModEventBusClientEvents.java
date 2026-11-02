@@ -24,5 +24,6 @@ public class ModEventBusClientEvents {
         event.registerLayerDefinition(AAModModelLayers.DOLPHIN_ALTERED_LAYER, aurum.aurum.client.model.DolphinAlteredModel::createBodyLayer);
         event.registerLayerDefinition(AAModModelLayers.DRAGON_ALTERED_LAYER, EnderDragonAlteredRenderer::createBodyLayer);
         event.registerLayerDefinition(AAModModelLayers.VEX_ALTERED_LAYER, aurum.aurum.client.model.VexAlteredModel::createBodyLayer);
+        event.registerLayerDefinition(AAModModelLayers.BLAZE_CORRUPTED_LAYER, aurum.aurum.client.model.BlazeCorruptedModel::createBodyLayer);
     }
 }

@@ -55,8 +55,7 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
 
     // CACHÉS DE RED (Para no destruir el rendimiento)
     private final Map<BlockPos, EnergyStorageBlockEntity> detectedMasterStorages = new HashMap<>();
-    private final Map<BlockPos, PipeNetworkUtils.IEnergyDevice> connectedDarkEnergyDevices = new HashMap<>();
-
+    private final Map<BlockPos, PipeNetworkUtils.Found<PipeNetworkUtils.IEnergyDevice>> connectedDarkEnergyDevices = new HashMap<>();
     private int cleanNetworkTicks = 0;
     private int darkNetworkTicks = 0;
     private static final int MAX_ENERGY_PULL_PER_TICK = 1000;
@@ -74,7 +73,7 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
     public int MAX_AURELITE_PURITY = 60;
 
     private boolean hasEnoughExperience = false;
-    private int maxDistance = 10;
+    private int maxDistance = 50;
 
     // Almacenamiento de Energía
     private final EnergyStorage energyStorage = new EnergyStorage(2000000, 0, 10, 10);
@@ -188,18 +187,23 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
         // 4. Actualizar modificadores de ítems
         ItemStack pipeStack = pBlockEntity.items.get(SLOT_INPUT);
         pBlockEntity.updatePeak(pBlockEntity.items.get(SLOT_PEAK));
-        pBlockEntity.updateRangeExtractor(pBlockEntity.items.get(SLOT_RANGE));
+        //pBlockEntity.updateRangeExtractor(pBlockEntity.items.get(SLOT_RANGE));
 
         boolean hasEnergy = pBlockEntity.energyStorage.getEnergyStored() >= pBlockEntity.getExtractingDuration();
 
-        // 5. GESTIÓN DE EXTRACCIÓN Y CONSUMO CONDICIONAL (No consume si está desconectado)
+        // 5. ENVÍO DE ENERGÍA OSCURA: siempre que haya almacenada, aunque el extractor no esté extrayendo
+        if (pBlockEntity.darkEnergyStorage.getEnergyStored() > 0) {
+            float before = pBlockEntity.darkEnergyStorage.getEnergyStored();
+            pBlockEntity.processDarkEnergy();
+            if (pBlockEntity.darkEnergyStorage.getEnergyStored() != before) {
+                stateChanged = true;
+            }
+        }
+
+        // 6. GESTIÓN DE EXTRACCIÓN Y CONSUMO CONDICIONAL (No consume si está desconectado)
         if (hasEnergy && pBlockEntity.manageAureliteConnection(pipeStack) && pBlockEntity.canExtractAurelite()) {
             pBlockEntity.litTime = pBlockEntity.getExtractingDuration();
             pBlockEntity.litDuration = pBlockEntity.litTime;
-
-            if (pBlockEntity.darkEnergyStorage.getEnergyStored() > 0) {
-                pBlockEntity.processDarkEnergy();
-            }
 
             pBlockEntity.energyStorage.consumeEnergy(1, false);
             pBlockEntity.energyStorage.consumeEnergy(600, false);
@@ -274,7 +278,8 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
                     BlockEntity be = level.getBlockEntity(adjacentPos);
                     if (be instanceof EnergyStorageBlockEntity storage) {
                         BlockPos masterPos = storage.isMaster() ? adjacentPos : storage.getMasterPos();
-                        if (level.isLoaded(masterPos) && level.getBlockEntity(masterPos) instanceof EnergyStorageBlockEntity masterStorage) {
+                        if (level.isLoaded(masterPos) && level.getBlockEntity(masterPos) instanceof EnergyStorageBlockEntity masterStorage
+                                && !masterStorage.isDarkEnergy()) {
                             currentMasters.add(masterPos);
                             detectedMasterStorages.put(masterPos, masterStorage);
                         }
@@ -287,9 +292,9 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
 
     private void detectDarkEnergyNetwork() {
         if (level == null) return;
-        Map<BlockPos, PipeNetworkUtils.IEnergyDevice> devices = PipeNetworkUtils.findConnectedDevices(level, worldPosition, PipeNetworkUtils.IEnergyDevice.class, DarkPipeBlock.class);
         this.connectedDarkEnergyDevices.clear();
-        this.connectedDarkEnergyDevices.putAll(devices);
+        this.connectedDarkEnergyDevices.putAll(PipeNetworkUtils.findConnectedDevicesWithDistance(
+                level, worldPosition, PipeNetworkUtils.IEnergyDevice.class, DarkPipeBlock.class));
     }
 
     private boolean pullCleanEnergyFromNetwork(float amountNeeded) {
@@ -305,6 +310,7 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
                 BlockEntity be = level.getBlockEntity(adjacentPos);
                 if (be instanceof EnergyStorageBlockEntity storage && !storage.isRemoved()) {
                     // Encontramos un almacenamiento adyacente directo físico
+                    if (storage.isDarkEnergy()) continue;
                     float available = storage.getEnergyStored();
                     if (available > 0) {
                         float toPull = Math.min(amountNeeded, available);
@@ -335,7 +341,7 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
                 iterator.remove();
                 continue;
             }
-
+            if (storage.isDarkEnergy()) continue;
             // Validar que el camino por tuberías sigue existiendo
             if (!isPathStillValid(worldPosition, masterPos)) {
                 iterator.remove();
@@ -420,41 +426,35 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
     }
 
     public void processDarkEnergy() {
-        float availableEnergy = this.darkEnergyStorage.getEnergyStored();
-        if (availableEnergy <= 0 || connectedDarkEnergyDevices.isEmpty()) return;
+        float available = this.darkEnergyStorage.getEnergyStored();
+        if (available <= 0 || connectedDarkEnergyDevices.isEmpty()) return;
 
-        List<PipeNetworkUtils.IEnergyDevice> receivers = connectedDarkEnergyDevices.values().stream()
-                .filter(PipeNetworkUtils.IEnergyDevice::canReceiveEnergy)
-                .collect(Collectors.toList());
+        Set<BlockPos> servedBanks = new HashSet<>();
 
-        if (receivers.isEmpty()) return;
+        for (Map.Entry<BlockPos, PipeNetworkUtils.Found<PipeNetworkUtils.IEnergyDevice>> entry : connectedDarkEnergyDevices.entrySet()) {
+            if (available <= 0) break;
 
-        float energyPerTick = Math.min(availableEnergy, 10f);
+            PipeNetworkUtils.IEnergyDevice device = entry.getValue().device();
+            if (device instanceof BlockEntity be && be.isRemoved()) continue;
+            if (!device.canReceiveEnergy()) continue;
 
-        for (PipeNetworkUtils.IEnergyDevice device : receivers) {
-            if (availableEnergy <= 0) break;
+            // Un banco con varios bloques en la red cuenta una sola vez
+            if (device instanceof EnergyStorageBlockEntity storage && !servedBanks.add(storage.getMasterPos())) continue;
 
-            BlockPos devicePos = connectedDarkEnergyDevices.entrySet().stream()
-                    .filter(entry -> entry.getValue() == device)
-                    .map(Map.Entry::getKey)
-                    .findFirst().orElse(null);
+            float loss = entry.getValue().pipes() * PipeNetworkUtils.ENERGY_LOSS_PER_PIPE;
+            if (loss >= 1f) continue; // demasiado lejos
 
-            if (devicePos == null) continue;
+            float toSend = Math.min(10f, available);
+            float afterLoss = toSend * (1f - loss);
+            float needed = device.getDarkEnergyCapacity() - device.getDarkEnergyStored();
+            float actual = Math.min(afterLoss, needed);
 
-            float energyLossPercentage = PipeNetworkUtils.calculateEnergyLoss(level, worldPosition, devicePos, DarkPipeBlock.class);
-            float energyToSend = Math.min(energyPerTick, availableEnergy);
-
-            float energyAfterLoss = energyToSend * (1.0f - energyLossPercentage);
-            float energyNeeded = device.getDarkEnergyCapacity() - device.getDarkEnergyStored();
-
-            float actualEnergy = Math.min(energyAfterLoss, energyNeeded);
-
-            if (actualEnergy > 0) {
-                device.receiveDarkEnergy(actualEnergy);
-                availableEnergy -= energyToSend;
+            if (actual > 0) {
+                device.receiveDarkEnergy(actual);
+                available -= actual / (1f - loss); // solo descuenta lo que realmente se usó
             }
         }
-        this.darkEnergyStorage.setStoredEnergy(availableEnergy);
+        this.darkEnergyStorage.setStoredEnergy(available);
     }
 
     private boolean manageAureliteConnection(ItemStack pipeStack) {
@@ -495,15 +495,6 @@ public abstract class AbstractExtractorBlockEntity extends BaseContainerBlockEnt
         else if (extractorPeak.is(ModItems.EXTRACTOR_PEAK_TIER2.get())) EXTRACTING_COST_AURELITE_ORE_TIME = 3000;
         else if (extractorPeak.is(ModItems.EXTRACTOR_PEAK_TIER1.get())) EXTRACTING_COST_AURELITE_ORE_TIME = 3500;
         else EXTRACTING_COST_AURELITE_ORE_TIME = 4000;
-    }
-
-    private void updateRangeExtractor(ItemStack rangeExtractor) {
-        if (rangeExtractor.isEmpty()) { maxDistance = 10; return; }
-        if (rangeExtractor.is(ModItems.RANGE_EXTRACTOR_UPDATER_TIER_5.get())) maxDistance = 35;
-        else if (rangeExtractor.is(ModItems.RANGE_EXTRACTOR_UPDATER_TIER_4.get())) maxDistance = 30;
-        else if (rangeExtractor.is(ModItems.RANGE_EXTRACTOR_UPDATER_TIER_3.get())) maxDistance = 25;
-        else if (rangeExtractor.is(ModItems.RANGE_EXTRACTOR_UPDATER_TIER_2.get())) maxDistance = 20;
-        else if (rangeExtractor.is(ModItems.RANGE_EXTRACTOR_UPDATER_TIER_1.get())) maxDistance = 15;
     }
 
     public float extractDarkEnergy(float maxExtract) {

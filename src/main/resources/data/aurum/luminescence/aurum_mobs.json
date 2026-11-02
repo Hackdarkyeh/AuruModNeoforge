@@ -1,0 +1,6 @@
+[
+  { "entity": "aurum:skeleton_altered", "damage": 7.5, "interval_ticks": 60, "interval_ticks_hard": 40, "aurum": true, "melee_interval_ticks": 0 },
+  { "entity": "aurum:blaze_corrupted",  "damage": 20.0, "interval_ticks": 59 },
+  { "entity": "aurum:zombie_altered",   "melee_interval_ticks": 8 },
+  { "entity": "aurum:spider_corrupted", "melee_interval_ticks": 8 }
+]

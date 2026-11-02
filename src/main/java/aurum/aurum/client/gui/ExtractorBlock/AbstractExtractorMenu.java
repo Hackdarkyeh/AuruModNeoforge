@@ -121,10 +121,10 @@ public abstract class AbstractExtractorMenu extends AbstractContainerMenu {
                     if (!this.moveItemStackTo(itemstack1, 3, 4, false)) {
                         return ItemStack.EMPTY;
                     }
-                }else if(this.isRangeExtractor(itemstack1)) { // Si es un actualizador de generador de energía
+                /*}else if(this.isRangeExtractor(itemstack1)) { // Si es un actualizador de generador de energía
                     if (!this.moveItemStackTo(itemstack1, 4, 5, false)) {
                         return ItemStack.EMPTY;
-                    }
+                    }*/
                 }else if (pIndex >= inventoryStart && pIndex < 31) { // Slots del inventario
                     if (!this.moveItemStackTo(itemstack1, 31, inventoryEnd, false)) {
                         return ItemStack.EMPTY;
@@ -165,14 +165,6 @@ public abstract class AbstractExtractorMenu extends AbstractContainerMenu {
 
     public boolean isProtector(ItemStack pStack) {
         return pStack.is(ModItems.EXTRACTOR_PROTECTOR.get().asItem());
-    }
-
-    public boolean isRangeExtractor(ItemStack pStack) {
-        return pStack.is(ModItems.RANGE_EXTRACTOR_UPDATER_TIER_1.get().asItem()) ||
-                pStack.is(ModItems.RANGE_EXTRACTOR_UPDATER_TIER_2.get().asItem()) ||
-                pStack.is(ModItems.RANGE_EXTRACTOR_UPDATER_TIER_3.get().asItem()) ||
-                pStack.is(ModItems.RANGE_EXTRACTOR_UPDATER_TIER_4.get().asItem())
-                || pStack.is(ModItems.RANGE_EXTRACTOR_UPDATER_TIER_5.get().asItem());
     }
 
     // Ticks de extracción acumulados y ticks totales (20 ticks = 1 segundo)

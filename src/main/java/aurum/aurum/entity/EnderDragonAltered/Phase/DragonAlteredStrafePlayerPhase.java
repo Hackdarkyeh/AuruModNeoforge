@@ -119,7 +119,7 @@ public class DragonAlteredStrafePlayerPhase extends AbstractDragonAlteredPhaseIn
                 j--;
             }
 
-            if (this.dragon.getDragonFight() != null && this.dragon.getDragonFight().getCrystalsAlive() > 0) {
+            if (this.dragon.getCrystalsAlive() > 0) {
                 j %= 12;
                 if (j < 0) {
                     j += 12;
@@ -193,4 +193,3 @@ public class DragonAlteredStrafePlayerPhase extends AbstractDragonAlteredPhaseIn
         return EnderDragonAlteredPhase.STRAFE_PLAYER;
     }
 }
-

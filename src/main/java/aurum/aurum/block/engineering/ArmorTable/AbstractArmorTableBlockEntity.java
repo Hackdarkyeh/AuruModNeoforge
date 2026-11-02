@@ -1,23 +1,21 @@
 package aurum.aurum.block.engineering.ArmorTable;
 
+import aurum.aurum.block.engineering.EnergyStorageBlock.EnergyStorageBlock;
+import aurum.aurum.block.engineering.EnergyStorageBlock.EnergyStorageBlockEntity;
 import aurum.aurum.block.engineering.ExtractorBlock.AbstractExtractorBlockEntity;
 import aurum.aurum.block.engineering.PipeSystem.DarkPipeBlock;
+import aurum.aurum.block.engineering.PipeSystem.PipeBlock;
 import aurum.aurum.block.engineering.PipeSystem.PipeNetworkUtils;
+import aurum.aurum.energy.ArmorAndWeapons.EnergyConfig;
 import aurum.aurum.init.ModDataComponents;
 import aurum.aurum.init.ModItems;
 import aurum.aurum.item.ArmorItem.ArmorExpData;
+import aurum.aurum.item.ArmorItem.AurumArmor;
 import aurum.aurum.item.Aurelite_ingot;
-import com.google.common.collect.Maps;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-import net.minecraft.SharedConstants;
-import net.minecraft.Util;
 import net.minecraft.core.*;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.tags.ItemTags;
-import net.minecraft.tags.TagKey;
-import net.minecraft.util.Mth;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.WorldlyContainer;
 import net.minecraft.world.entity.player.Player;
@@ -25,14 +23,11 @@ import net.minecraft.world.entity.player.StackedContents;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.inventory.RecipeCraftingHolder;
 import net.minecraft.world.inventory.StackedContentsCompatible;
-import net.minecraft.world.item.ArmorItem;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.AbstractCookingRecipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeType;
-import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -49,7 +44,14 @@ public abstract class AbstractArmorTableBlockEntity extends BaseContainerBlockEn
     protected static final int SLOT_ARMOR_OUT = 2; // Vista previa
     protected static final int SLOT_PROTECTOR = 3;
     protected static final int SLOT_RANGE_EXTRACTOR = 4;
-    private static final int SLOTS_COUNT = 5;
+    protected static final int SLOT_PURIFIER = 5;
+    private static final int SLOTS_COUNT = 6;
+
+    // Purificador: convierte energía limpia en energía oscura (1000 limpia -> 1 oscura).
+    // La durabilidad gastada por conversión es la que usaba DarkEnergyTable.
+    private static final int PURIFIER_CLEAN_COST = 1000;
+    private static final int PURIFIER_DARK_OUTPUT = 1;
+    private static final int PURIFIER_DURABILITY_COST = 3;
 
     private static final int[] SLOTS_FOR_UP = new int[]{SLOT_ARMOR_IN};
     private static final int[] SLOTS_FOR_DOWN = new int[]{SLOT_ARMOR_OUT, SLOT_AURELITE_IN};
@@ -71,6 +73,13 @@ public abstract class AbstractArmorTableBlockEntity extends BaseContainerBlockEn
 
     public float darkEnergyStored = 0;
     public int darkEnergyCapacity = 200000;
+
+    // Caché de los bancos de energía conectados (igual que el extractor, para no recorrer la red cada tick):
+    // limpios por tuberías normales y oscuros por dark pipes
+    private final Map<BlockPos, EnergyStorageBlockEntity> detectedMasterStorages = new HashMap<>();
+    private final Map<BlockPos, EnergyStorageBlockEntity> detectedDarkMasterStorages = new HashMap<>();
+    private int cleanNetworkTicks = 0;
+    private static final int MAX_ENERGY_PULL_PER_TICK = 1000;
 
     protected final ContainerData dataAccess = new ContainerData() {
         @Override
@@ -133,7 +142,16 @@ public abstract class AbstractArmorTableBlockEntity extends BaseContainerBlockEn
             pBlockEntity.litTime--;
         }
 
-        // 1. Rastreamos la red en busca de un Extractor de Energía Oscura
+        // 0. Cada segundo buscamos los bancos de energía conectados
+        //    (limpios por tuberías normales, oscuros por dark pipes)
+        pBlockEntity.cleanNetworkTicks++;
+        if (pBlockEntity.cleanNetworkTicks >= 20) {
+            pBlockEntity.detectEnergyNetwork(false);
+            pBlockEntity.detectEnergyNetwork(true);
+            pBlockEntity.cleanNetworkTicks = 0;
+        }
+
+        // 1. Energía oscura. Primero rastreamos la red en busca de un Extractor de Energía Oscura
         BlockPos containerPos = pBlockEntity.findDarkEnergyContainer();
 
         if (containerPos != null) {
@@ -156,9 +174,94 @@ public abstract class AbstractArmorTableBlockEntity extends BaseContainerBlockEn
             }
         }
 
+        // 1b. Si aún falta oscura, la tomamos de los bancos de energía oscura (por dark pipes o pegados a la mesa)
+        float darkDemand = pBlockEntity.darkEnergyCapacity - pBlockEntity.darkEnergyStored;
+        if (darkDemand > 0) {
+            float amountToPull = Math.min(darkDemand, MAX_ENERGY_PULL_PER_TICK);
+            if (pBlockEntity.pullFromNetwork(true, amountToPull)) {
+                stateChanged = true;
+            }
+        }
+
+        // 2. Energía limpia: la mesa la busca en los bancos limpios
+        //    (primero los pegados a ella, luego los de la red de tuberías normales)
+        float cleanDemand = pBlockEntity.cleanEnergyCapacity - pBlockEntity.cleanEnergyStored;
+        if (cleanDemand > 0) {
+            float amountToPull = Math.min(cleanDemand, MAX_ENERGY_PULL_PER_TICK);
+            if (pBlockEntity.pullFromNetwork(false, amountToPull)) {
+                stateChanged = true;
+            }
+        }
+
+        // 2b. Purificador: convierte energía limpia en oscura
+        if (purify(pBlockEntity)) {
+            stateChanged = true;
+        }
+
+        // 3. Cargamos el ítem del slot de carga con la energía almacenada (oscura primero)
+        if (chargeItem(pBlockEntity)) {
+            stateChanged = true;
+
+            // La vista previa de la mejora es una COPIA de la armadura: si hay una, la rehacemos para que
+            // lleve la energía recién cargada (si no, al cogerla se perdería esa energía)
+            if (!pBlockEntity.items.get(SLOT_ARMOR_OUT).isEmpty()) {
+                pBlockEntity.updateOutputSlot();
+            }
+        }
+
         if (stateChanged) {
             setChanged(pLevel, pPos, pState);
         }
+    }
+
+    /**
+     * Pasa energía de los tanques de la mesa al ítem del slot de carga (ver {@link EnergyItemCharger}).
+     *
+     * @return true si el ítem ha recibido energía este tick
+     */
+    private static boolean chargeItem(AbstractArmorTableBlockEntity table) {
+        ItemStack stack = table.items.get(SLOT_ARMOR_IN);
+        if (stack.isEmpty()) return false;
+
+        int dark = (int) table.darkEnergyStored;
+        int clean = (int) table.cleanEnergyStored;
+
+        // Carga instantánea: el límite por tick pasa a ser toda la energía disponible.
+        // Lo que se transfiere sigue limitado por la capacidad máxima del ítem.
+        int instantRate = dark + clean;
+
+        EnergyItemCharger.Result result = EnergyItemCharger.charge(
+                stack,
+                dark,
+                clean,
+                instantRate);
+
+        table.darkEnergyStored -= result.dark();
+        table.cleanEnergyStored -= result.clean();
+        return result.any();
+    }
+
+    /**
+     * Purificador: convierte energía limpia en oscura. Consume PURIFIER_CLEAN_COST de limpia y produce
+     * PURIFIER_DARK_OUTPUT de oscura por tick, gastando durabilidad del purificador.
+     *
+     * @return true si ha hecho una conversión este tick
+     */
+    private static boolean purify(AbstractArmorTableBlockEntity table) {
+        ItemStack purifier = table.items.get(SLOT_PURIFIER);
+        if (purifier.isEmpty() || !purifier.is(ModItems.PURIFIER.get())) return false;
+        if (purifier.getDamageValue() >= purifier.getMaxDamage()) return false;
+        if (table.cleanEnergyStored < PURIFIER_CLEAN_COST) return false;
+        if (table.darkEnergyStored + PURIFIER_DARK_OUTPUT > table.darkEnergyCapacity) return false;
+
+        table.cleanEnergyStored -= PURIFIER_CLEAN_COST;
+        table.darkEnergyStored += PURIFIER_DARK_OUTPUT;
+
+        purifier.setDamageValue(purifier.getDamageValue() + PURIFIER_DURABILITY_COST);
+        if (purifier.getDamageValue() >= purifier.getMaxDamage()) {
+            table.items.set(SLOT_PURIFIER, ItemStack.EMPTY);
+        }
+        return true;
     }
 
     /**
@@ -197,14 +300,205 @@ public abstract class AbstractArmorTableBlockEntity extends BaseContainerBlockEn
         return null;
     }
 
+    // --- REDES DE BANCOS DE ENERGÍA (misma lógica que AbstractExtractorBlockEntity) ---
+    // La limpia viaja por tuberías normales y la oscura por dark pipes. Un banco solo cuenta para el tanque
+    // de su propio tipo: un banco oscuro nunca llena el tanque de limpia ni al revés.
+
+    private static boolean isPipeOfType(BlockState state, boolean dark) {
+        return dark
+                ? state.getBlock() instanceof DarkPipeBlock
+                : state.getBlock() instanceof PipeBlock && !(state.getBlock() instanceof DarkPipeBlock);
+    }
+
+    private Map<BlockPos, EnergyStorageBlockEntity> storagesFor(boolean dark) {
+        return dark ? detectedDarkMasterStorages : detectedMasterStorages;
+    }
+
+    private void detectEnergyNetwork(boolean dark) {
+        Map<BlockPos, EnergyStorageBlockEntity> detected = storagesFor(dark);
+        Queue<BlockPos> queue = new LinkedList<>();
+        Set<BlockPos> visited = new HashSet<>();
+        Set<BlockPos> currentMasters = new HashSet<>();
+
+        queue.add(worldPosition);
+        visited.add(worldPosition);
+
+        int maxSteps = 150;
+        int steps = 0;
+
+        while (!queue.isEmpty() && steps < maxSteps) {
+            BlockPos currentPos = queue.poll();
+            steps++;
+
+            for (Direction direction : Direction.values()) {
+                BlockPos adjacentPos = currentPos.relative(direction);
+                if (visited.contains(adjacentPos) || level == null || !level.isLoaded(adjacentPos)) continue;
+
+                BlockState adjacentState = level.getBlockState(adjacentPos);
+                visited.add(adjacentPos);
+
+                if (isPipeOfType(adjacentState, dark)) {
+                    queue.add(adjacentPos);
+                } else if (adjacentState.getBlock() instanceof EnergyStorageBlock) {
+                    BlockEntity be = level.getBlockEntity(adjacentPos);
+                    if (be instanceof EnergyStorageBlockEntity storage && storage.isDarkEnergy() == dark) {
+                        BlockPos masterPos = storage.isMaster() ? adjacentPos : storage.getMasterPos();
+                        if (level.isLoaded(masterPos) && level.getBlockEntity(masterPos) instanceof EnergyStorageBlockEntity masterStorage) {
+                            currentMasters.add(masterPos);
+                            detected.put(masterPos, masterStorage);
+                        }
+                    }
+                }
+            }
+        }
+        detected.keySet().retainAll(currentMasters);
+    }
+
+    /** Saca energía de un banco y la mete en el tanque de la mesa del tipo indicado. */
+    private float takeFrom(EnergyStorageBlockEntity storage, boolean dark, float amountNeeded) {
+        float available = storage.getEnergyStored();
+        if (available <= 0) return 0f;
+
+        float pulled = storage.consumeEnergy(Math.min(amountNeeded, available), false);
+        if (pulled <= 0) return 0f;
+
+        if (dark) {
+            this.darkEnergyStored = Math.min(this.darkEnergyStored + pulled, this.darkEnergyCapacity);
+        } else {
+            this.cleanEnergyStored = Math.min(this.cleanEnergyStored + pulled, this.cleanEnergyCapacity);
+        }
+        return pulled;
+    }
+
+    /**
+     * Toma energía de los bancos conectados del tipo indicado (dark = oscura, si no limpia).
+     *
+     * @return true si ha sacado algo
+     */
+    private boolean pullFromNetwork(boolean dark, float amountNeeded) {
+        boolean pulledAny = false;
+
+        // 1. COMPROBACIÓN DIRECTA: primero los bancos pegados a la mesa (sin caché de red)
+        for (Direction direction : Direction.values()) {
+            BlockPos adjacentPos = worldPosition.relative(direction);
+            if (level == null || !level.isLoaded(adjacentPos)) continue;
+
+            BlockState adjacentState = level.getBlockState(adjacentPos);
+            if (adjacentState.getBlock() instanceof EnergyStorageBlock) {
+                BlockEntity be = level.getBlockEntity(adjacentPos);
+                if (be instanceof EnergyStorageBlockEntity storage && !storage.isRemoved() && storage.isDarkEnergy() == dark) {
+                    float pulled = takeFrom(storage, dark, amountNeeded);
+                    if (pulled > 0) {
+                        amountNeeded -= pulled;
+                        pulledAny = true;
+                        if (amountNeeded <= 0) return true;
+                    }
+                }
+            }
+        }
+
+        // 2. COMPROBACIÓN POR RED DE TUBERÍAS (usa la caché de bancos detectados)
+        Map<BlockPos, EnergyStorageBlockEntity> detected = storagesFor(dark);
+        if (detected.isEmpty()) return pulledAny;
+
+        Iterator<Map.Entry<BlockPos, EnergyStorageBlockEntity>> iterator = detected.entrySet().iterator();
+
+        while (iterator.hasNext()) {
+            Map.Entry<BlockPos, EnergyStorageBlockEntity> entry = iterator.next();
+            BlockPos masterPos = entry.getKey();
+            EnergyStorageBlockEntity storage = entry.getValue();
+
+            // Fuera de juego, descargado o con el banco ya cambiado de tipo
+            if (storage.isRemoved() || level == null || !level.isLoaded(masterPos) || storage.isDarkEnergy() != dark) {
+                iterator.remove();
+                continue;
+            }
+
+            // Validar que el camino por tuberías sigue existiendo
+            if (!isPathStillValid(worldPosition, masterPos, dark)) {
+                iterator.remove();
+                continue;
+            }
+
+            float pulled = takeFrom(storage, dark, amountNeeded);
+            if (pulled > 0) {
+                amountNeeded -= pulled;
+                pulledAny = true;
+                if (amountNeeded <= 0) break;
+            }
+        }
+        return pulledAny;
+    }
+
+    private boolean isPathStillValid(BlockPos startPos, BlockPos targetMasterPos, boolean dark) {
+        if (level == null) return false;
+
+        // 1. COMPROBACIÓN DIRECTA: el banco maestro (o uno de sus bloques) sigue pegado a la mesa
+        for (Direction direction : Direction.values()) {
+            BlockPos adjacentPos = startPos.relative(direction);
+            BlockState adjacentState = level.getBlockState(adjacentPos);
+
+            if (adjacentState.getBlock() instanceof EnergyStorageBlock) {
+                BlockEntity be = level.getBlockEntity(adjacentPos);
+                if (be instanceof EnergyStorageBlockEntity storage) {
+                    BlockPos masterPos = storage.isMaster() ? adjacentPos : storage.getMasterPos();
+                    if (masterPos.equals(targetMasterPos)) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        // 2. COMPROBACIÓN POR RED DE TUBERÍAS (si no están pegados, busca el camino por tubos del mismo tipo)
+        Queue<BlockPos> queue = new LinkedList<>();
+        Set<BlockPos> visited = new HashSet<>();
+
+        queue.add(startPos);
+        visited.add(startPos);
+
+        int maxSteps = 150;
+        int steps = 0;
+
+        while (!queue.isEmpty() && steps < maxSteps) {
+            BlockPos currentPos = queue.poll();
+            steps++;
+
+            for (Direction direction : Direction.values()) {
+                BlockPos adjacentPos = currentPos.relative(direction);
+
+                if (adjacentPos.equals(targetMasterPos)) {
+                    return true;
+                }
+
+                if (visited.contains(adjacentPos) || !level.isLoaded(adjacentPos)) continue;
+
+                BlockState adjacentState = level.getBlockState(adjacentPos);
+                visited.add(adjacentPos);
+
+                if (isPipeOfType(adjacentState, dark)) {
+                    queue.add(adjacentPos);
+                } else if (adjacentState.getBlock() instanceof EnergyStorageBlock) {
+                    BlockEntity be = level.getBlockEntity(adjacentPos);
+                    if (be instanceof EnergyStorageBlockEntity storage) {
+                        BlockPos masterPos = storage.isMaster() ? adjacentPos : storage.getMasterPos();
+                        if (masterPos.equals(targetMasterPos)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     // --- LÓGICA DE VISTA PREVIA (YUNQUE) ---
 
     public void updateOutputSlot() {
         ItemStack armorStack = this.items.get(SLOT_ARMOR_IN);
         ItemStack aureliteStack = this.items.get(SLOT_AURELITE_IN);
 
-        // 1. Verificamos si es una pieza de armadura y si hay un lingote de Aurelita
-        if (!armorStack.isEmpty() && isArmorItem(armorStack)
+        // 1. Solo piezas del mod (Aurelite o armaduras autorizadas) y con un lingote de Aurelita
+        if (AurumArmor.is(armorStack)
                 && !aureliteStack.isEmpty() && aureliteStack.is(ModItems.AURELITE_INGOT.get())) {
 
             int purity = Aurelite_ingot.getPurity(aureliteStack);
@@ -227,7 +521,7 @@ public abstract class AbstractArmorTableBlockEntity extends BaseContainerBlockEn
                 expToNext = (int) (expToNext * 1.5f);
             }
 
-            // CORREGIDO: Respetamos el orden (currentExp, currentLevel, expToNextLevel) de tu record
+            // Respetamos el orden (currentExp, currentLevel, expToNextLevel) del record
             ArmorExpData updatedData = new ArmorExpData(newExp, currentLevel, expToNext);
             previewStack.set(ModDataComponents.ARMOR_EXP.get(), updatedData);
 
@@ -238,10 +532,6 @@ public abstract class AbstractArmorTableBlockEntity extends BaseContainerBlockEn
         }
 
         this.setChanged();
-    }
-
-    private boolean isArmorItem(ItemStack stack) {
-        return stack.getItem() instanceof ArmorItem || stack.getItem() instanceof net.minecraft.world.item.ArmorItem;
     }
 
     @Override
@@ -296,6 +586,7 @@ public abstract class AbstractArmorTableBlockEntity extends BaseContainerBlockEn
         this.extractingProgress = pTag.getInt("ExtractorTime");
         this.extractingTotalTime = pTag.getInt("CookTimeTotal");
         this.darkEnergyStored = pTag.getFloat("DarkEnergyStorage");
+        this.cleanEnergyStored = pTag.getFloat("CleanEnergyStorage");
         this.litDuration = this.getExtractingDuration();
     }
 
@@ -306,6 +597,7 @@ public abstract class AbstractArmorTableBlockEntity extends BaseContainerBlockEn
         pTag.putInt("ExtractorTime", this.extractingProgress);
         pTag.putInt("CookTimeTotal", this.extractingTotalTime);
         pTag.putFloat("DarkEnergyStorage", this.darkEnergyStored);
+        pTag.putFloat("CleanEnergyStorage", this.cleanEnergyStored);
         ContainerHelper.saveAllItems(pTag, this.items, pRegistries);
     }
 
@@ -347,6 +639,7 @@ public abstract class AbstractArmorTableBlockEntity extends BaseContainerBlockEn
     @Override
     public boolean canPlaceItem(int pIndex, ItemStack pStack) {
         if (pIndex == SLOT_ARMOR_OUT) return false;
+        if (pIndex == SLOT_PURIFIER) return pStack.is(ModItems.PURIFIER.get());
         if (pIndex != SLOT_AURELITE_IN) return true;
         ItemStack itemstack = this.items.get(SLOT_AURELITE_IN);
         return pStack.getBurnTime(this.recipeType) > 0 || pStack.is(Items.BUCKET) && !itemstack.is(Items.BUCKET);

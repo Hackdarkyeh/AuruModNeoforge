@@ -1,6 +1,14 @@
 {
   "parent": "minecraft:item/generated",
-  "textures": {
-    "layer0": "aurum:item/battery_item"
-  }
+  "textures": { "layer0": "aurum:item/battery/battery_empty" },
+  "overrides": [
+    { "predicate": { "aurum:battery_state": 1 }, "model": "aurum:item/battery/battery_dark_1" },
+    { "predicate": { "aurum:battery_state": 2 }, "model": "aurum:item/battery/battery_dark_2" },
+    { "predicate": { "aurum:battery_state": 3 }, "model": "aurum:item/battery/battery_dark_3" },
+    { "predicate": { "aurum:battery_state": 4 }, "model": "aurum:item/battery/battery_dark_full" },
+    { "predicate": { "aurum:battery_state": 5 }, "model": "aurum:item/battery/battery_clean_1" },
+    { "predicate": { "aurum:battery_state": 6 }, "model": "aurum:item/battery/battery_clean_2" },
+    { "predicate": { "aurum:battery_state": 7 }, "model": "aurum:item/battery/battery_clean_3" },
+    { "predicate": { "aurum:battery_state": 8 }, "model": "aurum:item/battery/battery_clean_full" }
+  ]
 }

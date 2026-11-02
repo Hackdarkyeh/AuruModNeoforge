@@ -1,0 +1,4 @@
+{
+  "type": "minecraft:cache_2d",
+  "argument": { "type": "minecraft:noise", "noise": "aurum:overworld_hills", "xz_scale": 0.05, "y_scale": 0 }
+}

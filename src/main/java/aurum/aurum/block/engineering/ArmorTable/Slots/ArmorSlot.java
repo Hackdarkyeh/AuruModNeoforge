@@ -14,12 +14,11 @@ public class ArmorSlot extends Slot {
     }
 
     /**
-     * Verifica si el stack está permitido para ser colocado en este slot.
-     * Se utiliza para slots de armadura, así como para combustible de hornos.
+     * Slot de carga: acepta cualquier ítem que lleve energía (armaduras, armas, herramientas...).
      */
     @Override
     public boolean mayPlace(ItemStack pStack) {
-        return this.menu.isArmor(pStack);
+        return this.menu.isChargeable(pStack);
     }
 
 

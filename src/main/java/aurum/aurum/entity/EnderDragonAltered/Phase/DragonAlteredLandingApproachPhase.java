@@ -65,11 +65,13 @@ public class DragonAlteredLandingApproachPhase extends AbstractDragonAlteredPhas
                     .level()
                     .getNearestPlayer(NEAR_EGG_TARGETING, this.dragon, (double)blockpos.getX(), (double)blockpos.getY(), (double)blockpos.getZ());
             int j;
+            BlockPos origin = this.dragon.getFightOrigin();
             if (player != null) {
-                Vec3 vec3 = new Vec3(player.getX(), 0.0, player.getZ()).normalize();
-                j = this.dragon.findClosestNode(-vec3.x * 40.0, 105.0, -vec3.z * 40.0);
+                // Dirección del jugador respecto al centro de la arena (no respecto al (0,0) del mundo)
+                Vec3 vec3 = new Vec3(player.getX() - origin.getX(), 0.0, player.getZ() - origin.getZ()).normalize();
+                j = this.dragon.findClosestNode(origin.getX() - vec3.x * 40.0, this.dragon.getFlightReferenceY(), origin.getZ() - vec3.z * 40.0);
             } else {
-                j = this.dragon.findClosestNode(40.0, (double)blockpos.getY(), 0.0);
+                j = this.dragon.findClosestNode(origin.getX() + 40.0, (double)blockpos.getY(), origin.getZ());
             }
 
             Node node = new Node(blockpos.getX(), blockpos.getY(), blockpos.getZ());
@@ -101,4 +103,3 @@ public class DragonAlteredLandingApproachPhase extends AbstractDragonAlteredPhas
         }
     }
 }
-

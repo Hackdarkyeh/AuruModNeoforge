@@ -2,7 +2,7 @@ package aurum.aurum.client.gui.SoulModificationTableMenu;
 
 import aurum.aurum.item.ArmorItem.ArmorExpansions;
 import aurum.aurum.item.SoulExpansions;
-import aurum.aurum.tagsProvider.ModTags;
+import aurum.aurum.init.ModTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;

@@ -38,6 +38,10 @@ public abstract class AbstractInoculatedObsidianBlock extends BaseEntityBlock {
     @Override
     protected void onRemove(BlockState pState, Level pLevel, BlockPos pPos, BlockState pNewState, boolean pIsMoving) {
         if (!pState.is(pNewState.getBlock())) {
+            // Si el núcleo se rompe en mitad de la raid: fuera barra, barrera y noche
+            if (pLevel.getBlockEntity(pPos) instanceof AbstractInoculatedObsidianBlockEntity core) {
+                core.onCoreRemoved(pLevel);
+            }
             // Aquí se añadirá la lógica para destruir el portal si el bloque núcleo se rompe
             super.onRemove(pState, pLevel, pPos, pNewState, pIsMoving);
         }

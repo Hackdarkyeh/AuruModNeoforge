@@ -2,44 +2,36 @@ package aurum.aurum;
 
 import aurum.aurum.Commands.AurumCommands;
 import aurum.aurum.Commands.GenerateBridgesCommand;
-import aurum.aurum.block.ArmorSystem.SoulModificationTable.SoulModificationTableBlockEntityRenderer;
-import aurum.aurum.block.engineering.PedestalBlock.PedestalBlockEntityRenderer;
-import aurum.aurum.block.engineering.PortalAurum.AurumPortalInside.AurumPortalBlockRenderer;
-import aurum.aurum.block.engineering.PortalAurum.InoculatedObsidianBER;
-import aurum.aurum.client.renderer.*;
-import aurum.aurum.eventHandler.ArmorSystemEventHandler;
+import aurum.aurum.eventHandler.ArmorEvents.ArmorSystemEventHandler;
 import aurum.aurum.eventHandler.AurumBlightRain;
 import aurum.aurum.eventHandler.ServerEvents;
 import aurum.aurum.init.*;
 import aurum.aurum.init.GUI.ModMenuType;
-import aurum.aurum.item.pickage.AurelitePickaxeHighlight;
+import aurum.aurum.worldgen.Dimension.AurumDimension;
+import aurum.aurum.worldgen.structure.AurumStructureTypes;
 import com.mojang.logging.LogUtils;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.ItemBlockRenderTypes;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.entity.EntityRenderers;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
-
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTabs;
+import net.minecraft.world.item.EnchantedBookItem;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.EnchantmentInstance;
 import net.minecraft.world.level.block.Blocks;
 
-import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModLoadingContext;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.Mod;
-import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import org.slf4j.Logger;
 
-import javax.swing.text.html.parser.Entity;
 import java.util.function.Supplier;
 
 import static aurum.aurum.init.ModBlockEntities.BLOCK_ENTITIES_REGISTRY;
@@ -65,26 +57,18 @@ public class Aurum {
         assert modEventBus != null;
         modEventBus.addListener(this::commonSetup);
 
-        // Registra el Registro Diferido al bus de eventos del mod para que los ModBlocks se registren
+        // Registra los Registros Diferidos al bus de eventos del mod
         BLOCK_REGISTRY.register(modEventBus);
         BLOCK_ENTITIES_REGISTRY.register(modEventBus);
-        //BLOCKS_REGISTRY_DEFERRED_REGISTER.register(modEventBus);
-        // Registra el Registro Diferido al bus de eventos del mod para que los ModItems se registren
         ITEMS_REGISTRY.register(modEventBus);
 
         FEATURES.register(modEventBus);
-
-        // Registra el Registro Diferido al bus de eventos del mod para que los ModEffects se registren
         EFFECTS_REGISTRY.register(modEventBus);
-
-
-        // Registra el Registro Diferido al bus de eventos del mod para que las pestañas se registren
         CREATIVE_MODE_TABS.register(modEventBus);
 
         ModAttachments.register(modEventBus);
 
         modEventBus.register(ModNetworking.class);
-
 
         BIOME_SOURCES.register(modEventBus);
 
@@ -109,7 +93,8 @@ public class Aurum {
         ModFluidTypes.REGISTRY_FLUID_TYPE.register(modEventBus);
         ModMenuType.MENU_TYPE_REGISTRY.register(modEventBus);
 
-        ModDataComponents.register(modEventBus); // <-- Añade esta línea
+        ModDataComponents.register(modEventBus);
+        AurumStructureTypes.STRUCTURE_TYPES.register(modEventBus);
 
         NeoForge.EVENT_BUS.register(ArmorSystemEventHandler.class);
         ModAttributes.ATTRIBUTES.register(modEventBus);
@@ -117,17 +102,9 @@ public class Aurum {
         STStructures.DEFERRED_REGISTRY_STRUCTURE.register(modEventBus);
         STStructurePlacements.DEFERRED_REGISTRY_STRUCTURE_PLACEMENT_TYPE.register(modEventBus);
 
-
-        NeoForge.EVENT_BUS.register(AurelitePickaxeHighlight.class);
-
-        // Registrar características configuradas
-
-        // Registrar características colocadas
-
-        // Registra la ForgeConfigSpec de nuestro mod para que Forge pueda crear y cargar el archivo de configuración por nosotros
-        //ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Config.SPEC);
-        modEventBus.register(DataGenerators.class);
-
+        // AurelitePickaxeHighlight se registra ahora en AurumClient (solo cliente)
+        AurumDimension.CHUNK_GENERATORS.register(modEventBus);
+        modEventBus.register(ModDataGenerators.class);
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
@@ -136,131 +113,114 @@ public class Aurum {
         LOGGER.info("BLOQUE DE TIERRA >> {}", BuiltInRegistries.BLOCK.getKey(Blocks.DIRT));
     }
 
-    // Añade el item de bloque de ejemplo a la pestaña de ModBlocks de construcción
-    private void addCreative(BuildCreativeModeTabContentsEvent event)
-    {
+    private void addCreative(BuildCreativeModeTabContentsEvent event) {
         //if (event.getTabKey() == CreativeModeTabs.BUILDING_BLOCKS)
-            //event.accept(WITHERED_GRASS_BLOCK.get());
+        //event.accept(WITHERED_GRASS_BLOCK.get());
     }
-    // Puedes usar SubscribeEvent y dejar que el Event Bus descubra métodos para llamar
+
     @SubscribeEvent
     public void onServerStarting(ServerStartingEvent event) {
-        // Haz algo cuando el servidor comienza
         LOGGER.info("HOLA desde el inicio del servidor");
     }
 
-    // Puedes usar EventBusSubscriber para registrar automáticamente todos los métodos estáticos en la clase anotada con @SubscribeEvent
-    @EventBusSubscriber(modid = MODID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
-    public static class ClientModEvents {
-
-        @SubscribeEvent
-        public static void onClientSetup(FMLClientSetupEvent event)
-        {
-            // Algun código de configuración del cliente
-            LOGGER.info("NOMBRE DE MINECRAFT >> {}", Minecraft.getInstance().getUser().getName());
-            LOGGER.info("Pack de recursos activos DE MINECRAFT >> {}", Minecraft.getInstance().getDownloadedPackSource());
-            EntityRenderers.register(ModEntities.COOPER_GOLEM.get(), CooperGolemRenderer::new);
-            EntityRenderers.register(ModEntities.SORE_BOSS.get(), SoreRenderer::new);
-            EntityRenderers.register(ModEntities.ZOMBIE_ALTERED.get(), ZombieAlteredRender::new);
-            EntityRenderers.register(ModEntities.SPIDER_CORRUPTED.get(), SpiderAlteredRender::new);
-            EntityRenderers.register(ModEntities.SKELETON_ALTERED.get(), SkeletonAlteredRenderer::new);
-            EntityRenderers.register(ModEntities.DOLPHIN_ALTERED.get(), DolphinAlteredRenderer::new);
-            EntityRenderers.register(ModEntities.ENDER_DRAGON_ALTERED.get(), EnderDragonAlteredRenderer::new);
-            EntityRenderers.register(ModEntities.VEX_ALTERED.get(), VexAlteredRenderer::new);
-            ItemBlockRenderTypes.setRenderLayer(ENERGY_STORAGE_BLOCK.get(), RenderType.translucent());
-            EntityRenderers.register(ModEntities.DIVINE_ARMOR.get(), DivineArmorRenderer::new);
-
-        }
-
-        @SubscribeEvent
-        public static void registerBER(EntityRenderersEvent.RegisterRenderers event) {
-            event.registerBlockEntityRenderer(ModBlockEntities.PEDESTAL_BE.get(), PedestalBlockEntityRenderer::new);
-            event.registerBlockEntityRenderer(ModBlockEntities.SOUL_MODIFICATION_TABLE_BLOCK_ENTITY.get(), SoulModificationTableBlockEntityRenderer::new);
-            event.registerBlockEntityRenderer(ModBlockEntities.INOCULATED_OBSIDIAN_BLOCK_ENTITY.get(), InoculatedObsidianBER::new);
-            event.registerBlockEntityRenderer(ModBlockEntities.AURUM_PORTAL_BLOCK_ENTITY.get(), AurumPortalBlockRenderer::new);
-            event.registerBlockEntityRenderer(ModBlockEntities.ENERGY_STORAGE_BLOCK.get(), EnergyStorageBlockEntityRenderer::new);
-        }
-
-    }
-
-    // Crea una pestaña creativa con el id "examplemod:INTERFAZ_CREATIVO" para el item de ejemplo, que se coloca después de la pestaña de combate
+    // Pestaña creativa
     public static final Supplier<CreativeModeTab> INTERFAZ_CREATIVO = CREATIVE_MODE_TABS.register("interfaz_creativo", () -> CreativeModeTab.builder()
             .title(Component.translatable("item_group." + MODID + ".interfaz_creativo"))
             .withTabsBefore(CreativeModeTabs.COMBAT)
             .icon(() -> AURUM_HEALING_ITEM.get().getDefaultInstance())
             .displayItems((parameters, output) -> {
-                output.accept(WITHERED_GRASS_BLOCK.get()); // Añade el item de bloque de ejemplo a la pestaña
-                output.accept(FROZEN_WITHERED_GRASS_BLOCK.get()); // Añade el item de hierba marchita congelada a la pestaña
-                output.accept(WITHERED_DIRT_BLOCK.get()); // Añade el item de bloque de tierra marchita a la pestaña
-                output.accept(FROZEN_WITHERED_DIRT_BLOCK.get()); // Añade el item de bloque de tierra marchita congelada a la pestaña
-                output.accept(ANCIENT_AURUM_GRASS_BLOCK.get()); // Añade el item de hierba de Aurum a la pestaña
-                output.accept(ANCIENT_AURUM_DIRT_BLOCK.get()); // Añade el item de tierra de Aurum a la pestaña
-                output.accept(DRY_WITHERED_GRASS_BLOCK.get()); // Añade el item de hierba marchita seca a la pestaña
-                output.accept(DRY_WITHERED_DIRT_BLOCK.get()); // Añade el item de tierra marchita seca a la pestaña
-                output.accept(AURUM_HEALING_ITEM.get()); // Añade el item de curación de Aurum a la pestaña
-                output.accept(AURUMROSA_BUCKET.get()); // Añade el cubo de Aurum a la pestaña
-                output.accept(SOUL_BUCKET.get()); // Añade el cubo de Alma a la pestaña
-                output.accept(AURELITE_ORE.get()); // Añade el bloque de Aurum a la pestaña
-                output.accept(PIPE_BLOCK.get()); // Añade el bloque de tubería a la pestaña
-                output.accept(PIPE_DARK_BLOCK.get()); // Añade el bloque de tubería oscura a la pestaña
-                output.accept(PANEL_BLOCK.get()); // Añade el bloque de panel a la pestaña
-                output.accept(EXTRACTOR_BLOCK.get()); // Añade el bloque de extractor a la pestaña
-                output.accept(ENERGY_STORAGE_BLOCK.get()); // Añade el bloque de almacenamiento de energía a la pestaña
-                output.accept(ENERGY_GENERATOR_BLOCK.get()); // Añade el bloque de generador de energía a la pestaña
+                output.accept(WITHERED_GRASS_BLOCK.get());
+                output.accept(WITHERED_DIRT_BLOCK.get());
+                output.accept(VETALITA.get());
+                output.accept(FROZEN_WITHERED_GRASS_BLOCK.get());
+                output.accept(FROZEN_WITHERED_DIRT_BLOCK.get());
+                output.accept(ANCIENT_AURUM_GRASS_BLOCK.get());
+                output.accept(ANCIENT_AURUM_DIRT_BLOCK.get());
+                output.accept(DRY_WITHERED_GRASS_BLOCK.get());
+                output.accept(DRY_WITHERED_DIRT_BLOCK.get());
+                output.accept(AURUM_HEALING_ITEM.get());
+                output.accept(AURUMROSA_BUCKET.get());
+                output.accept(SOUL_BUCKET.get());
+                output.accept(AURELITE_ORE.get());
+                output.accept(PIPE_BLOCK.get());
+                output.accept(PIPE_DARK_BLOCK.get());
+                output.accept(PANEL_BLOCK.get());
+                output.accept(EXTRACTOR_BLOCK.get());
+                output.accept(ENERGY_STORAGE_BLOCK.get());
+                output.accept(ENERGY_GENERATOR_BLOCK.get());
                 output.accept(DARK_ENERGY_TABLE.get());
-                output.accept(BATTERY_ITEM.get()); // Añade el item de batería a la pestaña
-                output.accept(ENERGY_GENERATOR_UPDATER_TIER1.get()); // Añade el item de actualización de generador de energía de nivel 1 a la pestaña
-                output.accept(ENERGY_GENERATOR_UPDATER_TIER2.get()); // Añade el item de actualización de generador de energía de nivel 2 a la pestaña
-                output.accept(ENERGY_GENERATOR_UPDATER_TIER3.get()); // Añade el item de actualización de generador de energía de nivel 3 a la pestaña
-                output.accept(ENERGY_GENERATOR_UPDATER_TIER4.get()); // Añade el item de actualización de generador de energía de nivel 4 a la pestaña
-                output.accept(EXTRACTOR_PEAK_TIER1.get()); // Añade el item de pico de extractor de nivel 1 a la pestaña
-                output.accept(EXTRACTOR_PEAK_TIER2.get()); // Añade el item de pico de extractor de nivel 2 a la pestaña
-                output.accept(EXTRACTOR_PEAK_TIER3.get()); // Añade el item de pico de extractor de nivel 3 a la pestaña
-                output.accept(EXTRACTOR_PROTECTOR.get()); // Añade el item de protector de extractor a la pestaña
-                output.accept(RANGE_EXTRACTOR_UPDATER_TIER_1.get()); // Añade el item de actualización de extractor de rango de nivel 1 a la pestaña
-                output.accept(RANGE_EXTRACTOR_UPDATER_TIER_2.get()); // Añade el item de actualización de extractor de rango de nivel 2 a la pestaña
-                output.accept(RANGE_EXTRACTOR_UPDATER_TIER_3.get()); // Añade el item de actualización de extractor de rango de nivel 3 a la pestaña
-                output.accept(RANGE_EXTRACTOR_UPDATER_TIER_4.get()); // Añade el item de actualización de extractor de rango de nivel 4 a la pestaña
-                output.accept(RANGE_EXTRACTOR_UPDATER_TIER_5.get()); // Añade el item de actualización de extractor de rango de nivel 5 a la pestaña
+                output.accept(BATTERY_ITEM.get());
+                output.accept(ENERGY_GENERATOR_UPDATER_TIER1.get());
+                output.accept(ENERGY_GENERATOR_UPDATER_TIER2.get());
+                output.accept(ENERGY_GENERATOR_UPDATER_TIER3.get());
+                output.accept(ENERGY_GENERATOR_UPDATER_TIER4.get());
+                output.accept(EXTRACTOR_PEAK_TIER1.get());
+                output.accept(EXTRACTOR_PEAK_TIER2.get());
+                output.accept(EXTRACTOR_PEAK_TIER3.get());
+                output.accept(EXTRACTOR_PROTECTOR.get());
                 output.accept(aurum.aurum.item.Aurelite_ingot.createWithPurity(AURELITE_INGOT.get(), 5));
                 output.accept(aurum.aurum.item.Aurelite_ingot.createWithPurity(AURELITE_INGOT.get(), 100));
-                output.accept(AURELITE_FRAGMENT.get()); // Añade el item de fragmento de Aurum a la pestaña
-                output.accept(AURELITE_HELMET.get()); // Añade el item de casco de Aurum a la pestaña
-                output.accept(AURELITE_CHESTPLATE.get()); // Añade el item de peto de Aurum a la pestaña
-                output.accept(AURELITE_LEGGINGS.get()); // Añade el item de pantalones de Aurum a la pestaña
-                output.accept(AURELITE_BOOTS.get()); // Añade el item de botas de Aurum a la pestaña
-                output.accept(AURELITE_HELMET_GOLD.get()); // Añade el item de casco de Aurum dorado a la pestaña
-                output.accept(AURELITE_CHESTPLATE_GOLD.get()); // Añade el item de peto de Aurum dorado a la pestaña
-                output.accept(AURELITE_LEGGINGS_GOLD.get()); // Añade el item de pantalones de Aurum dorado a la pestaña
-                output.accept(AURELITE_BOOTS_GOLD.get()); // Añade el item de botas de Aurum dorado a la pestaña
-                output.accept(SYNTHESIZED_AURUM_BOTTLE.get()); // Añade el item de botella sintetizada de Aurum a la pestaña
-                output.accept(EXPANSION_DASH.get()); // Añade el item de expansión Dash a la pestaña
-                output.accept(EXPANSION_EXPLOSION.get()); // Añade el item de expansión Jump a la pestaña
-                output.accept(EXPANSION_DAMAGE_RESISTANCE.get()); // Añade el item de expansión Fall a la pestaña
-                output.accept(EXPANSION_FIRE_IMMUNE.get()); // Añade el item de expansión Speed a la pestaña
-                output.accept(EXPANSION_SUPER_SPEED.get()); // Añade el item de expansión Super Speed a la pestaña
-                output.accept(EXPANSION_HIGH_JUMP.get()); // Añade el item de expansión Super Jump a la pestaña
-                output.accept(EXPANSION_REGENERATION.get()); // Añade el item de expansión Super Fall a la pestaña
-                output.accept(EXPANSION_MAGIC_SHIELD.get()); // Añade el item de expansión Super Jump a la pestaña
-                output.accept(EXPANSION_LAVA_IMMUNE.get()); // Añade el item de expansión Dash a la pestaña
+                output.accept(AURELITE_FRAGMENT.get());
+                output.accept(AURELITE_HELMET.get());
+                output.accept(AURELITE_CHESTPLATE.get());
+                output.accept(AURELITE_LEGGINGS.get());
+                output.accept(AURELITE_BOOTS.get());
+                output.accept(AURELITE_HELMET_GOLD.get());
+                output.accept(AURELITE_CHESTPLATE_GOLD.get());
+                output.accept(AURELITE_LEGGINGS_GOLD.get());
+                output.accept(AURELITE_BOOTS_GOLD.get());
+                output.accept(SYNTHESIZED_AURUM_BOTTLE.get());
+                output.accept(EXPANSION_DASH.get());
+                output.accept(EXPANSION_EXPLOSION.get());
+                output.accept(EXPANSION_DAMAGE_RESISTANCE.get());
+                output.accept(EXPANSION_FIRE_IMMUNE.get());
+                output.accept(EXPANSION_SUPER_SPEED.get());
+                output.accept(EXPANSION_HIGH_JUMP.get());
+                output.accept(EXPANSION_REGENERATION.get());
+                output.accept(EXPANSION_MAGIC_SHIELD.get());
+                output.accept(EXPANSION_LAVA_IMMUNE.get());
                 output.accept(EXPANSION_SOUL_TOTEM_1.get());
                 output.accept(EXPANSION_SOUL_TOTEM_2.get());
                 output.accept(EXPANSION_SOUL_TOTEM_3.get());
-                output.accept(SOUL_MODIFICATION_TABLE_BLOCK.get()); // Añade el bloque de la mesa de modificación de almas a la pestaña
-                output.accept(ARMOR_TABLE_BLOCK.get()); // Añade el bloque de la mesa de armaduras a la pestaña
-                output.accept(PEDESTAL.get()); // Añade el bloque de pedestal a la pestaña
-                output.accept(AURELITE_SWORD.get()); // Añade el item de espada de Aurum a la pestaña
-                output.accept(AURELITE_PICKAGE.get()); // Añade el item de pico de Aurum a la pestaña
-                output.accept(ANTI_ELYTRA_BLOCK.get()); // Añade el bloque anti-elytra a la pestaña
-                output.accept(AMBAR_LEAVES.get()); // Añade el bloque de hojas de ámbar a la pestaña
-                output.accept(AMBAR_LOG_DRY.get()); // Añade el bloque de tronco seco de ámbar a la pestaña
-                output.accept(VETALITA.get()); // Añade el bloque de tronco de vetalita a la pestaña
-                output.accept(VEILPIERCER.get()); // Añade el item Veilpiercer a la pestaña
-                output.accept(CERULEO.get()); // Añade el bloque de planta de
-                output.accept(TOBA.get()); // Añade el bloque de planta de ámbar a la pestaña
-                output.accept(AURUM_VINES.get()); // Añade el bloque de enredaderas de Aurum a la pestaña
-                output.accept(AURUM_VINES_PLANT.get()); // Añade el bloque de enredaderas de Aurum a la pestaña
+                output.accept(SOUL_MODIFICATION_TABLE_BLOCK.get());
+                output.accept(ARMOR_TABLE_BLOCK.get());
+                output.accept(PEDESTAL.get());
+                output.accept(AURELITE_SWORD.get());
+                output.accept(AURELITE_PICKAGE.get());
+                output.accept(ANTI_ELYTRA_BLOCK.get());
+                output.accept(AMBAR_LEAVES.get());
+                output.accept(AMBAR_LOG.get());
+                output.accept(AMBAR_PLANKS.get());
+                output.accept(ModBlocks.AURUM_STAIRS);
+                output.accept(ModBlocks.AURUM_SLAB);
+                output.accept(ModBlocks.AURUM_PRESSURE_PLATE);
+                output.accept(ModBlocks.AURUM_BUTTON);
+                output.accept(ModBlocks.AURUM_FENCE);
+                output.accept(ModBlocks.AURUM_FENCE_GATE);
+                output.accept(ModBlocks.AURUM_WALL);
+                output.accept(ModBlocks.AURUM_DOOR);
+                output.accept(VEILPIERCER.get());
+                output.accept(CERULEO.get());
+                output.accept(TOBA.get());
+                output.accept(AURUM_VINES.get());
+                output.accept(AURUM_VINES_PLANT.get());
+                output.accept(AURUM_ARROW.get());
+                output.accept(GEIGER_COUNTER.get());
+                // Libros de encantamiento de Aurum (todos los niveles)
+                parameters.holders().lookup(Registries.ENCHANTMENT).ifPresent(enchants -> {
+                    addEnchantBooks(output, enchants, ModEnchantments.AURUM_DEW);
+                    addEnchantBooks(output, enchants, ModEnchantments.ENERGY_SIPHON);
+                    addEnchantBooks(output, enchants, ModEnchantments.TRIDENT_ECHO);
+                });
             }).build());
 
-
+    private static void addEnchantBooks(CreativeModeTab.Output output,
+                                        HolderLookup.RegistryLookup<Enchantment> lookup,
+                                        ResourceKey<Enchantment> key) {
+        lookup.get(key).ifPresent(holder -> {
+            for (int lvl = holder.value().getMinLevel(); lvl <= holder.value().getMaxLevel(); lvl++) {
+                output.accept(EnchantedBookItem.createForEnchantment(new EnchantmentInstance(holder, lvl)));
+            }
+        });
+    }
 }

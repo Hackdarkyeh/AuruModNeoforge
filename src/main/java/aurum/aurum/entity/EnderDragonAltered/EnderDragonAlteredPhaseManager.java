@@ -26,7 +26,7 @@ public class EnderDragonAlteredPhaseManager {
 
             this.currentPhase = this.getPhase((EnderDragonAlteredPhase<DragonAlteredPhaseInstance>)phase);
             if (!this.dragon.level().isClientSide) {
-                this.dragon.getEntityData().set(EnderDragon.DATA_PHASE, phase.getId());
+                this.dragon.getEntityData().set(EnderDragonAltered.DATA_PHASE, phase.getId());
             }
 
             LOGGER.debug("Dragon is now in phase {} on the {}", phase, this.dragon.level().isClientSide ? "client" : "server");

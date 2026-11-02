@@ -1,5 +1,6 @@
 package aurum.aurum.item.ArmorItem;
 
+import aurum.aurum.energy.ArmorAndWeapons.EnergyConfig;
 import aurum.aurum.energy.ArmorAndWeapons.IEnergyArmor;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -29,7 +30,8 @@ public record ArmorEnergyData(
             (energy, capacity, type) -> new ArmorEnergyData(energy, capacity, IEnergyArmor.EnergyType.valueOf(type))
     );
 
+    /** El máximo sale siempre de EnergyConfig.AureliteArmor.MAX_ENERGY_CAPACITY. */
     public static ArmorEnergyData defaultData() {
-        return new ArmorEnergyData(0, 5000, IEnergyArmor.EnergyType.NONE);
+        return new ArmorEnergyData(0, EnergyConfig.AureliteArmor.MAX_ENERGY_CAPACITY, IEnergyArmor.EnergyType.NONE);
     }
 }

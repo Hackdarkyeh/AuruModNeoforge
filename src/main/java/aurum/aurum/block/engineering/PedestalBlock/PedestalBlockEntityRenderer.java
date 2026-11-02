@@ -41,4 +41,6 @@ public class PedestalBlockEntityRenderer implements BlockEntityRenderer<Pedestal
         int sLight = level.getBrightness(LightLayer.SKY, pos);
         return LightTexture.pack(bLight, sLight);
     }
+    @Override
+    public int getViewDistance() { return 32; }
 }

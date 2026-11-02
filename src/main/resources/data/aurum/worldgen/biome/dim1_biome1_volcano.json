@@ -12,19 +12,17 @@
   },
   "spawners": {},
   "spawn_costs": {},
-  "carvers": {
-    "air": [
-      "minecraft:cave",
-      "minecraft:cave_extra_underground",
-      "minecraft:canyon"
-    ]
-  },
+  "carvers": {},
   "features": [
     [],
     [],
     [],
     [],
-    ["aurum:volcano_crater_placed"],
+    [
+      "aurum:volcano_crater_placed"
+    ],
+    [],
+    [],
     [],
     [],
     [],

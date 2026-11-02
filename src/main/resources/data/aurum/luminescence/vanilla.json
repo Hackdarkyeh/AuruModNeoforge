@@ -1,0 +1,13 @@
+[
+  { "entity": "minecraft:skeleton", "damage": 4.0, "interval_ticks": 60, "interval_ticks_hard": 40, "melee_interval_ticks": 0 },
+  { "entity": "minecraft:stray",    "damage": 4.0, "interval_ticks": 60, "interval_ticks_hard": 40, "melee_interval_ticks": 0 },
+  { "entity": "minecraft:bogged",   "damage": 4.0, "interval_ticks": 60, "interval_ticks_hard": 40, "melee_interval_ticks": 0 },
+  { "entity": "minecraft:blaze",    "damage": 5.0, "interval_ticks": 59 },
+  { "entity": "minecraft:ghast",    "damage": 10.0, "interval_ticks": 60, "melee_interval_ticks": 0 },
+  { "entity": "minecraft:creeper",  "damage": 28.0, "interval_ticks": 100, "melee_interval_ticks": 0 },
+  { "entity": "minecraft:witch",    "damage": 6.0, "interval_ticks": 60, "melee_interval_ticks": 0 },
+  { "entity": "minecraft:pillager", "damage": 7.0, "interval_ticks": 50, "melee_interval_ticks": 0 },
+  { "entity": "minecraft:drowned",  "damage": 8.0, "interval_ticks": 40 },
+  { "entity": "minecraft:shulker",  "damage": 4.0, "interval_ticks": 70, "melee_interval_ticks": 0 },
+  { "entity": "minecraft:wither",   "damage": 8.0, "interval_ticks": 30 }
+]

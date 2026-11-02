@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:interpolated",
+  "argument": {
+    "type": "minecraft:add",
+    "argument1": 1,
+    "argument2": {
+      "type": "minecraft:mul",
+      "argument1": -1,
+      "argument2": {
+        "type": "minecraft:clamp",
+        "input": {
+          "type": "minecraft:mul",
+          "argument1": 6,
+          "argument2": { "type": "minecraft:add", "argument1": -0.25, "argument2": "aurum:dim1_volcano_noise" }
+        },
+        "min": 0,
+        "max": 1
+      }
+    }
+  }
+}

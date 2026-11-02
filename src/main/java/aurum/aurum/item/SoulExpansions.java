@@ -31,7 +31,6 @@ public class SoulExpansions extends Item {
     private final int honor;
     private final int maxWight;
     private final int maxHonor;
-    private List<SoulAbilityData> currentData;
 
     public SoulExpansions(int idTier, int maxHonor, int maxWight) {
         super(new Properties().stacksTo(1));
@@ -76,7 +75,9 @@ public class SoulExpansions extends Item {
     public void updateStackNBT(ItemStack soulStack, List<SoulAbilityData> currentData) {
         // Asegurarse de que tenemos exactamente 8 slots
         List<SoulAbilityData> validatedData = validateAndFixData(currentData);
-        SoulData newData = new SoulData(this.idTier, this.honor, this.maxWight, maxHonor, validatedData);
+        // CORREGIDO: el record SoulData pide (idTier, honor, maxHonor, maxWeight, abilities).
+        // Antes se pasaba maxWight antes que maxHonor y se guardaban intercambiados.
+        SoulData newData = new SoulData(this.idTier, this.honor, this.maxHonor, this.maxWight, validatedData);
         soulStack.set(SOUL_COMPONENT.get(), newData);
     }
 
@@ -115,7 +116,8 @@ public class SoulExpansions extends Item {
             return false;
         }
 
-        currentData = getSoulData(soulStack);
+        // CORREGIDO: variable local en lugar de campo compartido del Item
+        List<SoulAbilityData> currentData = getSoulData(soulStack);
 
         // Verificar unicidad
         if (!isAbilityUnique(soulStack, newAbility.getId())) {
@@ -144,7 +146,8 @@ public class SoulExpansions extends Item {
             return false;
         }
 
-        currentData = getSoulData(soulStack);
+        // CORREGIDO: variable local en lugar de campo compartido del Item
+        List<SoulAbilityData> currentData = getSoulData(soulStack);
         currentData.set(index, new SoulAbilityData(index, null, null, null, 0));
         updateStackNBT(soulStack, currentData);
 
@@ -217,51 +220,45 @@ public class SoulExpansions extends Item {
     @Override
     public void appendHoverText(ItemStack pStack, TooltipContext pContext, List<Component> pTooltipComponents, TooltipFlag pIsAdvanced) {
 
+        // CORREGIDO: se leen los datos del propio stack (su componente), no de un campo del Item.
+        // Aquí no se usa getSoulData() porque ese método escribe en el stack si no tiene datos.
+        SoulData soulData = pStack.get(SOUL_COMPONENT.get());
+        if (soulData == null) {
+            return;
+        }
+        List<SoulAbilityData> currentData = soulData.abilities();
+
         // --- Expansiones con manejo de null ---
         String[] tooltipKeys = {
                 "expansion1", "expansion2", "expansion3", "expansion4",
                 "expansion5", "expansion6", "expansion7", "expansion8"
         };
 
-        // Asegúrate de que currentData no es null antes de intentar acceder a él
-        if (currentData != null) {
-            for (int i = 0; i < tooltipKeys.length; i++) {
-                // Verifica que el índice 'i' sea válido en la lista 'currentData'
-                if (i < currentData.size()) {
-                    // Asegúrate de que la lista currentData está tipada correctamente (List<SoulAbilityData>)
-                    SoulAbilityData expansionValue = currentData.get(i);
-                    String expansionKey = "item.aurum.soul_expansions.tooltip." + tooltipKeys[i];
-                    String key2 = "ability.aurum.";
-                    MutableComponent expansionNameComponent;
+        for (int i = 0; i < tooltipKeys.length; i++) {
+            // Verifica que el índice 'i' sea válido en la lista 'currentData'
+            if (i < currentData.size()) {
+                SoulAbilityData expansionValue = currentData.get(i);
+                String expansionKey = "item.aurum.soul_expansions.tooltip." + tooltipKeys[i];
+                String key2 = "ability.aurum.";
+                MutableComponent expansionNameComponent;
 
-                    if (expansionValue.name() != null) {
-                        // 1. El valor 'name' contiene la CLAVE DE TRADUCCIÓN del efecto (e.g., "ability.aurum.resistance_to_damage")
-                        String abilityTranslationKey = expansionValue.name();
+                if (expansionValue.name() != null) {
+                    // 1. El valor 'name' contiene la CLAVE DE TRADUCCIÓN del efecto (e.g., "ability.aurum.resistance_to_damage")
+                    String abilityTranslationKey = expansionValue.name();
 
-                        // 2. Creamos el Component traducible para el nombre de la habilidad.
-                        // Usamos un color distintivo, por ejemplo, GOLD o AQUA.
-                        expansionNameComponent = Component.translatable(key2.concat(abilityTranslationKey))
-                                .withStyle(ChatFormatting.GOLD);
+                    // 2. Creamos el Component traducible para el nombre de la habilidad.
+                    expansionNameComponent = Component.translatable(key2.concat(abilityTranslationKey))
+                            .withStyle(ChatFormatting.GOLD);
 
-                        // 3. Agregamos el Component de la línea de expansión, pasándole el Component del nombre
-                        // Traduce: "Expansión de alma X: " + [Componente Traducido de la Habilidad]
-                        pTooltipComponents.add(Component.translatable(expansionKey, expansionNameComponent));
+                    // 3. Traduce: "Expansión de alma X: " + [Componente Traducido de la Habilidad]
+                    pTooltipComponents.add(Component.translatable(expansionKey, expansionNameComponent));
 
-                        // NOTA: Quita la línea duplicada que tenías: pTooltipComponents.add(Component.translatable(key, Component.literal(expansionName)));
+                } else {
+                    // Si el valor ES null: "Sin asignar"
+                    expansionNameComponent = Component.translatable("tooltip.aurum.unassigned_slot")
+                            .withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC);
 
-                    } else {
-                        // Si el valor ES null: "Sin asignar"
-
-                        // Opción 1: Clave de traducción para el estado "Sin asignar" (Recomendada)
-                        // Se traduce: "Expansión de alma X: Sin asignar"
-
-                        // 1. Creamos el Componente para "Sin asignar"
-                        expansionNameComponent = Component.translatable("tooltip.aurum.unassigned_slot")
-                                .withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC);
-
-                        // 2. Agregamos el Component de la línea de expansión, pasándole el Component "Sin asignar"
-                        pTooltipComponents.add(Component.translatable(expansionKey, expansionNameComponent));
-                    }
+                    pTooltipComponents.add(Component.translatable(expansionKey, expansionNameComponent));
                 }
             }
         }

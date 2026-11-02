@@ -55,11 +55,17 @@ public class DragonAlteredHoldingPatternPhase extends AbstractDragonAlteredPhase
     }
 
     private void findNewTarget() {
+        // Poca vida y quedan cristales: va a curarse a uno (y los jugadores pueden destruirlo)
+        if (this.dragon.shouldHealAtCrystal()) {
+            this.dragon.getPhaseManager().setPhase(EnderDragonAlteredPhase.CRYSTAL_HEAL);
+            return;
+        }
+
         if (this.currentPath != null && this.currentPath.isDone()) {
             BlockPos blockpos = this.dragon
                     .level()
                     .getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, new BlockPos(EndPodiumFeature.getLocation(this.dragon.getFightOrigin())));
-            int i = this.dragon.getDragonFight() == null ? 0 : this.dragon.getDragonFight().getCrystalsAlive();
+            int i = this.dragon.getCrystalsAlive();
             if (this.dragon.getRandom().nextInt(i + 3) == 0) {
                 this.dragon.getPhaseManager().setPhase(EnderDragonAlteredPhase.LANDING_APPROACH);
                 return;
@@ -95,7 +101,7 @@ public class DragonAlteredHoldingPatternPhase extends AbstractDragonAlteredPhase
                 k--;
             }
 
-            if (this.dragon.getDragonFight() != null && this.dragon.getDragonFight().getCrystalsAlive() >= 0) {
+            if (this.dragon.getCrystalsAlive() > 0) {
                 k %= 12;
                 if (k < 0) {
                     k += 12;
@@ -143,4 +149,3 @@ public class DragonAlteredHoldingPatternPhase extends AbstractDragonAlteredPhase
         }
     }
 }
-

@@ -1,0 +1,33 @@
+{
+  "type": "minecraft:mul",
+  "argument1": -1000,
+  "argument2": {
+    "type": "minecraft:mul",
+    "argument1": {
+      "type": "minecraft:y_clamped_gradient",
+      "from_y": -40, "from_value": 0, "to_y": -20, "to_value": 1
+    },
+    "argument2": {
+      "type": "minecraft:mul",
+      "argument1": "aurum:dim1_volcano_cave_gate",
+      "argument2": {
+        "type": "minecraft:clamp",
+        "input": {
+          "type": "minecraft:mul",
+          "argument1": 8,
+          "argument2": {
+            "type": "minecraft:add",
+            "argument1": 0.15,
+            "argument2": {
+              "type": "minecraft:mul",
+              "argument1": -2,
+              "argument2": { "type": "minecraft:abs", "argument": "aurum:dim1_cave_noise" }
+            }
+          }
+        },
+        "min": 0,
+        "max": 1
+      }
+    }
+  }
+}

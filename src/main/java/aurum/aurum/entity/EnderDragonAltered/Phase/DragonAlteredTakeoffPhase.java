@@ -51,8 +51,9 @@ public class DragonAlteredTakeoffPhase extends AbstractDragonAlteredPhaseInstanc
     private void findNewTarget() {
         int i = this.dragon.findClosestNode();
         Vec3 vec3 = this.dragon.getHeadLookVector(1.0F);
-        int j = this.dragon.findClosestNode(-vec3.x * 40.0, 105.0, -vec3.z * 40.0);
-        if (this.dragon.getDragonFight() != null && this.dragon.getDragonFight().getCrystalsAlive() > 0) {
+        BlockPos origin = this.dragon.getFightOrigin();
+        int j = this.dragon.findClosestNode(origin.getX() - vec3.x * 40.0, this.dragon.getFlightReferenceY(), origin.getZ() - vec3.z * 40.0);
+        if (this.dragon.getCrystalsAlive() > 0) {
             j %= 12;
             if (j < 0) {
                 j += 12;

@@ -1,20 +1,25 @@
 package aurum.aurum.eventHandler;
 
+import aurum.aurum.Aurum;
 import aurum.aurum.effectsPlayer.AurumBlight;
-import aurum.aurum.init.ModParticles;
+import aurum.aurum.worldgen.Dimension.AurumSkyData;
+import aurum.aurum.worldgen.Dimension.AurumWeatherEvents;
+import aurum.aurum.worldgen.Dimension.AurumWeatherEvents.AurumWeatherState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.level.levelgen.Heightmap;
-import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
 
-@EventBusSubscriber(Dist.DEDICATED_SERVER)
+// CAMBIADO: antes era @EventBusSubscriber(Dist.DEDICATED_SERVER), que solo registra la clase en un servidor
+// dedicado: en un mundo de un jugador (servidor integrado) la lluvia no hacía nada. El handler ya comprueba
+// que el nivel es un ServerLevel, así que no hace falta limitar por Dist.
+@EventBusSubscriber(modid = Aurum.MODID)
 public class AurumBlightRain {
+    // Lluvia FORZADA a mano con /Aurum startaurumrain y /Aurum stopaurumrain (afecta a todas las dimensiones).
     private static boolean shouldRain = false;
-    private static int particleSpawnCooldown = 0;
+    private static int effectCooldown = 0;
 
     // Métodos existentes (se mantienen exactamente igual)
     public static void startAurumBlightRain() {
@@ -25,84 +30,35 @@ public class AurumBlightRain {
         shouldRain = false;
     }
 
+    /**
+     * ¿Llueve en este nivel? Sí si la lluvia está forzada por comando, o si es dim1 y el estado de la
+     * noche es AURUM_RAIN. Así la lluvia del estado solo ocurre en su dimensión y se apaga sola al terminar.
+     */
+    public static boolean isRainingIn(ServerLevel level) {
+        if (shouldRain) {
+            return true;
+        }
+        return level.dimension() == AurumWeatherEvents.AURUM_DIMENSION_KEY
+                && AurumSkyData.get(level).current() == AurumWeatherState.AURUM_RAIN;
+    }
+
     @SubscribeEvent
     public static void onWorldTick(LevelTickEvent.Pre event) {
-        if (!shouldRain || !(event.getLevel() instanceof ServerLevel world)) return;
+        if (!(event.getLevel() instanceof ServerLevel world) || !isRainingIn(world)) return;
 
         // Optimización: Solo procesar cada 3 ticks (reduce carga del servidor)
-        if (++particleSpawnCooldown < 3) return;
-        particleSpawnCooldown = 0;
-
-        // Radio alrededor del jugador para spawnear partículas
-        final int rainRadius = 50;
-        // Altura mínima/máxima de las partículas
-        final double minHeight = 10.0;
-        final double maxHeight = 70.0;
+        if (++effectCooldown < 3) return;
+        effectCooldown = 0;
 
         for (ServerPlayer player : world.players()) {
-            BlockPos playerPos = player.blockPosition();
+            // 1. Detección de exposición: a cubierto no hay efecto
+            if (!isExposedToRain(world, player.blockPosition())) continue;
 
-            // 1. Sistema mejorado de detección de exposición
-            if (!isExposedToRain(world, playerPos)) continue;
-
-            // 2. Aplicar efecto (manteniendo tu lógica original)
+            // 2. Aplicar efecto (tu lógica original)
             AurumBlight.getEffectTier1(player);
-
-            // 3. Nuevo sistema optimizado de partículas
-            spawnAurumRainParticles(world, playerPos, rainRadius, minHeight, maxHeight);
         }
-    }
-
-    private static void spawnAurumRainParticles(ServerLevel world, BlockPos center, int radius, double minH, double maxH) {
-        int particleCount = getParticleCountForRainIntensity();
-
-        for (int i = 0; i < particleCount; i++) {
-            // Distribución más uniforme alrededor del jugador
-            double angle = world.random.nextDouble() * Math.PI * 2;
-            double distance = world.random.nextDouble() * radius;
-
-            double x = center.getX() + Math.cos(angle) * distance;
-            double z = center.getZ() + Math.sin(angle) * distance;
-
-            // Altura basada en el terreno
-            int surfaceY = world.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, (int)x, (int)z);
-            double y = surfaceY + minH + world.random.nextDouble() * (maxH - minH);
-
-            BlockPos particlePos = new BlockPos((int)x, (int)y, (int)z);
-
-            // Solo si tiene línea de visión al cielo
-            if (world.canSeeSky(particlePos)) {
-                // Parámetros ajustados para mejor visualización
-                world.sendParticles(
-                        ModParticles.AURUM_BLIGHT_PARTICLE_RAIN.get(),
-                        x, y, z,         // Posición
-                        0,                // Count (0 para partículas únicas)
-                        -0.02, -0.5, 0.02, // Velocidad (movimiento aleatorio suave)
-                        0.5               // Tamaño/scale
-                );
-            }
-        }
-    }
-
-    // Método auxiliar para partículas en el suelo (splash)
-    private static void spawnSplashParticles(ServerLevel world, BlockPos pos) {
-        if (world.random.nextInt(3) == 0) { // 33% de chance de spawnear splash
-            world.sendParticles(
-                    ModParticles.AURUM_BLIGHT_PARTICLE_RAIN.get(), // Necesitarás registrar este tipo
-                    pos.getX() + 0.5,
-                    pos.getY() + 0.1,
-                    pos.getZ() + 0.5,
-                    2, // Cantidad
-                    0.1, 0, 0.1, // Spread
-                    0.2 // Velocidad
-            );
-        }
-    }
-
-    // Método auxiliar para calcular cantidad de partículas
-    private static int getParticleCountForRainIntensity() {
-        // Base + variación aleatoria
-        return 8000 + (int)(Math.random() * 4000);
+        // Las partículas de la lluvia ya no se mandan desde aquí: las dibuja el cliente (AurumRainClient),
+        // a partir del estado que le manda AurumSkySync.
     }
 
     // Método mejorado para detectar exposición (se mantiene igual el header)

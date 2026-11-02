@@ -1,5 +1,6 @@
 package aurum.aurum.entity.SkeletonAltered;
 
+import aurum.aurum.init.ModItems;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -11,8 +12,12 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.entity.monster.Stray;
+import net.minecraft.world.entity.projectile.AbstractArrow;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
+
+import javax.annotation.Nullable;
 
 public class SkeletonAltered extends AbstractAlteredSkeleton {
     private static final int TOTAL_CONVERSION_TIME = 300;
@@ -42,6 +47,11 @@ public class SkeletonAltered extends AbstractAlteredSkeleton {
     @Override
     public boolean isShaking() {
         return this.isFreezeConverting();
+    }
+
+    @Override
+    protected AbstractArrow getArrow(ItemStack arrow, float velocity, @Nullable ItemStack weapon) {
+        return new AurumArrow(this.level(), this, new ItemStack(ModItems.AURUM_ARROW.get()), weapon);
     }
 
     @Override

@@ -14,14 +14,7 @@ public class ArmorTableUpgradeSlot extends Slot {
         this.menu = pFurnaceMenu;
     }
 
-    /**
-     * Verifica si el stack está permitido para ser colocado en este slot.
-     * Se utiliza para slots de armadura, así como para combustible de hornos.
-     */
-    @Override
-    public boolean mayPlace(ItemStack pStack) {
-        return this.menu.isRangeExtractor(pStack);
-    }
+
 
 
 

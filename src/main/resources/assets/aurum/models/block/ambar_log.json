@@ -1,0 +1,13 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "down": "aurum:block/trees/ambar_log_top",
+    "up": "aurum:block/trees/ambar_log_top",
+    "north": "aurum:block/trees/ambar_log",
+    "east": "aurum:block/trees/ambar_log",
+    "south": "aurum:block/trees/ambar_log",
+    "west": "aurum:block/trees/ambar_log",
+    "particle": "aurum:block/trees/ambar_log"
+  },
+  "render_type": "solid"
+}

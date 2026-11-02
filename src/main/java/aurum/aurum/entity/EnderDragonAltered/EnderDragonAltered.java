@@ -87,6 +87,17 @@ public class EnderDragonAltered extends Mob implements Enemy {
     private final int[] nodeAdjacency = new int[24];
     private final BinaryHeap openSet = new BinaryHeap();
 
+    // --- Arena de la raid -------------------------------------------------------------
+    // Todos los nodos de vuelo se calculan alrededor de fightOrigin (el núcleo del portal),
+    // no alrededor del (0,0) del mundo como en el End de vanilla.
+    private boolean hasArena = false;
+    private double arenaRadius = 97.0D;
+    private int crystalsAliveCache = 0;
+    private int crystalsCacheTick = -1000;
+    private int healCooldownUntil = 0;
+    /** Etiqueta que lleva cada End Crystal creado por la raid. */
+    public static final String RAID_CRYSTAL_TAG = "aurum_crystal";
+
     public EnderDragonAltered(EntityType<? extends EnderDragonAltered> entityType, Level level) {
         super(ModEntities.ENDER_DRAGON_ALTERED.get(), level);
         this.head = new EnderDragonAlteredPart(this, "head", 1.0F, 1.0F);
@@ -122,6 +133,101 @@ public class EnderDragonAltered extends Mob implements Enemy {
 
     public BlockPos getFightOrigin() {
         return this.fightOrigin;
+    }
+
+    /**
+     * Define la arena del combate: centro (núcleo del portal) y radio de la barrera.
+     * Los nodos de vuelo se recalculan la próxima vez que se necesiten.
+     */
+    public void setFightArena(BlockPos origin, double radius) {
+        this.fightOrigin = origin;
+        this.arenaRadius = radius;
+        this.hasArena = true;
+        this.nodes[0] = null;
+    }
+
+    public boolean hasArena() {
+        return this.hasArena;
+    }
+
+    public double getArenaRadius() {
+        return this.arenaRadius;
+    }
+
+    /** Altura de referencia para buscar nodos "en la dirección de" algo (sustituye al 105 absoluto de vanilla). */
+    public double getFlightReferenceY() {
+        return this.hasArena ? this.fightOrigin.getY() + 30.0D : 105.0D;
+    }
+
+    /** End Crystals vivos de la raid dentro de la arena (solo servidor). */
+    public List<EndCrystal> getAliveRaidCrystals() {
+        if (!this.hasArena) {
+            return java.util.Collections.emptyList();
+        }
+        AABB area = new AABB(this.fightOrigin).inflate(this.arenaRadius + 8.0D, 320.0D, this.arenaRadius + 8.0D);
+        return this.level().getEntitiesOfClass(EndCrystal.class, area,
+                crystal -> crystal.isAlive() && crystal.getTags().contains(RAID_CRYSTAL_TAG));
+    }
+
+    /** Nº de cristales vivos. Con arena se cuentan los de la raid (cacheado 1 s); sin ella, el de la pelea vanilla. */
+    public int getCrystalsAlive() {
+        if (this.dragonFight != null) {
+            return this.dragonFight.getCrystalsAlive();
+        }
+        if (!this.hasArena || this.level().isClientSide) {
+            return 0;
+        }
+        if (this.tickCount - this.crystalsCacheTick >= 20) {
+            this.crystalsCacheTick = this.tickCount;
+            this.crystalsAliveCache = this.getAliveRaidCrystals().size();
+        }
+        return this.crystalsAliveCache;
+    }
+
+    @Nullable
+    public EndCrystal findNearestAliveCrystal() {
+        EndCrystal best = null;
+        double bestDist = Double.MAX_VALUE;
+        for (EndCrystal crystal : this.getAliveRaidCrystals()) {
+            double d = crystal.distanceToSqr(this);
+            if (d < bestDist) {
+                bestDist = d;
+                best = crystal;
+            }
+        }
+        return best;
+    }
+
+    /** ¿Toca ir a curarse a un cristal? Poca vida, quedan cristales y no acaba de curarse. */
+    public boolean shouldHealAtCrystal() {
+        return !this.level().isClientSide
+                && this.tickCount >= this.healCooldownUntil
+                && this.getHealth() < this.getMaxHealth() * 0.4F
+                && this.getCrystalsAlive() > 0;
+    }
+
+    public void setHealCooldown(int ticks) {
+        this.healCooldownUntil = this.tickCount + ticks;
+    }
+
+    /**
+     * Red de seguridad: si el dragón se acerca al borde de la arena, se le empuja hacia el centro
+     * de forma progresiva (la barrera de la raid lo frena en seco como último recurso).
+     */
+    private void steerBackIntoArena() {
+        if (!this.hasArena) {
+            return;
+        }
+        double dx = this.getX() - (this.fightOrigin.getX() + 0.5D);
+        double dz = this.getZ() - (this.fightOrigin.getZ() + 0.5D);
+        double dist = Math.sqrt(dx * dx + dz * dz);
+        double soft = this.arenaRadius * 0.90D;
+        if (dist <= soft || dist < 1.0E-4D) {
+            return;
+        }
+        double t = Math.min(1.0D, (dist - soft) / (this.arenaRadius * 0.08D));
+        double push = 0.06D + 0.25D * t;
+        this.setDeltaMovement(this.getDeltaMovement().add(-dx / dist * push, 0.0D, -dz / dist * push));
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -306,6 +412,8 @@ public class EnderDragonAltered extends Mob implements Enemy {
                         double d5 = 0.8 + 0.15 * (vec33.dot(vec32) + 1.0) / 2.0;
                         this.setDeltaMovement(this.getDeltaMovement().multiply(d5, 0.91F, d5));
                     }
+
+                    this.steerBackIntoArena();
                 }
 
                 this.yBodyRot = this.getYRot();
@@ -626,28 +734,32 @@ public class EnderDragonAltered extends Mob implements Enemy {
 
     public int findClosestNode() {
         if (this.nodes[0] == null) {
+            double cx = this.fightOrigin.getX() + 0.5D;
+            double cz = this.fightOrigin.getZ() + 0.5D;
+            double outerRadius = this.arenaRadius * 0.62D;   // 12 nodos (60 con radio 97)
+            double middleRadius = this.arenaRadius * 0.41D;  // 8 nodos  (40)
+            double innerRadius = this.arenaRadius * 0.21D;   // 4 nodos  (20)
             for (int i = 0; i < 24; i++) {
                 int j = 5;
-                int l;
-                int i1;
+                double radius;
+                float angle;
                 if (i < 12) {
-                    l = Mth.floor(60.0F * Mth.cos(2.0F * ((float) -Math.PI + (float) (Math.PI / 12) * (float)i)));
-                    i1 = Mth.floor(60.0F * Mth.sin(2.0F * ((float) -Math.PI + (float) (Math.PI / 12) * (float)i)));
+                    radius = outerRadius;
+                    angle = 2.0F * ((float) -Math.PI + (float) (Math.PI / 12) * (float) i);
                 } else if (i < 20) {
-                    int $$2 = i - 12;
-                    l = Mth.floor(40.0F * Mth.cos(2.0F * ((float) -Math.PI + (float) (Math.PI / 8) * (float)$$2)));
-                    i1 = Mth.floor(40.0F * Mth.sin(2.0F * ((float) -Math.PI + (float) (Math.PI / 8) * (float)$$2)));
+                    radius = middleRadius;
+                    angle = 2.0F * ((float) -Math.PI + (float) (Math.PI / 8) * (float) (i - 12));
                     j += 10;
                 } else {
-                    int k1 = i - 20;
-                    l = Mth.floor(20.0F * Mth.cos(2.0F * ((float) -Math.PI + (float) (Math.PI / 4) * (float)k1)));
-                    i1 = Mth.floor(20.0F * Mth.sin(2.0F * ((float) -Math.PI + (float) (Math.PI / 4) * (float)k1)));
+                    radius = innerRadius;
+                    angle = 2.0F * ((float) -Math.PI + (float) (Math.PI / 4) * (float) (i - 20));
                 }
 
-                int j1 = Math.max(
-                        this.level().getSeaLevel() + 10, this.level().getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, new BlockPos(l, 0, i1)).getY() + j
-                );
-                this.nodes[i] = new Node(l, j1, i1);
+                int l = Mth.floor(cx + radius * Mth.cos(angle));
+                int i1 = Mth.floor(cz + radius * Mth.sin(angle));
+                int ground = this.level().getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, new BlockPos(l, 0, i1)).getY() + j;
+                int minY = this.hasArena ? this.fightOrigin.getY() + 10 : this.level().getSeaLevel() + 10;
+                this.nodes[i] = new Node(l, Math.max(minY, ground), i1);
             }
 
             this.nodeAdjacency[0] = 6146;
@@ -687,7 +799,7 @@ public class EnderDragonAltered extends Mob implements Enemy {
         int i = 0;
         Node node = new Node(Mth.floor(x), Mth.floor(y), Mth.floor(z));
         int j = 0;
-        if (this.dragonFight == null || this.dragonFight.getCrystalsAlive() == 0) {
+        if (this.getCrystalsAlive() == 0) {
             j = 12;
         }
 
@@ -730,7 +842,7 @@ public class EnderDragonAltered extends Mob implements Enemy {
         this.openSet.insert(node4);
         Node node1 = node4;
         int j = 0;
-        if (this.dragonFight == null || this.dragonFight.getCrystalsAlive() == 0) {
+        if (this.getCrystalsAlive() == 0) {
             j = 12;
         }
 
@@ -814,6 +926,12 @@ public class EnderDragonAltered extends Mob implements Enemy {
         super.addAdditionalSaveData(compound);
         compound.putInt("DragonPhase", this.phaseManager.getCurrentPhase().getPhase().getId());
         compound.putInt("DragonDeathTime", this.dragonDeathTime);
+        if (this.hasArena) {
+            compound.putInt("ArenaX", this.fightOrigin.getX());
+            compound.putInt("ArenaY", this.fightOrigin.getY());
+            compound.putInt("ArenaZ", this.fightOrigin.getZ());
+            compound.putDouble("ArenaRadius", this.arenaRadius);
+        }
     }
 
     /**
@@ -824,6 +942,11 @@ public class EnderDragonAltered extends Mob implements Enemy {
         super.readAdditionalSaveData(compound);
         if (compound.contains("DragonPhase")) {
             this.phaseManager.setPhase(EnderDragonAlteredPhase.getById(compound.getInt("DragonPhase")));
+        }
+
+        if (compound.contains("ArenaRadius")) {
+            this.setFightArena(new BlockPos(compound.getInt("ArenaX"), compound.getInt("ArenaY"), compound.getInt("ArenaZ")),
+                    compound.getDouble("ArenaRadius"));
         }
 
         if (compound.contains("DragonDeathTime")) {
@@ -988,4 +1111,3 @@ public class EnderDragonAltered extends Mob implements Enemy {
         return 1.0F;
     }
 }
-

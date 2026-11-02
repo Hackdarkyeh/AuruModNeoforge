@@ -1,0 +1,8 @@
+{
+  "values": [
+    "#minecraft:enchantable/weapon",
+    "#minecraft:enchantable/mining",
+    "aurum:aurelite_sword",
+    "aurum:aurelite_pickage"
+  ]
+}
