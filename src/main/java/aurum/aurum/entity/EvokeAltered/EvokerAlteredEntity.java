@@ -1,13 +1,11 @@
 package aurum.aurum.entity.EvokeAltered;
 
-import aurum.aurum.Aurum;
 import aurum.aurum.entity.ICorruptedMob;
 import aurum.aurum.entity.VexAltered.VexAlteredEntity;
 import aurum.aurum.init.ModAttributes;
 import aurum.aurum.init.ModEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
@@ -20,7 +18,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.SpawnGroupData;
-import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
@@ -48,16 +45,11 @@ import javax.annotation.Nullable;
 public class EvokerAlteredEntity extends SpellcasterIllager implements ICorruptedMob {
     @Override public LivingEntity self() { return this; }
 
-    // ===== Aurum en sangre (mismo sistema que ZombieAlteredEntity) =====
-    private static final ResourceLocation AURUM_HEALTH_ID =
-            ResourceLocation.fromNamespaceAndPath(Aurum.MODID, "aurum_health_bonus_evoker");
-    private static final ResourceLocation AURUM_DAMAGE_ID =
-            ResourceLocation.fromNamespaceAndPath(Aurum.MODID, "aurum_damage_bonus_evoker");
-
+    // ===== Aurum en sangre (el sorteo y los bonus viven en ICorruptedMob) =====
     /** +25 % de vida base por punto de aurum sobre 1 (igual que el zombi). */
-    private static final double HEALTH_PER_AURUM = 0.25D;
+    @Override public double healthPerAurum() { return 0.25D; }
     /** Daño: el zombi usa 0.15; aquí 0.05 porque los colmillos pegan varias veces. Súbelo a 0.15 para igualarlo. */
-    private static final double DAMAGE_PER_AURUM = 0.05D;
+    @Override public double damagePerAurum() { return 0.05D; }
 
     // ===== Invocación =====
     private static final int VEXES_PER_CAST = 5;
@@ -101,20 +93,6 @@ public class EvokerAlteredEntity extends SpellcasterIllager implements ICorrupte
         spawnGroupData = super.finalizeSpawn(level, difficulty, spawnType, spawnGroupData);
         rollAurumBlood();
         return spawnGroupData;
-    }
-
-    private void rollAurumBlood() {
-        float aurum = 1.0F + this.random.nextFloat() * 99.0F;
-        this.getAttribute(ModAttributes.AURUM_IN_BLOOD).setBaseValue(aurum);
-
-        this.getAttribute(Attributes.MAX_HEALTH).addOrReplacePermanentModifier(
-                new AttributeModifier(AURUM_HEALTH_ID, (aurum - 1.0) * HEALTH_PER_AURUM,
-                        AttributeModifier.Operation.ADD_MULTIPLIED_BASE));
-        this.getAttribute(Attributes.ATTACK_DAMAGE).addOrReplacePermanentModifier(
-                new AttributeModifier(AURUM_DAMAGE_ID, (aurum - 1.0) * DAMAGE_PER_AURUM,
-                        AttributeModifier.Operation.ADD_MULTIPLIED_BASE));
-
-        this.setHealth(this.getMaxHealth());
     }
 
     @Override

@@ -90,7 +90,9 @@ public class AurumArrow extends AbstractArrow {
             double dist = t.getBoundingBox().getCenter().distanceTo(c);
             if (dist > RADIUS) continue;
 
-            float dmg = DAMAGE * (1.0F - 0.6F * (float) (dist / RADIUS));
+            float aurumMult = this.getOwner() instanceof AbstractAlteredSkeleton skeleton
+                    ? skeleton.getAurumDamageMultiplier() : 1.0F;
+            float dmg = DAMAGE * aurumMult * (1.0F - 0.6F * (float) (dist / RADIUS));
             t.hurt(src, dmg);
             // Opcional: además contagia el efecto Aurum Blight
             AurumBlight.applyCorruptedBlight(t, 1.0D);

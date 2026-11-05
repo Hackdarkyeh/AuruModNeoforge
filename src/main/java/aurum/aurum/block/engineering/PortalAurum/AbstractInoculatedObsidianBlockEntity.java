@@ -2,6 +2,7 @@ package aurum.aurum.block.engineering.PortalAurum;
 
 import aurum.aurum.block.engineering.PedestalBlock.PedestalBlock;
 import aurum.aurum.block.engineering.PedestalBlock.PedestalBlockEntity;
+import aurum.aurum.entity.ICorruptedMob;
 import aurum.aurum.init.ModBlockEntities;
 import aurum.aurum.init.ModBlocks;
 import aurum.aurum.init.ModEntities;
@@ -13,7 +14,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.boss.enderdragon.EndCrystal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -26,9 +27,6 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.nbt.ListTag;
@@ -453,6 +451,13 @@ public class AbstractInoculatedObsidianBlockEntity extends BlockEntity {
                 // 2. ¡VITAL! Etiquetar para que el núcleo registre las muertes
                 enemy.addTag("aurum_raid_mob");
                 enemy.setPersistenceRequired();
+
+                if (level instanceof ServerLevel sl) {
+                    enemy.finalizeSpawn(sl, sl.getCurrentDifficultyAt(spawnPos), MobSpawnType.EVENT, null);
+                }
+                if (enemy instanceof ICorruptedMob corrupted) {
+                    corrupted.rollAurumBlood(5.0F, 25.0F);
+                }
 
                 level.addFreshEntity(enemy);
             }

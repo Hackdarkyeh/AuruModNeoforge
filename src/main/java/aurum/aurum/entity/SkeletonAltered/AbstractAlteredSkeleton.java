@@ -1,5 +1,7 @@
 package aurum.aurum.entity.SkeletonAltered;
 
+import aurum.aurum.entity.ICorruptedMob;
+import aurum.aurum.init.ModAttributes;
 import java.time.LocalDate;
 import java.time.temporal.ChronoField;
 import javax.annotation.Nullable;
@@ -45,10 +47,12 @@ import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 
-public abstract class AbstractAlteredSkeleton extends Monster implements RangedAttackMob {
+public abstract class AbstractAlteredSkeleton extends Monster implements RangedAttackMob, ICorruptedMob {
+    @Override public LivingEntity self() { return this; }
+
     private static final int HARD_ATTACK_INTERVAL = 20;
     private static final int NORMAL_ATTACK_INTERVAL = 40;
-    private final RangedBowAttackGoal<AbstractAlteredSkeleton> bowGoal = new RangedBowAttackGoal<>(this, 1.0, 20, 15.0F);
+    private final RangedBowAttackGoal<AbstractAlteredSkeleton> bowGoal = new RangedBowAttackGoal<>(this, 1.1, 20, 20.0F);
     private final MeleeAttackGoal meleeGoal = new MeleeAttackGoal(this, 1.2, false) {
         @Override
         public void stop() {
@@ -83,7 +87,13 @@ public abstract class AbstractAlteredSkeleton extends Monster implements RangedA
     }
 
     public static AttributeSupplier.Builder createAttributes() {
-        return Monster.createMonsterAttributes().add(Attributes.MOVEMENT_SPEED, 0.25);
+        return Monster.createMonsterAttributes()
+                .add(Attributes.MOVEMENT_SPEED, 0.28)
+                .add(Attributes.MAX_HEALTH, 32.0)
+                .add(Attributes.ARMOR, 4.0)
+                .add(Attributes.KNOCKBACK_RESISTANCE, 0.2)
+                .add(Attributes.ATTACK_DAMAGE, 4.0)
+                .add(ModAttributes.AURUM_IN_BLOOD, 1.0);
     }
 
     @Override
@@ -152,7 +162,19 @@ public abstract class AbstractAlteredSkeleton extends Monster implements RangedA
             }
         }
 
+        rollAurumBlood();
         return spawnGroupData;
+    }
+
+    // ===== Aurum en sangre (el sorteo y los bonus viven en ICorruptedMob) =====
+    /** +25 % de vida base por punto de aurum sobre 1. */
+    @Override public double healthPerAurum() { return 0.25D; }
+    /** +5 % de daño base por punto de aurum sobre 1 (cuerpo a cuerpo y explosión de la AurumArrow). */
+    @Override public double damagePerAurum() { return 0.05D; }
+
+    /** Multiplicador de daño por aurum en sangre (lo usa la AurumArrow al explotar). */
+    public float getAurumDamageMultiplier() {
+        return 1.0F + (float) ((this.getAurumValue() - 1.0D) * damagePerAurum());
     }
 
     public void reassessWeaponGoal() {
@@ -175,11 +197,11 @@ public abstract class AbstractAlteredSkeleton extends Monster implements RangedA
     }
 
     protected int getHardAttackInterval() {
-        return 20;
+        return 14;
     }
 
     protected int getAttackInterval() {
-        return 40;
+        return 30;
     }
 
     /**
@@ -231,4 +253,3 @@ public abstract class AbstractAlteredSkeleton extends Monster implements RangedA
         return this.isFullyFrozen();
     }
 }
-

@@ -14,7 +14,9 @@ import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeSource;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.levelgen.LegacyRandomSource;
 import net.minecraft.world.level.levelgen.WorldGenerationContext;
+import net.minecraft.world.level.levelgen.WorldgenRandom;
 import net.minecraft.world.level.levelgen.heightproviders.HeightProvider;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructureType;
@@ -126,38 +128,21 @@ public class DungeonFortressStructure extends Structure {
      * Si pasan, configura la posición y llama al sistema de piezas Jigsaw para crear la estructura.
      */
     @Override
-    public Optional<GenerationStub> findGenerationPoint(GenerationContext context) {
+    protected Optional<GenerationStub> findGenerationPoint(GenerationContext ctx) {
+        Optional<BridgeNetwork.Plan> plan = BridgeNetwork.plan(ctx.seed(), ctx.chunkPos(),
+                ctx.chunkGenerator(), ctx.randomState(), ctx.heightAccessor());
+        if (plan.isEmpty()) return Optional.empty();
 
-        // Verifica si el lugar es válido para la estructura
-        if (!DungeonFortressStructure.extraSpawningChecks(context)) {
-            return Optional.empty();
-        }
+        // JigsawPlacement hace Rotation.getRandom(random) en su primera tirada: busco una semilla que dé NONE
+        long sd = ctx.seed() ^ ctx.chunkPos().toLong();
+        while (new LegacyRandomSource(sd).nextInt(4) != 0) sd++;
+        GenerationContext fixed = new GenerationContext(ctx.registryAccess(), ctx.chunkGenerator(), ctx.biomeSource(),
+                ctx.randomState(), ctx.structureTemplateManager(), new WorldgenRandom(new LegacyRandomSource(sd)),
+                ctx.seed(), ctx.chunkPos(), ctx.heightAccessor(), ctx.validBiome());
 
-        // Calcula la altura de inicio usando el HeightProvider
-        int startY = this.startHeight.sample(context.random(), new WorldGenerationContext(context.chunkGenerator(), context.heightAccessor()));
-
-        // Convierte las coordenadas del chunk a coordenadas de bloque
-        ChunkPos chunkPos = context.chunkPos();
-        BlockPos blockPos = new BlockPos(chunkPos.getMinBlockX(), startY, chunkPos.getMinBlockZ());
-
-        // Genera las piezas de la estructura usando el sistema Jigsaw
-        Optional<GenerationStub> structurePiecesGenerator =
-                JigsawPlacement.addPieces(
-                        context,
-                        this.startPool,
-                        this.startJigsawName,
-                        this.size,
-                        blockPos,
-                        false,
-                        this.projectStartToHeightmap,
-                        this.maxDistanceFromCenter,
-                        PoolAliasLookup.EMPTY,
-                        this.dimensionPadding,
-                        this.liquidSettings);
-
-        // Devuelve el generador de piezas para que el juego cree la estructura
-        // Los puentes se generarán mediante un evento después de que la estructura esté completa
-        return structurePiecesGenerator;
+        BlockPos pos = new BlockPos(ctx.chunkPos().getMinBlockX(), plan.get().boxY() + BridgeNetwork.DECK, ctx.chunkPos().getMinBlockZ());
+        return JigsawPlacement.addPieces(fixed, startPool, Optional.empty(), size, pos, false, Optional.empty(), 128,
+                PoolAliasLookup.EMPTY, JigsawStructure.DEFAULT_DIMENSION_PADDING, LiquidSettings.IGNORE_WATERLOGGING);
     }
 
     // Puente autoconstruido

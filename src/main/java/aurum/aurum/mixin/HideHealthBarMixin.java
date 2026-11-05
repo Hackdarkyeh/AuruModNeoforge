@@ -79,10 +79,8 @@ public class HideHealthBarMixin {
 
             int hpPerFila = HEARTS_PER_ROW * 2;
             int tierActual = (currentHealth - 1) / hpPerFila;
-            int tierMaximo = (maxHealth - 1) / hpPerFila;
 
             tierActual = Mth.clamp(tierActual, 0, MAX_ROWS - 1);
-            tierMaximo = Mth.clamp(tierMaximo, 0, MAX_ROWS - 1);
 
             int vidaRestanteEnTier = currentHealth % hpPerFila;
             if (vidaRestanteEnTier == 0 && currentHealth > 0) vidaRestanteEnTier = hpPerFila;
@@ -101,17 +99,9 @@ public class HideHealthBarMixin {
                 guiGraphics.blit(AURUM_BACKGROUND, x, y + yOffset, 0, 0, 9, 9, 9, 9);
             }
 
-            // PASADA B: Renderizar la base del Tier de fondo
-            if (tierActual > 0) {
-                if (vidaRestanteEnTier < valorParaLleno) {
-                    ResourceLocation capaFondoAnterior = FULL_HEARTS_TEXTURES[tierActual - 1];
-                    guiGraphics.blit(capaFondoAnterior, x + 1, y + yOffset + 1, 0, 0, 7, 7, 7, 7);
-                }
-            } else if (tierMaximo > tierActual && (i * 2) < maxHealth) {
-                if (vidaRestanteEnTier < valorParaLleno && tierMaximo > 0) {
-                    ResourceLocation capaFondoAnterior = FULL_HEARTS_TEXTURES[Math.min(tierMaximo - 1, MAX_ROWS - 1)];
-                    guiGraphics.blit(capaFondoAnterior, x + 1, y + yOffset + 1, 0, 0, 7, 7, 7, 7);
-                }
+            // PASADA B: base del tier anterior bajo los corazones aún no llenos
+            if (tierActual > 0 && vidaRestanteEnTier < valorParaLleno) {
+                guiGraphics.blit(FULL_HEARTS_TEXTURES[tierActual - 1], x + 1, y + yOffset + 1, 0, 0, 7, 7, 7, 7);
             }
 
             // PASADA C: Interiores principales

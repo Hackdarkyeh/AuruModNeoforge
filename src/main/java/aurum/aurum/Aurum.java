@@ -102,6 +102,9 @@ public class Aurum {
         STStructures.DEFERRED_REGISTRY_STRUCTURE.register(modEventBus);
         STStructurePlacements.DEFERRED_REGISTRY_STRUCTURE_PLACEMENT_TYPE.register(modEventBus);
 
+        STStructureTypes.STRUCTURE_TYPES.register(modEventBus);
+        STFeatures.FEATURES.register(modEventBus);
+
         // AurelitePickaxeHighlight se registra ahora en AurumClient (solo cliente)
         AurumDimension.CHUNK_GENERATORS.register(modEventBus);
         modEventBus.register(ModDataGenerators.class);

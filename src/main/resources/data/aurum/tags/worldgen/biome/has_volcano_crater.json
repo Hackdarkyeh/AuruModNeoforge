@@ -1,5 +1,6 @@
 {
+  "replace": false,
   "values": [
-    "aurum:dim1_biome1_volcano"
+    "#aurum:is_dim1_biome7_void"
   ]
 }

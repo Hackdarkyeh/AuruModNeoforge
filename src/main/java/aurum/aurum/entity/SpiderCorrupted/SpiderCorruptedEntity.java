@@ -1,7 +1,5 @@
-
 package aurum.aurum.entity.SpiderCorrupted;
 
-import aurum.aurum.Aurum;
 import aurum.aurum.entity.ICorruptedMob;
 import aurum.aurum.entity.CooperGolem.ExtinguishFireGoal;
 import aurum.aurum.init.ModAttributes;
@@ -18,7 +16,6 @@ import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.*;
-import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.*;
@@ -39,11 +36,6 @@ import java.util.UUID;
 public class SpiderCorruptedEntity extends Monster implements ICorruptedMob {
 	@Override public LivingEntity self() { return this; }
 
-	private static final ResourceLocation AURUM_HEALTH_ID =
-			ResourceLocation.fromNamespaceAndPath(Aurum.MODID, "aurum_health_bonus");
-	private static final ResourceLocation AURUM_DAMAGE_ID =
-			ResourceLocation.fromNamespaceAndPath(Aurum.MODID, "aurum_damage_bonus");
-
 	private int remainingPersistentAngerTime;
 	private static final UniformInt PERSISTENT_ANGER_TIME = TimeUtil.rangeOfSeconds(20, 39);
 	@javax.annotation.Nullable
@@ -62,7 +54,7 @@ public class SpiderCorruptedEntity extends Monster implements ICorruptedMob {
 
 	public SpiderCorruptedEntity(EntityType<? extends Monster> type, Level world) {
 		super(type, world);
-        xpReward = 0;
+		xpReward = 0;
 		setNoAi(false);
 	}
 
@@ -207,19 +199,6 @@ public class SpiderCorruptedEntity extends Monster implements ICorruptedMob {
 		spawnData = super.finalizeSpawn(level, difficulty, spawnType, spawnData);
 		rollAurumBlood();
 		return spawnData;
-	}
-
-	private void rollAurumBlood() {
-		float aurum = 1.0F + this.random.nextFloat() * 99.0F; // rango 1.0 - 100.0
-		this.getAttribute(ModAttributes.AURUM_IN_BLOOD).setBaseValue(aurum);
-
-		// Escala otras stats en función del aurum (ejemplo: vida y daño)
-		this.getAttribute(Attributes.MAX_HEALTH).addOrReplacePermanentModifier(
-				new AttributeModifier(AURUM_HEALTH_ID, (aurum - 1.0) * 0.25, AttributeModifier.Operation.ADD_MULTIPLIED_BASE));
-		this.getAttribute(Attributes.ATTACK_DAMAGE).addOrReplacePermanentModifier(
-				new AttributeModifier(AURUM_DAMAGE_ID, (aurum - 1.0) * 0.15, AttributeModifier.Operation.ADD_MULTIPLIED_BASE));
-
-		this.setHealth(this.getMaxHealth()); // full HP tras aplicar el bonus
 	}
 
 

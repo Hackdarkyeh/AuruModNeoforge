@@ -52,12 +52,6 @@ import java.util.UUID;
 public class ZombieAlteredEntity extends Monster implements ICorruptedMob {
 	@Override public LivingEntity self() { return this; }
 
-	// ===== Aurum en sangre =====
-	private static final ResourceLocation AURUM_HEALTH_ID =
-			ResourceLocation.fromNamespaceAndPath(Aurum.MODID, "aurum_health_bonus_zombie");
-	private static final ResourceLocation AURUM_DAMAGE_ID =
-			ResourceLocation.fromNamespaceAndPath(Aurum.MODID, "aurum_damage_bonus_zombie");
-
 	private int remainingPersistentAngerTime;
 	private static final net.minecraft.util.valueproviders.UniformInt PERSISTENT_ANGER_TIME =
 			net.minecraft.util.TimeUtil.rangeOfSeconds(20, 39);
@@ -458,19 +452,6 @@ public class ZombieAlteredEntity extends Monster implements ICorruptedMob {
 					new AttributeModifier(LEADER_BONUS_ID, this.random.nextDouble() * 3.0 + 1.0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
 			this.setCanBreakDoors(true);
 		}
-	}
-
-	// ===== Aurum en sangre =====
-	private void rollAurumBlood() {
-		float aurum = 1.0F + this.random.nextFloat() * 99.0F; // ajusta el rango/tope por dimensión cuando lo definas aquí también
-		this.getAttribute(ModAttributes.AURUM_IN_BLOOD).setBaseValue(aurum);
-
-		this.getAttribute(Attributes.MAX_HEALTH).addOrReplacePermanentModifier(
-				new AttributeModifier(AURUM_HEALTH_ID, (aurum - 1.0) * 0.25, AttributeModifier.Operation.ADD_MULTIPLIED_BASE));
-		this.getAttribute(Attributes.ATTACK_DAMAGE).addOrReplacePermanentModifier(
-				new AttributeModifier(AURUM_DAMAGE_ID, (aurum - 1.0) * 0.15, AttributeModifier.Operation.ADD_MULTIPLIED_BASE));
-
-		this.setHealth(this.getMaxHealth());
 	}
 
 	@Override

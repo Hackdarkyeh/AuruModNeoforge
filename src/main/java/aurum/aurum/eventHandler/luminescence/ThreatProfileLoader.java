@@ -95,7 +95,6 @@ public class ThreatProfileLoader extends SimpleJsonResourceReloadListener {
 
         byType = types;
         byTag = tags;
-        LOGGER.info("Luminiscencia: {} entidades y {} tags con perfil de amenaza", types.size(), tags.size());
     }
 
     private static void parse(ResourceLocation file, JsonElement json, Map<EntityType<?>, Profile> types,
@@ -109,7 +108,6 @@ public class ThreatProfileLoader extends SimpleJsonResourceReloadListener {
         boolean isTag = entry.entity().startsWith("#");
         ResourceLocation id = ResourceLocation.tryParse(isTag ? entry.entity().substring(1) : entry.entity());
         if (id == null) {
-            LOGGER.error("Luminiscencia: id inválido '{}' en {}", entry.entity(), file);
             return;
         }
 
@@ -117,8 +115,7 @@ public class ThreatProfileLoader extends SimpleJsonResourceReloadListener {
             tags.add(new AbstractMap.SimpleEntry<>(TagKey.create(Registries.ENTITY_TYPE, id), profile));
         } else {
             Optional<EntityType<?>> type = BuiltInRegistries.ENTITY_TYPE.getOptional(id);
-            if (type.isPresent()) types.put(type.get(), profile);
-            else LOGGER.warn("Luminiscencia: la entidad '{}' de {} no existe (¿id mal escrito o mod ausente?)", id, file);
+            type.ifPresent(entityType -> types.put(entityType, profile));
         }
     }
 }

@@ -1,5 +1,7 @@
 package aurum.aurum.entity.DolphinAltered;
 
+import aurum.aurum.entity.ICorruptedMob;
+import aurum.aurum.init.ModAttributes;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.function.Predicate;
@@ -49,7 +51,9 @@ import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.pathfinder.PathComputationType;
 import net.minecraft.world.phys.Vec3;
 
-public class DolphinAlteredEntity extends Monster {
+public class DolphinAlteredEntity extends Monster implements ICorruptedMob {
+    @Override public LivingEntity self() { return this; }
+
     private static final EntityDataAccessor<BlockPos> TREASURE_POS = SynchedEntityData.defineId(DolphinAlteredEntity.class, EntityDataSerializers.BLOCK_POS);
     private static final EntityDataAccessor<Boolean> GOT_FISH = SynchedEntityData.defineId(DolphinAlteredEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> MOISTNESS_LEVEL = SynchedEntityData.defineId(DolphinAlteredEntity.class, EntityDataSerializers.INT);
@@ -73,7 +77,9 @@ public class DolphinAlteredEntity extends Monster {
     public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty, MobSpawnType spawnType, @Nullable SpawnGroupData spawnGroupData) {
         this.setAirSupply(this.getMaxAirSupply());
         this.setXRot(0.0F);
-        return super.finalizeSpawn(level, difficulty, spawnType, spawnGroupData);
+        spawnGroupData = super.finalizeSpawn(level, difficulty, spawnType, spawnGroupData);
+        rollAurumBlood();
+        return spawnGroupData;
     }
 
     public void setTreasurePos(BlockPos pos) {
@@ -163,7 +169,8 @@ public class DolphinAlteredEntity extends Monster {
                 .add(Attributes.MAX_HEALTH, 40.0)
                 .add(Attributes.MOVEMENT_SPEED, 0.3F)
                 .add(Attributes.ATTACK_DAMAGE, 12.0)
-                .add(Attributes.FLYING_SPEED, 0.6F);
+                .add(Attributes.FLYING_SPEED, 0.6F)
+                .add(ModAttributes.AURUM_IN_BLOOD, 1.0);
     }
 
     @Override
@@ -256,7 +263,7 @@ public class DolphinAlteredEntity extends Monster {
     }
 
     /**
-     * Handler for {@link World#setEntityState}
+     * Handler for client and server to perform specific operations upon receiving packets. Used for things like entity state synchronization.
      */
     @Override
     public void handleEntityEvent(byte id) {
@@ -275,24 +282,24 @@ public class DolphinAlteredEntity extends Monster {
             this.level().addParticle(particleOption, this.getRandomX(1.0), this.getRandomY() + 0.2, this.getRandomZ(1.0), d0, d1, d2);
         }
     }
-/*
-    @Override
-    protected InteractionResult mobInteract(Player player, InteractionHand hand) {
+    /*
+        @Override
+        protected InteractionResult mobInteract(Player player, InteractionHand hand) {
 
-        ItemStack itemstack = player.getItemInHand(hand);
-        if (!itemstack.isEmpty() && itemstack.is(ItemTags.FISHES)) {
-            if (!this.level().isClientSide) {
-                this.playSound(SoundEvents.DOLPHIN_EAT, 1.0F, 1.0F);
+            ItemStack itemstack = player.getItemInHand(hand);
+            if (!itemstack.isEmpty() && itemstack.is(ItemTags.FISHES)) {
+                if (!this.level().isClientSide) {
+                    this.playSound(SoundEvents.DOLPHIN_EAT, 1.0F, 1.0F);
+                }
+
+                this.setGotFish(true);
+                itemstack.consume(1, player);
+                return InteractionResult.sidedSuccess(this.level().isClientSide);
+            } else {
+                return super.mobInteract(player, hand);
             }
-
-            this.setGotFish(true);
-            itemstack.consume(1, player);
-            return InteractionResult.sidedSuccess(this.level().isClientSide);
-        } else {
-            return super.mobInteract(player, hand);
         }
-    }
-*/
+    */
     @Override
     protected SoundEvent getHurtSound(DamageSource damageSource) {
         return SoundEvents.DOLPHIN_HURT;
@@ -616,4 +623,3 @@ public class DolphinAlteredEntity extends Monster {
         }
     }
 }
-

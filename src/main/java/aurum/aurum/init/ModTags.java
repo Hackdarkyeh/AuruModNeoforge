@@ -8,6 +8,7 @@ import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Block;
 
 import static aurum.aurum.Aurum.MODID;
@@ -31,9 +32,13 @@ public class ModTags {
         private static TagKey<Item> createTag(String name) {
             return ItemTags.create(ResourceLocation.fromNamespaceAndPath(MODID, name));
         }
-
-
     }
+
+    public static final class Biomes {
+        public static final TagKey<Biome> IS_DIM1_BIOME7_VOID = TagKey.create(Registries.BIOME,
+                ResourceLocation.fromNamespaceAndPath("aurum", "is_dim1_biome7_void"));
+    }
+
     public static final TagKey<Item> AURUM_WEAPONS = TagKey.create(
             Registries.ITEM,
             ResourceLocation.fromNamespaceAndPath(MODID, "enchantable/aurum_weapons"));
